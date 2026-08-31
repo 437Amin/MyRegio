@@ -1,0 +1,77 @@
+# =============================================================================
+#  Website bauen und zu Hostinger hochladen
+# =============================================================================
+#
+#  Laeuft automatisch bei jeder Aenderung am Hauptzweig - also auch dann,
+#  wenn Oender im Redaktionsbereich unter /admin auf "Veroeffentlichen"
+#  klickt. Der Ablauf ist dann:
+#
+#    Oender speichert  ->  Aenderung landet im Repository
+#                      ->  dieser Ablauf baut die Seite neu
+#                      ->  Ergebnis wird per FTP zu Hostinger hochgeladen
+#
+#  EINMALIG EINZURICHTEN (GitHub -> Settings -> Secrets and variables ->
+#  Actions -> New repository secret):
+#
+#    FTP_SERVER    z. B. ftp.myregiocar.com   (steht im hPanel unter "FTP-Konten")
+#    FTP_BENUTZER  der FTP-Benutzername
+#    FTP_PASSWORT  das FTP-Passwort
+#
+#  Die Zugangsdaten liegen verschluesselt bei GitHub und tauchen im
+#  Protokoll nicht auf.
+# =============================================================================
+
+name: Bauen und zu Hostinger hochladen
+
+on:
+  push:
+    branches: [main]
+  # Erlaubt es, den Ablauf im GitHub-Reiter "Actions" von Hand zu starten
+  workflow_dispatch:
+
+# Nie zwei Uploads gleichzeitig - sonst ueberholen sie sich gegenseitig
+concurrency:
+  group: hostinger-deploy
+  cancel-in-progress: true
+
+jobs:
+  bauen-und-hochladen:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Quellcode holen
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Pakete installieren
+        run: npm ci
+
+      # Faengt den Fall ab, dass im Redaktionsbereich ein Feld fehlt und
+      # dadurch beim Speichern Inhalte verloren gegangen waeren.
+      - name: Redaktionsbereich gegen die Inhalte pruefen
+        run: node scripts/cms-pruefen.mjs
+
+      # Schlaegt fehl, wenn eine Inhaltsdatei fehlerhaft ist. Dann wird
+      # NICHTS hochgeladen und die bisherige Website bleibt unveraendert.
+      - name: Website bauen
+        run: npm run build
+
+      - name: Per FTP zu Hostinger hochladen
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_BENUTZER }}
+          password: ${{ secrets.FTP_PASSWORT }}
+          # Verschluesselte Verbindung. Falls Hostinger sie ablehnt und der
+          # Ablauf mit einem Verbindungsfehler abbricht: auf "ftp" aendern.
+          protocol: ftps
+          local-dir: ./dist/
+          server-dir: ./public_html/
+          # Es werden nur geaenderte Dateien uebertragen. Dazu legt die
+          # Aktion auf dem Server eine kleine Merkdatei an.
+          state-name: .ftp-deploy-sync-state.json

@@ -7,6 +7,7 @@ import {
   adresseEinzeilig,
   telefonLink,
   emailLink,
+  bestellungenLink,
   whatsappLink,
   whatsappStandardtext,
 } from '~/config/site';
@@ -72,7 +73,7 @@ const kartenLink = `https://www.openstreetmap.org/?mlat=${a.breitengrad}&mlon=${
           </span>
         </a>
 
-        <a href={emailLink} class="karte karte-hover flex flex-col p-6">
+        <div class="karte flex flex-col p-6">
           <span class="icon-rahmen">
             <Icon name="mail" size={22} />
           </span>
@@ -80,10 +81,32 @@ const kartenLink = `https://www.openstreetmap.org/?mlat=${a.breitengrad}&mlon=${
           <p class="mt-1.5 flex-1 text-sm text-nebel-400">
             Für Firmenanfragen, Angebote und Rechnungen.
           </p>
-          <span class="mt-4 break-all text-sm font-semibold text-cyan-400">
-            {site.kontakt.email}
-          </span>
-        </a>
+
+          <dl class="mt-4 space-y-3 text-sm">
+            <div>
+              <dt class="text-nebel-500">Buchungen</dt>
+              <dd>
+                <a
+                  href={bestellungenLink}
+                  class="break-all font-semibold text-cyan-400 hover:text-cyan-300"
+                >
+                  {site.kontakt.bestellungenEmail}
+                </a>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-nebel-500">Allgemeine Anfragen</dt>
+              <dd>
+                <a
+                  href={emailLink}
+                  class="break-all font-semibold text-cyan-400 hover:text-cyan-300"
+                >
+                  {site.kontakt.email}
+                </a>
+              </dd>
+            </div>
+          </dl>
+        </div>
       </div>
 
       <div class="mt-4 grid gap-4 md:grid-cols-2">

@@ -30,18 +30,18 @@ unternehmen:
   slogan: "Ihr Mietwagen mit Fahrer in Stuttgart"
 
 kontakt:
-  # ---------------------------------------------------------------------------
-  #  WICHTIG: Hier die echten Nummern eintragen (siehe TODO-KUNDE.md)
-  # ---------------------------------------------------------------------------
   # Telefonnummer, so wie sie auf der Seite ANGEZEIGT wird:
-  telefonAnzeige: "+49 711 000000"
+  telefonAnzeige: "+49 173 3480810"
   # Dieselbe Nummer zum Anklicken - NUR Ziffern und ein + am Anfang:
-  telefonWaehlen: "+4971100000"
+  telefonWaehlen: "+491733480810"
   # WhatsApp-Nummer - NUR ZIFFERN, ohne +, ohne Leerzeichen, ohne Klammern.
   # Deutschland beginnt mit 49 statt der 0.
   # Beispiel: aus 0171 2345678  wird  491712345678
-  whatsapp: "491700000000"
-  email: "info@myregiocar.com"
+  whatsapp: "491733480810"
+  # Allgemeine Anfragen
+  email: "contact@myregiocar.com"
+  # Adresse fuer Fahrtanfragen und Buchungen
+  bestellungenEmail: "bestellungen@myregiocar.com"
   # Adresse fuer Bewerbungen (steht auch auf dem Flyer)
   bewerbungEmail: "bewerbung@myregiocar.com"
 
@@ -102,7 +102,7 @@ einzugsgebiet:
 
 rechtliches:
   # Fuer das Impressum - bitte vom Steuerberater bestaetigen lassen
-  ustId: "DE000000000"
+  ustId: "DE285112009"
   # Genehmigungsbehoerde nach Personenbefoerderungsgesetz
   aufsichtsbehoerde: "Landeshauptstadt Stuttgart, Amt für öffentliche Ordnung"
   # Ihre Konzessionsnummer nach PBefG, falls vorhanden

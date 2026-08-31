@@ -171,23 +171,49 @@ Eigenschaften:
 
 ## Veröffentlichen
 
-### Netlify
+### Hostinger (produktiv)
 
-`netlify.toml` liegt bereits im Projekt. Repository verbinden – fertig.
-Build-Befehl `npm run build`, Verzeichnis `dist`.
+Hostinger ist klassisches Webhosting und führt selbst keinen Build aus. Diese
+Lücke schließt `.github/workflows/deploy.yml`: Bei jedem Push auf `main` baut
+GitHub Actions die Seite und lädt `dist/` per FTP nach `public_html`.
 
-### Cloudflare Pages
+Damit funktioniert auch der Redaktionsbereich – die Kette ist:
 
-- Framework-Voreinstellung: **Astro**
-- Build-Befehl: `npm run build`
-- Ausgabeverzeichnis: `dist`
-- Umgebungsvariable: `NODE_VERSION = 22`
+```
+Önder speichert unter /admin
+   → DecapBridge schreibt einen Commit ins Repository
+   → GitHub Actions baut die Seite neu
+   → Upload per FTP zu Hostinger
+```
 
-### Danach
+Einzurichten sind nur drei GitHub-Secrets: `FTP_SERVER`, `FTP_BENUTZER`,
+`FTP_PASSWORT` (Schritt für Schritt in [`TODO-KUNDE.md`](TODO-KUNDE.md)).
+
+Schlägt `npm run build` oder die Inhaltsprüfung fehl, wird **nichts**
+hochgeladen – die bisherige Website bleibt unverändert online.
+
+`public/.htaccess` liefert die Servereinstellungen mit: eigene 404-Seite,
+HTTPS-Erzwingung, Sicherheits-Kopfzeilen und Cache-Regeln.
+
+### Netlify (Vorschau)
+
+`netlify.toml` liegt weiterhin im Projekt. Für Kundenvorschauen eignet sich:
+
+```bash
+node scripts/vorschau-bauen.mjs
+```
+
+Das erzeugt ein Paket mit `noindex` und Vorschau-Hinweis, das sich bei
+app.netlify.com/drop ablegen lässt. **Nicht** für den Livegang verwenden –
+dafür `npm run build`.
+
+### Nach dem Domainwechsel
 
 1. In `astro.config.mjs` die echte Domain bei `SEITEN_URL` eintragen
 2. Dieselbe Domain in `public/robots.txt` bei `Sitemap:` eintragen
-3. `sitemap-index.xml` in der Google Search Console einreichen
+3. Auf **eine** Schreibweise festlegen (mit oder ohne `www`) – die Weiche
+   dafür steht in `public/.htaccess`
+4. `sitemap-index.xml` in der Google Search Console einreichen
 
 ---
 

@@ -48,7 +48,12 @@ const einstellungenSchema = z.object({
       ),
     email: z
       .string()
-      .email('Das ist keine gültige E-Mail-Adresse. Beispiel: info@myregiocar.com'),
+      .email(
+        'Das ist keine gültige E-Mail-Adresse. Beispiel: contact@myregiocar.com',
+      ),
+    bestellungenEmail: z
+      .string()
+      .email('Das ist keine gültige E-Mail-Adresse.'),
     bewerbungEmail: z.string().email('Das ist keine gültige E-Mail-Adresse.'),
   }),
   oeffnungszeiten: z.object({
@@ -215,7 +220,12 @@ export function whatsappLink(text?: string): string {
 }
 
 export const telefonLink = `tel:${site.kontakt.telefonWaehlen}`;
+
+/** Allgemeine Anfragen, Impressum, Datenschutz. */
 export const emailLink = `mailto:${site.kontakt.email}`;
+
+/** Fahrtanfragen und Buchungen - z. B. als Ersatz, wenn WhatsApp fehlt. */
+export const bestellungenLink = `mailto:${site.kontakt.bestellungenEmail}`;
 
 /** Standardtext, wenn jemand den WhatsApp-Knopf ohne den Assistenten benutzt. */
 export const whatsappStandardtext = `Hallo ${site.unternehmen.marke}, ich möchte eine Fahrt anfragen.`;

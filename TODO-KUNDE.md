@@ -1,159 +1,162 @@
-# Was noch von Önder gebraucht wird
+# Offene Punkte bis zum Livegang
 
-Die Website ist fertig und funktioniert. An den unten aufgeführten Stellen
-stehen aber noch **Platzhalter**, die vor dem Livegang durch echte Angaben
-ersetzt werden müssen.
-
-Abhaken, was erledigt ist.
+Stand: 31.08.2026 · Hosting: **Hostinger** · Domain: **myregiocar.com**
 
 ---
 
-## 🔧 Redaktionsbereich einrichten (macht der Entwickler)
+## ✅ Erledigt
 
-Damit Önder unter `/admin` selbst Inhalte pflegen kann, fehlen noch drei
-Schritte. Alle drei brauchen ein Konto und lassen sich nicht vorbereiten.
-
-- [ ] **1. Repository auf GitHub anlegen** (dein Konto, nicht Önders)
-  - Neues, **privates** Repository erstellen, z. B. `myregiocar`
-  - Lokal ist bereits alles vorbereitet und eingecheckt. Es fehlt nur:
-    ```
-    git remote add origin https://github.com/DEINNAME/myregiocar.git
-    git push -u origin main
-    ```
-
-- [ ] **2. Netlify mit dem Repository verbinden**
-  - Im Netlify-Projekt: *Site configuration → Build & deploy → Link repository*
-  - Build-Befehl `npm run build`, Verzeichnis `dist` (steht schon in
-    `netlify.toml`)
-  - Ab dann baut Netlify bei jeder Änderung automatisch neu – das Hochladen
-    von Zip-Dateien entfällt
-
-- [ ] **3. DecapBridge einrichten** (kostenlos für bis zu 3 Websites)
-  - Auf **decapbridge.com** registrieren, eine „Site" anlegen und das
-    GitHub-Repository verbinden
-  - DecapBridge zeigt danach zwei Werte an. Diese in
-    `public/admin/config.yml` eintragen – die Stellen sind dort mit
-    `↓↓↓` markiert:
-    - `repo:` → `DEINNAME/myregiocar`
-    - `identity_url:` → `https://auth.decapbridge.com/sites/<deine-site-id>`
-  - Önder per E-Mail einladen. Er bekommt eine Einladung, vergibt ein
-    Passwort und meldet sich danach direkt unter `/admin` an – **ohne
-    GitHub-Konto**
-
-- [ ] **4. Danach einmal prüfen**
-  - Unter `/admin` anmelden, eine Kleinigkeit ändern, veröffentlichen
-  - Prüfen, ob Netlify neu baut und die Änderung live erscheint
-  - `node scripts/cms-pruefen.mjs` ausführen – meldet, falls im Editor ein
-    Feld fehlt, das sonst beim Speichern verloren ginge
-
-> **Hinweis für später:** Wer in `content/*.yaml` ein neues Feld ergänzt, muss
-> es auch in `public/admin/config.yml` eintragen. Sonst löscht der Editor es
-> beim nächsten Speichern. Das Prüfskript aus Schritt 4 findet solche Lücken.
+- [x] **Telefonnummer** +49 173 3480810 – eingetragen, erscheint auf allen
+      Seiten inkl. Google-Daten
+- [x] **WhatsApp-Nummer** – Buchungsassistent schickt jetzt an 491733480810
+- [x] **E-Mail-Adressen** – `bestellungen@` für Buchungen, `contact@` für
+      allgemeine Anfragen, `bewerbung@` für Stellen
+- [x] **Umsatzsteuer-ID** DE285112009 – im Impressum
+- [x] **Hosting-Angaben** in der Datenschutzerklärung (Hostinger)
 
 ---
 
 ## 🔴 Muss vor dem Livegang erledigt sein
 
-### Kontaktdaten → `content/einstellungen.yaml`
-
-- [ ] **Telefonnummer** (steht aktuell auf `+49 711 000000`)
-  - `telefonAnzeige` – so wie sie angezeigt wird, z. B. `"+49 711 123456"`
-  - `telefonWaehlen` – dieselbe Nummer, nur Ziffern nach dem `+`
-- [ ] **WhatsApp-Nummer** (steht aktuell auf `491700000000`)
-  - Nur Ziffern, ohne `+`, ohne Leerzeichen. Aus `0171 2345678` wird `491712345678`
-  - ⚠️ **Ohne diese Nummer funktioniert der Buchungsassistent nicht** – er ist
-    das Herzstück der Seite
-- [ ] **E-Mail-Adresse** (steht aktuell auf `info@myregiocar.com`)
-  - Falls diese Adresse noch nicht existiert: einrichten oder ändern
-- [ ] **Öffnungszeiten** prüfen
-  - Aktuell wird „Täglich 24 Stunden erreichbar" beworben. Stimmt das?
-  - Falls nein: `durchgehend: false` setzen und die Zeiten darunter eintragen
-
-### Impressum → `content/einstellungen.yaml`, Abschnitt `rechtliches`
-
-- [ ] **Umsatzsteuer-Identifikationsnummer** (steht auf `DE000000000`)
-  - Vom Steuerberater bestätigen lassen
-- [ ] **Genehmigungsbehörde** prüfen
-  - Eingetragen ist: „Landeshauptstadt Stuttgart, Amt für öffentliche Ordnung"
-  - Bitte mit der eigenen Konzessionsurkunde abgleichen
-- [ ] **Konzessionsnummer** nach PBefG eintragen, falls vorhanden
-
-### Rechtliche Prüfung
+### Rechtliches
 
 - [ ] **Impressum und Datenschutzerklärung anwaltlich prüfen lassen**
-  - Beide Seiten sind sorgfältige Entwürfe und tragen einen sichtbaren
-    Warnhinweis, der nach der Prüfung entfernt wird
-  - Ein unvollständiges Impressum ist abmahnfähig
-- [ ] **Hosting-Anbieter in der Datenschutzerklärung eintragen**
-  - In `src/pages/datenschutz.astro`, Abschnitt 4, steht ein Platzhalter
-  - Auftragsverarbeitungsvertrag (AVV) mit dem Anbieter abschließen
+- [ ] **Danach den gelben Warnkasten auf beiden Seiten entfernen**
+      → in `src/pages/impressum.astro` und `src/pages/datenschutz.astro`
+      jeweils der Block mit `border-amber-400/30`.
+      ⚠️ Solange er drinsteht, liest jeder Besucher „Dies ist ein Entwurf" –
+      das wirkt unseriös. Er darf aber erst weg, **wenn** die Prüfung erfolgt ist.
+- [ ] **Genehmigungsbehörde prüfen** – eingetragen ist „Landeshauptstadt
+      Stuttgart, Amt für öffentliche Ordnung". Bitte mit der
+      Konzessionsurkunde abgleichen
+- [ ] **Konzessionsnummer** nach PBefG eintragen, falls vorhanden
+- [ ] **Auftragsverarbeitungsvertrag mit Hostinger abschließen**
+      → Hostinger-Konto → *Legal* → AVV online unterzeichnen
+- [ ] **Serverstandort auf Deutschland bzw. EU stellen**
+      → sonst muss die Datenschutzerklärung um die Drittlandübermittlung
+      ergänzt werden
+
+### Inhaltlich
+
+- [ ] **Öffnungszeiten prüfen** – aktuell wird „Täglich 24 Stunden erreichbar"
+      beworben. Stimmt das? Falls nein: im Redaktionsbereich den Haken bei
+      „Rund um die Uhr erreichbar" entfernen und die Zeiten eintragen
+- [ ] **Entscheiden: mit oder ohne `www`?**
+      Beide Schreibweisen müssen auf dieselbe zeigen, sonst wertet Google die
+      Seite doppelt. Aktuell eingestellt ist **mit www**:
+      - `astro.config.mjs` → `SEITEN_URL`
+      - `public/robots.txt` → `Sitemap:`
+      - Für *ohne* www zusätzlich in `public/.htaccess` die zwei markierten
+        Zeilen entkommentieren
+
+---
+
+## 🚀 Livegang bei Hostinger
+
+Der Ablauf ist so eingerichtet, dass Sie nach dem Einrichten **nie wieder
+Dateien hochladen müssen**. Jede Änderung – auch die von Önder im
+Redaktionsbereich – baut und veröffentlicht sich selbst.
+
+- [ ] **1. Repository auf GitHub anlegen** (privat, z. B. `myregiocar`)
+      Lokal ist alles eingecheckt, es fehlt nur:
+      ```
+      git remote add origin https://github.com/DEINNAME/myregiocar.git
+      git push -u origin main
+      ```
+
+- [ ] **2. FTP-Zugang bei Hostinger holen**
+      hPanel → *Dateien → FTP-Konten*. Notieren: Server, Benutzername, Passwort
+
+- [ ] **3. Zugangsdaten bei GitHub hinterlegen**
+      Repository → *Settings → Secrets and variables → Actions → New secret*:
+      | Name | Wert |
+      |---|---|
+      | `FTP_SERVER` | z. B. `ftp.myregiocar.com` |
+      | `FTP_BENUTZER` | FTP-Benutzername |
+      | `FTP_PASSWORT` | FTP-Passwort |
+
+      Danach läuft `.github/workflows/deploy.yml` bei jedem Push automatisch:
+      bauen → prüfen → per FTP nach `public_html` hochladen.
+      Schlägt der Build fehl, wird **nichts** hochgeladen – die alte Seite
+      bleibt online.
+
+- [ ] **4. Domain und SSL bei Hostinger einrichten**
+      Domain auf das Hosting zeigen lassen, kostenloses SSL-Zertifikat
+      aktivieren
+
+- [ ] **5. Ersten Durchlauf prüfen**
+      GitHub → Reiter *Actions* → läuft der Ablauf grün durch?
+      Danach die Seite im Browser aufrufen und die Unterseiten durchklicken
+
+> **Falls der Upload mit einem Verbindungsfehler abbricht:** In
+> `.github/workflows/deploy.yml` `protocol: ftps` auf `protocol: ftp` ändern.
+> Manche Hostinger-Pakete erlauben kein FTPS.
+
+---
+
+## 🔧 Redaktionsbereich für Önder freischalten
+
+Damit Önder unter `myregiocar.com/admin` selbst Inhalte pflegen kann –
+**ohne GitHub-Konto**:
+
+- [ ] **1. Bei decapbridge.com registrieren** (kostenlos für bis zu 3 Websites),
+      eine „Site" anlegen und das GitHub-Repository verbinden
+- [ ] **2. Die zwei angezeigten Werte eintragen** in `public/admin/config.yml`
+      – die Stellen sind mit `↓↓↓` markiert:
+      - `repo:` → `DEINNAME/myregiocar`
+      - `identity_url:` → `https://auth.decapbridge.com/sites/<site-id>`
+- [ ] **3. Önder per E-Mail einladen.** Er vergibt ein Passwort und meldet sich
+      danach direkt unter `/admin` an
+- [ ] **4. Gemeinsam einmal durchgehen** – die bebilderte Anleitung dafür ist
+      [`ANLEITUNG.md`](ANLEITUNG.md)
+
+> **Für Entwickler:** Wer in `content/*.yaml` ein Feld ergänzt, muss es auch in
+> `public/admin/config.yml` eintragen – sonst löscht der Editor es beim
+> nächsten Speichern. `node scripts/cms-pruefen.mjs` findet solche Lücken und
+> läuft bei jedem Deploy automatisch mit.
 
 ---
 
 ## 🟡 Sollte bald ergänzt werden
 
-### Park & Fly → `content/preise.yaml`
+### Park & Fly → im Redaktionsbereich unter „Preise"
 
-Diese Angaben fehlen noch. Ohne sie kann die Website nicht sagen, was Park & Fly
-kostet und wie es abläuft:
+Ohne diese Angaben kann die Website nicht sagen, was Park & Fly kostet:
 
 - [ ] Preis pro Tag und pro Woche
-- [ ] Anzahl der verfügbaren Stellplätze
-- [ ] Ist der Platz überdacht?
-- [ ] Ist das Gelände umzäunt oder videoüberwacht?
-- [ ] Muss der Autoschlüssel abgegeben werden?
-- [ ] Aufpreis für den Shuttle bis zum Terminal (oder ist er inklusive?)
+- [ ] Anzahl der Stellplätze
+- [ ] Überdacht? Umzäunt oder videoüberwacht? Schlüsselabgabe nötig?
+- [ ] Aufpreis für den Shuttle (oder inklusive?)
 - [ ] **Versicherungsfrage klären:** Wer haftet, wenn dem abgestellten Fahrzeug
-      auf dem Gelände etwas passiert? Das gehört in Ihre
-      Geschäftsbedingungen – bitte mit Ihrer Versicherung besprechen
+      auf dem Gelände etwas passiert? Gehört in die Geschäftsbedingungen –
+      bitte mit der Versicherung besprechen
 
 ### Bilder
 
 - [ ] **Original-Logo** als SVG oder PNG mit transparentem Hintergrund
-  - Aktuell ist das Logo nach dem Flyer nachgebaut. Das sieht stimmig aus, ist
-    aber nicht die Originaldatei
-  - Ablegen unter `public/` und Bescheid geben
-- [ ] **Fotos vom Fahrzeug und vom Gelände**
-  - Besonders wertvoll: die Einfahrt und der Stellplatzbereich für Park & Fly,
-    und der Fußweg zur Haltestelle. Das schafft Vertrauen
-  - ⚠️ **Ohne Fremdlogos.** Der vorhandene Flyer zeigt das Uber-Logo an der
-    Fahrzeugtür. Auf einer Seite, die gerade die Unabhängigkeit von Uber
-    herstellen soll, ist das inhaltlich unpassend und markenrechtlich heikel
-- [ ] **Foto von Önder** für die Startseite (optional, wirkt aber persönlich)
+      (aktuell nach dem Flyer nachgebaut)
+- [ ] **Fotos vom Fahrzeug und vom Gelände** – besonders die Einfahrt, der
+      Stellplatzbereich und der Fußweg zur Haltestelle. Das schafft Vertrauen
+      ⚠️ **Ohne Fremdlogos.** Der vorhandene Flyer zeigt das Uber-Logo an der
+      Fahrzeugtür – das gehört nicht auf diese Website
+- [ ] Danach `node scripts/bilder-erzeugen.mjs` ausführen, damit auch das
+      WhatsApp-Vorschaubild das echte Logo zeigt
 
-### Kundenstimmen → `content/kundenstimmen/beispiele.yaml`
+### Kundenstimmen → im Redaktionsbereich
 
-- [ ] Echte Rückmeldungen von Kunden sammeln und eintragen
-  - Die drei Beispiel-Einträge sind auf `freigegeben: false` gesetzt und
-    erscheinen daher **nicht** auf der Website
-  - ⚠️ Erfundene Bewertungen sind wettbewerbswidrig. Bitte die Person vorher
-    um Erlaubnis fragen – Vorname und Stadtteil genügen
+- [ ] Echte Rückmeldungen sammeln und eintragen
+      ⚠️ Erfundene Bewertungen sind wettbewerbswidrig. Vorher um Erlaubnis
+      fragen – Vorname und Stadtteil genügen
 
 ---
 
-## 🟢 Entscheidungen, die noch anstehen
+## 🟢 Danach
 
-- [ ] **Internetadresse (Domain) festlegen**
-  - Eingetragen ist `https://www.myregiocar.com` in `astro.config.mjs` und in
-    `public/robots.txt`
-  - Falls eine andere Adresse gewünscht ist, an beiden Stellen ändern
-- [ ] **Hosting entscheiden:** Netlify oder Cloudflare Pages (beide kostenlos)
-  - Siehe `README.md` für die Einrichtung
-- [ ] **GitHub-Konto für Önder anlegen**, damit er die Inhalte selbst pflegen
-      kann – siehe `ANLEITUNG.md`
 - [ ] **Google Unternehmensprofil** anlegen bzw. beanspruchen
-  - Für ein lokales Fahrdienst-Unternehmen bringt das erfahrungsgemäß mehr
-    Anfragen als die Website allein. Adresse, Öffnungszeiten und
-    Telefonnummer müssen dort **exakt** so stehen wie auf der Website
-- [ ] **Preise veröffentlichen oder nicht?**
-  - Aktuell absichtlich ausgeblendet (`anzeigen: false` in `preise.yaml`)
-  - Die Tabelle ist fertig gebaut und lässt sich jederzeit einschalten
-
----
-
-## Nicht vergessen
-
-Wenn die Website online geht, sollten Adresse, Telefonnummer und
-Öffnungszeiten **überall identisch** sein – auf der Website, im Google-Profil,
-auf Flyern und in Fahrzeugbeschriftungen. Suchmaschinen bewerten das, und
-Kunden verlassen sich darauf.
+      Bringt einem lokalen Fahrdienst erfahrungsgemäß mehr Anfragen als die
+      Website allein. Adresse, Öffnungszeiten und Telefonnummer müssen dort
+      **exakt** so stehen wie auf der Website
+- [ ] **Sitemap in der Google Search Console einreichen**
+      (`https://www.myregiocar.com/sitemap-index.xml`)
+- [ ] **Preise veröffentlichen?** Aktuell absichtlich ausgeblendet. Die Tabelle
+      ist fertig und lässt sich im Redaktionsbereich mit einem Haken einschalten

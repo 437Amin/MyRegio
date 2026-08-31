@@ -86,7 +86,8 @@ collections:
                 widget: string
                 hint: 'NUR Ziffern. Kein Pluszeichen, keine Leerzeichen. Die 0 am Anfang wird durch 49 ersetzt: aus 0171 2345678 wird 491712345678'
                 pattern: ['^[0-9]{8,15}$', 'Nur Ziffern – ohne +, ohne Leerzeichen, ohne die 0 am Anfang']
-              - { name: email, label: 'E-Mail-Adresse', widget: string }
+              - { name: email, label: 'E-Mail für allgemeine Anfragen', widget: string }
+              - { name: bestellungenEmail, label: 'E-Mail für Buchungen', widget: string, hint: 'Hierhin gehen Fahrtanfragen, wenn jemand kein WhatsApp nutzt.' }
               - { name: bewerbungEmail, label: 'E-Mail für Bewerbungen', widget: string }
 
           - name: oeffnungszeiten
