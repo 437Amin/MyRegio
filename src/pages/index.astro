@@ -7,7 +7,7 @@ import LeistungenRaster from '~/components/LeistungenRaster.astro';
 import FaqListe from '~/components/FaqListe.astro';
 import Kundenstimmen from '~/components/Kundenstimmen.astro';
 import PreisTabelle from '~/components/PreisTabelle.astro';
-import { site, telefonLink } from '~/config/site';
+import { site, telefonLink, preise, preiseSichtbar, preisFormat } from '~/config/site';
 
 const leistungen = (await getCollection('leistungen'))
   .sort((a, b) => a.data.reihenfolge - b.data.reihenfolge)
@@ -154,6 +154,18 @@ const ablauf = [
               <dd class="font-display text-2xl font-bold text-cyan-400">0</dd>
             </div>
           </dl>
+
+          {
+            preiseSichtbar && preise.parkAndFly.preisProTag > 0 && (
+              <p class="mt-5 text-sm text-nebel-400">
+                Stellplatz ab{' '}
+                <strong class="font-semibold text-white">
+                  {preisFormat(preise.parkAndFly.preisProTag)} pro Tag
+                </strong>{' '}
+                – überdacht und videoüberwacht.
+              </p>
+            )
+          }
 
           <a
             href="/park-and-fly"

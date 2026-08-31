@@ -156,5 +156,5 @@ Ohne diese Angaben kann die Website nicht sagen, was Park & Fly kostet:
       **exakt** so stehen wie auf der Website
 - [ ] **Sitemap in der Google Search Console einreichen**
       (`https://www.myregiocar.com/sitemap-index.xml`)
-- [ ] **Preise veröffentlichen?** Aktuell absichtlich ausgeblendet. Die Tabelle
-      ist fertig und lässt sich im Redaktionsbereich mit einem Haken einschalten
+- [x] **Preise veröffentlicht** – Park & Fly mit 7 € pro Tag. Fahrpreise
+      bleiben Verhandlungssache und erscheinen nicht (stehen auf 0)

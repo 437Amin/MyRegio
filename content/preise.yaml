@@ -77,4 +77,4 @@ zahlungsarten:
 #     false = Preise bleiben verborgen, Anfrage laeuft ueber WhatsApp  (aktuell)
 #     true  = Preistabelle erscheint auf der Seite
 # =============================================================================
-anzeigen: false
+anzeigen: true

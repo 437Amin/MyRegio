@@ -17,6 +17,14 @@ interface Props {
 
 const { nurParken = false } = Astro.props;
 const pf = preise.parkAndFly;
+
+// Nur Strecken mit einem echten Preis zeigen. Sonst erschiene eine Tabelle
+// voller Nullen, sobald jemand den Schalter fuer Park & Fly umlegt.
+const strecken = nurParken ? [] : preise.strecken.filter((s) => s.preis > 0);
+
+const zeigeStrecken = strecken.length > 0;
+const zeigeParken = pf.preisProTag > 0;
+const beideKarten = zeigeStrecken && zeigeParken;
 ---
 
 {
@@ -28,21 +36,28 @@ const pf = preise.parkAndFly;
             <Icon name="euro" size={15} />
             Preise
           </span>
-          <h2 class="mt-4 text-3xl md:text-4xl">Feste Preise, vorab bekannt</h2>
+          <h2 class="mt-4 text-3xl md:text-4xl">
+            {nurParken ? 'Was Park & Fly kostet' : 'Feste Preise, vorab bekannt'}
+          </h2>
           <p class="mt-4 text-nebel-400">
-            Sie erfahren den Preis vor der Fahrt und er bleibt bestehen – auch
-            wenn es unterwegs länger dauert.
+            {
+              nurParken
+                ? 'Abgerechnet wird pro angefangenem Tag. Sie erfahren die Gesamtsumme vor der Buchung – es kommt nichts dazu.'
+                : zeigeStrecken
+                  ? 'Sie erfahren den Preis vor der Fahrt und er bleibt bestehen – auch wenn es unterwegs länger dauert.'
+                  : 'Den Preis für Ihre Fahrt nennen wir Ihnen vorab per WhatsApp – verbindlich und ohne Aufschlag im Stau.'
+            }
           </p>
         </div>
 
-        <div class="mt-10 grid gap-4 lg:grid-cols-2">
-          {!nurParken && preise.strecken.length > 0 && (
+        <div class:list={["mt-10 grid gap-4", beideKarten && "lg:grid-cols-2"]}>
+          {zeigeStrecken && (
             <div class="karte overflow-hidden">
               <h3 class="border-b border-white/8 px-6 py-4 font-bold text-white">
                 Häufige Strecken ab Feuerbach
               </h3>
               <ul class="divide-y divide-white/8">
-                {preise.strecken.map((strecke) => (
+                {strecken.map((strecke) => (
                   <li class="flex items-center justify-between gap-4 px-6 py-4">
                     <div>
                       <div class="font-medium text-nebel-100">{strecke.ziel}</div>
@@ -59,7 +74,7 @@ const pf = preise.parkAndFly;
             </div>
           )}
 
-          {pf.preisProTag > 0 && (
+          {zeigeParken && (
             <div class="karte overflow-hidden">
               <h3 class="border-b border-white/8 px-6 py-4 font-bold text-white">
                 Park &amp; Fly
