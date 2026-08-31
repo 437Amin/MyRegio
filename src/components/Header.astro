@@ -1,0 +1,207 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { hauptmenue, istAktiv } from '~/config/navigation';
+import {
+  site,
+  telefonLink,
+  whatsappLink,
+  whatsappStandardtext,
+} from '~/config/site';
+
+const aktuell = Astro.url.pathname;
+---
+
+{
+  /* Hinweisstreifen, z. B. fuer Urlaub - wird in einstellungen.yaml geschaltet */
+  site.hinweisBanner.anzeigen && site.hinweisBanner.text && (
+    <div class="bg-cyan-500 text-nacht-950">
+      <p class="huelle py-2 text-center text-sm font-semibold">
+        {site.hinweisBanner.text}
+      </p>
+    </div>
+  )
+}
+
+<header
+  class="sticky top-0 z-50 border-b border-white/8 bg-nacht-950/85 backdrop-blur-lg"
+>
+  <div class="huelle flex h-16 items-center justify-between gap-4 lg:h-20">
+    <a
+      href="/"
+      class="shrink-0 rounded-lg"
+      aria-label={`${site.unternehmen.marke} Startseite`}
+    >
+      <Logo />
+    </a>
+
+    <!-- Menue ab Tablet -->
+    <nav aria-label="Hauptmenü" class="hidden lg:block">
+      <ul class="flex items-center gap-1">
+        {
+          hauptmenue.map((punkt) => (
+            <li>
+              <a
+                href={punkt.pfad}
+                aria-current={istAktiv(punkt.pfad, aktuell) ? 'page' : undefined}
+                class:list={[
+                  'block rounded-lg px-3.5 py-2 text-sm font-medium transition-colors',
+                  istAktiv(punkt.pfad, aktuell)
+                    ? 'bg-cyan-500/12 text-cyan-300'
+                    : 'text-nebel-300 hover:bg-white/5 hover:text-white',
+                ]}
+              >
+                {punkt.titel}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+
+    <div class="hidden items-center gap-2 lg:flex">
+      <a
+        href={telefonLink}
+        class="knopf knopf-rand !px-4 text-sm"
+        aria-label={`Anrufen unter ${site.kontakt.telefonAnzeige}`}
+      >
+        <Icon name="telefon" size={17} />
+        <span class="hidden xl:inline">{site.kontakt.telefonAnzeige}</span>
+        <span class="xl:hidden">Anrufen</span>
+      </a>
+      <a
+        href={whatsappLink(whatsappStandardtext)}
+        target="_blank"
+        rel="noopener"
+        class="knopf knopf-whatsapp !px-4 text-sm"
+      >
+        <Icon name="whatsapp" size={17} />
+        WhatsApp
+      </a>
+    </div>
+
+    <!--
+      Mobiles Menue als <details>. Das funktioniert auch dann noch,
+      wenn JavaScript nicht laedt.
+    -->
+    <details class="menue-mobil lg:hidden" id="menue-mobil">
+      <summary
+        class="flex h-12 w-12 cursor-pointer items-center justify-center rounded-xl border border-white/12 text-white transition-colors hover:bg-white/5"
+        aria-label="Menü öffnen"
+      >
+        <Icon name="menue" size={22} class="menue-auf" />
+        <Icon name="schliessen" size={22} class="menue-zu" />
+      </summary>
+
+      <div
+        class="fixed inset-x-0 bottom-0 top-16 z-40 overflow-y-auto border-t border-white/8 bg-nacht-950/98 backdrop-blur-xl"
+      >
+        <nav aria-label="Hauptmenü mobil" class="huelle py-6">
+          <ul class="flex flex-col gap-1">
+            {
+              hauptmenue.map((punkt) => (
+                <li>
+                  <a
+                    href={punkt.pfad}
+                    aria-current={
+                      istAktiv(punkt.pfad, aktuell) ? 'page' : undefined
+                    }
+                    class:list={[
+                      'flex min-h-14 items-center justify-between rounded-xl px-4 text-lg font-semibold transition-colors',
+                      istAktiv(punkt.pfad, aktuell)
+                        ? 'bg-cyan-500/12 text-cyan-300'
+                        : 'text-nebel-100 hover:bg-white/5',
+                    ]}
+                  >
+                    {punkt.titel}
+                    <Icon name="pfeil-rechts" size={18} class="opacity-40" />
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+
+          <div class="mt-6 grid gap-3">
+            <a
+              href={whatsappLink(whatsappStandardtext)}
+              target="_blank"
+              rel="noopener"
+              class="knopf knopf-whatsapp w-full"
+            >
+              <Icon name="whatsapp" size={20} />
+              Fahrt per WhatsApp anfragen
+            </a>
+            <a href={telefonLink} class="knopf knopf-rand w-full">
+              <Icon name="telefon" size={18} />
+              {site.kontakt.telefonAnzeige}
+            </a>
+          </div>
+
+          <p class="mt-6 flex items-center gap-2 px-1 text-sm text-nebel-400">
+            <Icon name="uhr" size={16} class="text-cyan-500" />
+            {site.oeffnungszeiten.text}
+          </p>
+        </nav>
+      </div>
+    </details>
+  </div>
+</header>
+
+<style>
+  /* Der Pfeil, den Browser bei <details> automatisch setzen, stoert hier */
+  .menue-mobil > summary {
+    list-style: none;
+  }
+  .menue-mobil > summary::-webkit-details-marker {
+    display: none;
+  }
+  .menue-mobil > summary::marker {
+    content: '';
+  }
+
+  /* Passendes Symbol je nach Zustand zeigen.
+     :global() ist noetig, weil die Symbole aus der Icon-Komponente stammen
+     und daher nicht vom Scoping dieser Datei erfasst werden. */
+  .menue-mobil :global(.menue-zu) {
+    display: none;
+  }
+  .menue-mobil[open] :global(.menue-auf) {
+    display: none;
+  }
+  .menue-mobil[open] :global(.menue-zu) {
+    display: block;
+  }
+</style>
+
+<script>
+  // Kleine Verbesserungen fuer das mobile Menue.
+  // Ohne dieses Skript bleibt das Menue trotzdem bedienbar.
+  const menue = document.getElementById('menue-mobil') as HTMLDetailsElement | null;
+
+  if (menue) {
+    const schliessen = () => {
+      menue.open = false;
+      document.body.style.removeProperty('overflow');
+    };
+
+    // Seite im Hintergrund nicht mitscrollen lassen
+    menue.addEventListener('toggle', () => {
+      document.body.style.overflow = menue.open ? 'hidden' : '';
+    });
+
+    // Nach einem Klick auf einen Menuepunkt schliessen
+    menue.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', schliessen);
+    });
+
+    // Mit Escape schliessen
+    document.addEventListener('keydown', (ereignis) => {
+      if (ereignis.key === 'Escape' && menue.open) schliessen();
+    });
+
+    // Beim Wechsel auf eine breite Ansicht schliessen
+    window.matchMedia('(min-width: 1024px)').addEventListener('change', (m) => {
+      if (m.matches && menue.open) schliessen();
+    });
+  }
+</script>

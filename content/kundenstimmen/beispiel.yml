@@ -1,0 +1,16 @@
+# Eine Datei = eine Kundenstimme.
+# Neue Stimmen legen Sie am besten im Redaktionsbereich unter /admin an.
+#
+# ACHTUNG: Erfundene Bewertungen sind wettbewerbswidrig und abmahnbar.
+# Solange "freigegeben" auf false steht, erscheint der Eintrag NICHT
+# auf der Website. Erst auf true stellen, wenn der Text echt ist und
+# die Person der Veroeffentlichung zugestimmt hat.
+
+name: "Beispiel-Eintrag"
+ort: "Stuttgart"
+anlass: "Flughafentransfer"
+sterne: 5
+text: >-
+  Hier steht später eine echte Kundenstimme. Bis dahin bleibt dieser Eintrag
+  ausgeblendet.
+freigegeben: false

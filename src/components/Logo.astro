@@ -1,0 +1,72 @@
+---
+import { site } from '~/config/site';
+
+/**
+ * PLATZHALTER-LOGO.
+ * Nachgebaut nach dem vorhandenen MyRegioCar-Flyer, damit die Seite jetzt
+ * schon stimmig aussieht. Sobald die Original-Datei vorliegt (am besten als
+ * SVG mit transparentem Hintergrund), wird sie hier eingesetzt -
+ * siehe TODO-KUNDE.md.
+ */
+interface Props {
+  class?: string;
+  nurZeichen?: boolean;
+  /** Hoehe des Schriftzugs in rem */
+  gross?: boolean;
+}
+
+const { class: klasse = '', nurZeichen = false, gross = false } = Astro.props;
+
+// "MyRegio" steht weiss, "Car" cyan - wie auf dem Flyer.
+const marke = site.unternehmen.marke;
+const trennstelle = marke.toLowerCase().lastIndexOf('car');
+const teilWeiss = trennstelle > 0 ? marke.slice(0, trennstelle) : marke;
+const teilCyan = trennstelle > 0 ? marke.slice(trennstelle) : '';
+---
+
+<span class={`inline-flex items-center gap-2.5 ${klasse}`}>
+  <svg
+    viewBox="0 0 48 48"
+    class={gross ? 'h-11 w-11' : 'h-8 w-8'}
+    role="img"
+    aria-label={`${marke} Logo`}
+  >
+    <!-- Kartennadel als Umriss -->
+    <path
+      d="M24 5.5c-7.9 0-14.3 6.3-14.3 14.1 0 9.4 12.2 21.3 13.5 22.5a1.2 1.2 0 0 0 1.6 0c1.3-1.2 13.5-13.1 13.5-22.5C38.3 11.8 31.9 5.5 24 5.5Z"
+      fill="none"
+      stroke="#22b8f0"
+      stroke-width="2.6"
+    />
+    <!-- Funkbogen oben, wie im Original -->
+    <path
+      d="M17.2 17.4a9.6 9.6 0 0 1 13.6 0"
+      fill="none"
+      stroke="#22b8f0"
+      stroke-width="2.4"
+      stroke-linecap="round"
+    />
+    <path
+      d="M20.4 21.2a5.1 5.1 0 0 1 7.2 0"
+      fill="none"
+      stroke="#22b8f0"
+      stroke-width="2.2"
+      stroke-linecap="round"
+    />
+    <circle cx="24" cy="26.2" r="2.1" fill="#22b8f0" />
+  </svg>
+
+  {
+    !nurZeichen && (
+      <span
+        class={`font-display font-bold tracking-tight leading-none ${
+          gross ? 'text-2xl' : 'text-xl'
+        }`}
+      >
+        <span class="text-white">{teilWeiss}</span><span class="text-cyan-500"
+          >{teilCyan}</span
+        >
+      </span>
+    )
+  }
+</span>

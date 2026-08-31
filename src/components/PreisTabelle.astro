@@ -1,0 +1,120 @@
+---
+import Icon from './Icon.astro';
+import { preise, preiseSichtbar, preisFormat } from '~/config/site';
+
+/**
+ * Preisuebersicht.
+ *
+ * Erscheint NUR, wenn in content/preise.yaml der Schalter "anzeigen" auf true
+ * steht UND tatsaechlich Zahlen hinterlegt sind. Solange beides nicht erfuellt
+ * ist, bleibt der Abschnitt komplett unsichtbar - so kann niemals eine
+ * Tabelle voller Nullen online gehen.
+ */
+interface Props {
+  /** Nur den Park-&-Fly-Teil zeigen */
+  nurParken?: boolean;
+}
+
+const { nurParken = false } = Astro.props;
+const pf = preise.parkAndFly;
+---
+
+{
+  preiseSichtbar && (
+    <section class="abschnitt" id="preise">
+      <div class="huelle">
+        <div class="max-w-2xl">
+          <span class="augenbraue">
+            <Icon name="euro" size={15} />
+            Preise
+          </span>
+          <h2 class="mt-4 text-3xl md:text-4xl">Feste Preise, vorab bekannt</h2>
+          <p class="mt-4 text-nebel-400">
+            Sie erfahren den Preis vor der Fahrt und er bleibt bestehen – auch
+            wenn es unterwegs länger dauert.
+          </p>
+        </div>
+
+        <div class="mt-10 grid gap-4 lg:grid-cols-2">
+          {!nurParken && preise.strecken.length > 0 && (
+            <div class="karte overflow-hidden">
+              <h3 class="border-b border-white/8 px-6 py-4 font-bold text-white">
+                Häufige Strecken ab Feuerbach
+              </h3>
+              <ul class="divide-y divide-white/8">
+                {preise.strecken.map((strecke) => (
+                  <li class="flex items-center justify-between gap-4 px-6 py-4">
+                    <div>
+                      <div class="font-medium text-nebel-100">{strecke.ziel}</div>
+                      {strecke.hinweis && (
+                        <div class="text-sm text-nebel-500">{strecke.hinweis}</div>
+                      )}
+                    </div>
+                    <div class="shrink-0 font-display text-lg font-bold text-cyan-400">
+                      {preisFormat(strecke.preis)}
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {pf.preisProTag > 0 && (
+            <div class="karte overflow-hidden">
+              <h3 class="border-b border-white/8 px-6 py-4 font-bold text-white">
+                Park &amp; Fly
+              </h3>
+              <ul class="divide-y divide-white/8">
+                <li class="flex items-center justify-between gap-4 px-6 py-4">
+                  <span class="font-medium text-nebel-100">Pro Tag</span>
+                  <span class="font-display text-lg font-bold text-cyan-400">
+                    {preisFormat(pf.preisProTag)}
+                  </span>
+                </li>
+                {pf.preisProWoche > 0 && (
+                  <li class="flex items-center justify-between gap-4 px-6 py-4">
+                    <span class="font-medium text-nebel-100">Pro Woche</span>
+                    <span class="font-display text-lg font-bold text-cyan-400">
+                      {preisFormat(pf.preisProWoche)}
+                    </span>
+                  </li>
+                )}
+                <li class="flex items-center justify-between gap-4 px-6 py-4">
+                  <span class="font-medium text-nebel-100">
+                    Shuttle bis zum Terminal
+                  </span>
+                  <span class="font-display text-lg font-bold text-cyan-400">
+                    {pf.shuttleAufpreis > 0
+                      ? preisFormat(pf.shuttleAufpreis)
+                      : 'inklusive'}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          )}
+        </div>
+
+        {preise.zuschlaege.some((z) => z.preis > 0) && (
+          <ul class="mt-4 flex flex-wrap gap-2">
+            {preise.zuschlaege
+              .filter((z) => z.preis > 0)
+              .map((zuschlag) => (
+                <li class="rounded-full border border-white/12 bg-white/3 px-4 py-2 text-sm text-nebel-400">
+                  {zuschlag.bezeichnung}:{' '}
+                  <span class="font-semibold text-nebel-100">
+                    {preisFormat(zuschlag.preis)}
+                  </span>
+                </li>
+              ))}
+          </ul>
+        )}
+
+        {preise.zahlungsarten.length > 0 && (
+          <p class="mt-6 text-sm text-nebel-500">
+            Zahlung: {preise.zahlungsarten.join(' · ')}
+          </p>
+        )}
+      </div>
+    </section>
+  )
+}

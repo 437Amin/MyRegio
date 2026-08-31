@@ -1,0 +1,56 @@
+---
+import Icon from './Icon.astro';
+import { faq } from '~/config/site';
+
+interface Props {
+  ueberschrift?: string;
+}
+
+const { ueberschrift = 'Häufige Fragen' } = Astro.props;
+---
+
+{
+  faq.length > 0 && (
+    <section class="abschnitt" id="fragen">
+      <div class="huelle">
+        <div class="grid gap-10 lg:grid-cols-[1fr_1.6fr] lg:gap-16">
+          <div>
+            <span class="augenbraue">Gut zu wissen</span>
+            <h2 class="mt-4 text-3xl md:text-4xl">{ueberschrift}</h2>
+            <p class="mt-4 text-nebel-400">
+              Ihre Frage ist nicht dabei? Schreiben Sie uns kurz per WhatsApp –
+              wir antworten in der Regel innerhalb weniger Minuten.
+            </p>
+          </div>
+
+          <ul class="divide-y divide-white/8 border-y border-white/8">
+            {faq.map((eintrag) => (
+              <li>
+                <details class="frage group">
+                  <summary class="flex cursor-pointer list-none items-start justify-between gap-4 py-5 text-left">
+                    <span class="font-semibold text-white">{eintrag.frage}</span>
+                    <span class="icon-rahmen !h-8 !w-8 !rounded-lg transition-transform duration-300 group-open:rotate-45">
+                      <Icon name="plus" size={16} />
+                    </span>
+                  </summary>
+                  <p class="pb-5 pr-12 leading-relaxed text-nebel-400">
+                    {eintrag.antwort}
+                  </p>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .frage > summary::-webkit-details-marker {
+    display: none;
+  }
+  .frage > summary::marker {
+    content: '';
+  }
+</style>

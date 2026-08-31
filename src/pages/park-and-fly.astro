@@ -1,0 +1,346 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Icon from '~/components/Icon.astro';
+import Buchungsassistent from '~/components/Buchungsassistent.astro';
+import PreisTabelle from '~/components/PreisTabelle.astro';
+import { site, adresseEinzeilig, telefonLink } from '~/config/site';
+
+const a = site.anfahrt;
+
+const schritte = [
+  {
+    icon: 'parken' as const,
+    titel: 'Auto bei uns abstellen',
+    text: `Sie fahren auf unser Gelände in der ${site.unternehmen.strasse} und stellen Ihr Fahrzeug ab. Kennzeichen und Zeitraum haben wir vorher per WhatsApp abgestimmt.`,
+  },
+  {
+    icon: 'route' as const,
+    titel: `${a.fussMinuten} Minuten zu Fuß`,
+    text: `Rund ${a.fussMeter} Meter, ebenerdig: von unserem Hof zur Haltestelle ${a.haltestelle}. Kein Umweg, kein Warten auf einen Zubringerbus.`,
+  },
+  {
+    icon: 'bahn' as const,
+    titel: `Mit der ${a.linien[0]} ohne Umsteigen`,
+    text: `Die ${a.linien[0]} fährt alle ${a.taktMinuten} Minuten und bringt Sie direkt zum Flughafen/Messe – ohne einmal umzusteigen.`,
+  },
+  {
+    icon: 'flugzeug' as const,
+    titel: 'Ankommen und einchecken',
+    text: `Nach rund ${a.flughafenMinuten} Minuten sind Sie am Terminal. Bei der Rückkehr steht Ihr Auto genau dort, wo Sie es abgestellt haben.`,
+  },
+];
+
+const gruende = [
+  {
+    icon: 'euro' as const,
+    titel: 'Günstiger als tagelang am Terminal',
+    text: 'Flughafennahe Stellplätze sind über eine ganze Reise hinweg teuer. Bei uns zahlen Sie den Stellplatz und ein Nahverkehrsticket – den Rest sparen Sie.',
+  },
+  {
+    icon: 'uhr' as const,
+    titel: 'Planbar statt Parkplatzsuche',
+    text: 'Kein Kreisen durch volle Parkdecks, kein Shuttle-Warten mit Gepäck. Sie wissen vorher, wo Ihr Platz ist.',
+  },
+  {
+    icon: 'schild' as const,
+    titel: 'Auf unserem Firmengelände',
+    text: 'Ihr Fahrzeug steht nicht anonym in einer öffentlichen Straße, sondern auf dem Gelände eines Betriebs, der jeden Tag dort ist.',
+  },
+  {
+    icon: 'haendedruck' as const,
+    titel: 'Shuttle, wenn Sie möchten',
+    text: 'Viel Gepäck, kleine Kinder oder ein Flug um fünf Uhr morgens? Dann fahren wir Sie auf Wunsch direkt bis vor das Terminal.',
+  },
+];
+
+const kartenLink = `https://www.openstreetmap.org/?mlat=${a.breitengrad}&mlon=${a.laengengrad}#map=17/${a.breitengrad}/${a.laengengrad}`;
+---
+
+<BaseLayout
+  titel="Park & Fly Stuttgart – Auto abstellen, mit der Bahn zum Flughafen"
+  beschreibung={`Park & Fly in Stuttgart-Feuerbach: Auto auf unserem Gelände abstellen, ${a.fussMinuten} Minuten zu Fuß zur Haltestelle ${a.haltestelle}, mit der ${a.linien[0]} ohne Umsteigen zum Flughafen. Shuttle auf Wunsch.`}
+>
+  <!-- ================================ Hero ================================ -->
+  <section class="relative overflow-hidden border-b border-white/8">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10"
+      aria-hidden="true"
+      style="background-image: radial-gradient(42rem 26rem at 25% 0%, rgb(34 184 240 / 0.18), transparent 70%);"
+    >
+    </div>
+
+    <div class="huelle pb-16 pt-14 md:pb-20 md:pt-18">
+      <nav aria-label="Sie sind hier" class="mb-6 text-sm text-nebel-500">
+        <a href="/" class="hover:text-white">Start</a>
+        <span class="mx-2">/</span>
+        <span class="text-nebel-300">Park &amp; Fly</span>
+      </nav>
+
+      <div class="grid gap-10 lg:grid-cols-[1.1fr_1fr] lg:items-center">
+        <div>
+          <span class="augenbraue">
+            <Icon name="parken" size={15} />
+            Park &amp; Fly
+          </span>
+
+          <h1 class="mt-5 text-4xl leading-[1.1] sm:text-5xl lg:text-[3.4rem]">
+            Parken, wo die Bahn<br />
+            <span class="text-cyan-400">schon wartet.</span>
+          </h1>
+
+          <p class="mt-6 max-w-xl text-lg leading-relaxed text-nebel-300">
+            Unser Betriebssitz liegt {a.fussMeter} Meter von der Haltestelle {
+              a.haltestelle
+            } entfernt. Sie stellen Ihr Auto bei uns ab, gehen {a.fussMinuten}
+            Minuten – und die {a.linien[0]} bringt Sie ohne Umsteigen zum Flughafen.
+          </p>
+
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href="#buchen" class="knopf knopf-cyan">
+              Stellplatz anfragen
+              <Icon name="pfeil-rechts" size={18} />
+            </a>
+            <a href={telefonLink} class="knopf knopf-rand">
+              <Icon name="telefon" size={18} />
+              {site.kontakt.telefonAnzeige}
+            </a>
+          </div>
+        </div>
+
+        <!-- Eigene Anfahrtsgrafik statt einer Karten-Einbettung:
+             so werden keine Daten an Dritte übertragen. -->
+        <div class="karte p-6 md:p-7">
+          <h2 class="text-sm font-bold uppercase tracking-widest text-nebel-500">
+            Ihr Weg zum Terminal
+          </h2>
+
+          <ol class="mt-5 space-y-0">
+            <li class="relative flex gap-4 pb-6">
+              <span
+                class="absolute left-[1.4rem] top-11 h-full w-px bg-gradient-to-b from-cyan-500/60 to-cyan-500/10"
+                aria-hidden="true"></span>
+              <span class="icon-rahmen relative z-10 bg-nacht-900">
+                <Icon name="parken" size={20} />
+              </span>
+              <div class="pt-1.5">
+                <div class="font-bold text-white">{site.unternehmen.marke}</div>
+                <div class="text-sm text-nebel-400">
+                  {site.unternehmen.strasse}
+                </div>
+              </div>
+            </li>
+
+            <li class="relative flex gap-4 pb-6">
+              <span
+                class="absolute left-[1.4rem] top-11 h-full w-px bg-gradient-to-b from-cyan-500/60 to-cyan-500/10"
+                aria-hidden="true"></span>
+              <span class="icon-rahmen relative z-10 bg-nacht-900">
+                <Icon name="route" size={20} />
+              </span>
+              <div class="pt-1.5">
+                <div class="font-bold text-white">
+                  {a.fussMeter} m zu Fuß
+                </div>
+                <div class="text-sm text-nebel-400">
+                  etwa {a.fussMinuten} Minuten, ebenerdig
+                </div>
+              </div>
+            </li>
+
+            <li class="relative flex gap-4 pb-6">
+              <span
+                class="absolute left-[1.4rem] top-11 h-full w-px bg-gradient-to-b from-cyan-500/60 to-cyan-500/10"
+                aria-hidden="true"></span>
+              <span class="icon-rahmen relative z-10 bg-nacht-900">
+                <Icon name="bahn" size={20} />
+              </span>
+              <div class="pt-1.5">
+                <div class="font-bold text-white">{a.haltestelle}</div>
+                <div class="text-sm text-nebel-400">
+                  {a.linien.join(' · ')} · {a.linien[0]} alle {a.taktMinuten} Min
+                </div>
+              </div>
+            </li>
+
+            <li class="relative flex gap-4">
+              <span class="icon-rahmen relative z-10 border-cyan-400 bg-cyan-500/15">
+                <Icon name="flugzeug" size={20} />
+              </span>
+              <div class="pt-1.5">
+                <div class="font-bold text-white">Flughafen / Messe</div>
+                <div class="text-sm text-cyan-400">
+                  rund {a.flughafenMinuten} Minuten · 0 Umstiege
+                </div>
+              </div>
+            </li>
+          </ol>
+
+          <a
+            href={kartenLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-400 hover:text-cyan-300"
+          >
+            <Icon name="pin" size={15} />
+            Lage auf der Karte ansehen
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== Ablauf ================================ -->
+  <section class="abschnitt">
+    <div class="huelle">
+      <div class="max-w-2xl">
+        <span class="augenbraue">Ablauf</span>
+        <h2 class="mt-4 text-3xl md:text-4xl">In vier Schritten zum Flug</h2>
+        <p class="mt-4 text-nebel-400">
+          Kein Formular, kein Automat, keine Schranke, die nicht aufgeht. Sie
+          stimmen alles vorab per WhatsApp mit uns ab.
+        </p>
+      </div>
+
+      <ol class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {
+          schritte.map((schritt, index) => (
+            <li class="karte flex flex-col p-6">
+              <div class="flex items-center justify-between">
+                <span class="icon-rahmen">
+                  <Icon name={schritt.icon} size={22} />
+                </span>
+                <span class="font-display text-4xl font-bold leading-none text-cyan-500/20">
+                  {index + 1}
+                </span>
+              </div>
+              <h3 class="mt-4 font-bold text-white">{schritt.titel}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-nebel-400">
+                {schritt.text}
+              </p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================== Gründe ================================ -->
+  <section class="abschnitt border-t border-white/8 bg-nacht-900/40">
+    <div class="huelle">
+      <div class="max-w-2xl">
+        <span class="augenbraue">Warum Feuerbach</span>
+        <h2 class="mt-4 text-3xl md:text-4xl">
+          Was Sie davon haben
+        </h2>
+      </div>
+
+      <ul class="mt-10 grid gap-4 sm:grid-cols-2">
+        {
+          gruende.map((grund) => (
+            <li class="karte flex gap-5 p-6">
+              <span class="icon-rahmen">
+                <Icon name={grund.icon} size={22} />
+              </span>
+              <div>
+                <h3 class="font-bold text-white">{grund.titel}</h3>
+                <p class="mt-1.5 text-sm leading-relaxed text-nebel-400">
+                  {grund.text}
+                </p>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="mt-8 max-w-3xl text-sm leading-relaxed text-nebel-500">
+        Hinweis: Für die Fahrt mit Stadtbahn und S-Bahn benötigen Sie ein
+        gültiges VVS-Ticket. Die angegebene Fahrzeit bezieht sich auf die
+        reguläre Verbindung ab {a.haltestelle}; Bauarbeiten oder Störungen im
+        Nahverkehr können sie verändern. Planen Sie wie immer etwas Puffer ein.
+      </p>
+    </div>
+  </section>
+
+  <!-- ============================== Shuttle =============================== -->
+  <section class="abschnitt">
+    <div class="huelle">
+      <div class="karte grid gap-8 p-7 md:grid-cols-[1fr_auto] md:items-center md:p-10">
+        <div>
+          <span class="augenbraue">
+            <Icon name="haendedruck" size={15} />
+            Auf Wunsch
+          </span>
+          <h2 class="mt-4 text-2xl md:text-3xl">
+            Lieber gefahren werden? Nehmen Sie den Shuttle.
+          </h2>
+          <p class="mt-4 max-w-2xl leading-relaxed text-nebel-400">
+            Manchmal passt die Bahn einfach nicht: zwei Koffer, ein Kinderwagen,
+            ein Flug um kurz nach sechs. Dann bringen wir Sie von unserem
+            Gelände direkt bis vor Ihr Terminal – und holen Sie bei der Rückkehr
+            dort wieder ab. Sagen Sie einfach im Assistenten Bescheid.
+          </p>
+        </div>
+        <a href="#buchen" class="knopf knopf-cyan whitespace-nowrap">
+          Mit Shuttle anfragen
+          <Icon name="pfeil-rechts" size={18} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <PreisTabelle nurParken />
+
+  <!-- ========================== Buchungsassistent ========================== -->
+  <Buchungsassistent
+    vorauswahl="Park & Fly"
+    ueberschrift="Stellplatz anfragen"
+    einleitung="Sagen Sie uns Kennzeichen, Zeitraum und ob Sie den Shuttle möchten. Daraus wird eine fertige WhatsApp-Nachricht – Sie schicken sie nur noch ab."
+  />
+
+  <!-- ============================== Anfahrt =============================== -->
+  <section class="abschnitt border-t border-white/8">
+    <div class="huelle">
+      <div class="grid gap-8 md:grid-cols-2">
+        <div>
+          <span class="augenbraue">
+            <Icon name="pin" size={15} />
+            So finden Sie uns
+          </span>
+          <h2 class="mt-4 text-2xl">{site.unternehmen.firmenname}</h2>
+          <address class="mt-3 not-italic leading-relaxed text-nebel-300">
+            {adresseEinzeilig}<br />
+            {site.unternehmen.land}
+          </address>
+          <p class="mt-4 text-sm text-nebel-400">
+            {site.oeffnungszeiten.text}
+          </p>
+          <a
+            href={kartenLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="knopf knopf-rand mt-6"
+          >
+            <Icon name="pin" size={17} />
+            Route planen
+          </a>
+        </div>
+
+        <div class="karte p-6">
+          <h3 class="font-bold text-white">Anreise mit dem Auto</h3>
+          <p class="mt-2 text-sm leading-relaxed text-nebel-400">
+            Über die B295 oder die Siemensstraße erreichen Sie den Bereich
+            Bahnhof Feuerbach. Die genaue Einfahrt und den Stellplatz schicken
+            wir Ihnen nach der Buchung per WhatsApp – so müssen Sie vor Ort
+            nichts suchen.
+          </p>
+
+          <h3 class="mt-6 font-bold text-white">Anreise mit der Bahn</h3>
+          <p class="mt-2 text-sm leading-relaxed text-nebel-400">
+            Haltestelle {a.haltestelle}: {a.linien.join(', ')}. Von dort sind es
+            {' '}{a.fussMinuten} Gehminuten zu uns.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

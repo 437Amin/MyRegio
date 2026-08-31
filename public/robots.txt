@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Der Redaktionsbereich gehoert nicht in die Suchergebnisse
+Disallow: /admin
+
+Sitemap: https://www.myregiocar.com/sitemap-index.xml

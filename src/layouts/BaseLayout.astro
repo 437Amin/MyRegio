@@ -1,0 +1,69 @@
+---
+import '~/styles/global.css';
+import Seo from '~/components/Seo.astro';
+import Header from '~/components/Header.astro';
+import Footer from '~/components/Footer.astro';
+import AktionsbalkenMobil from '~/components/AktionsbalkenMobil.astro';
+import StrukturierteDaten from '~/components/StrukturierteDaten.astro';
+
+interface Props {
+  titel: string;
+  beschreibung: string;
+  nichtIndexieren?: boolean;
+  mitFaqDaten?: boolean;
+  leistungenFuerDaten?: { titel: string; kurz: string; slug: string }[];
+}
+
+const {
+  titel,
+  beschreibung,
+  nichtIndexieren = false,
+  mitFaqDaten = false,
+  leistungenFuerDaten = [],
+} = Astro.props;
+---
+
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#05070A" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <Seo
+      titel={titel}
+      beschreibung={beschreibung}
+      nichtIndexieren={nichtIndexieren}
+    />
+    <StrukturierteDaten
+      mitFaq={mitFaqDaten}
+      leistungen={leistungenFuerDaten}
+    />
+
+    <slot name="kopf" />
+  </head>
+
+  <body class="flex min-h-dvh flex-col">
+    <a
+      href="#inhalt"
+      class="nur-vorlesen focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-cyan-500 focus:px-4 focus:py-2 focus:text-nacht-950"
+    >
+      Zum Inhalt springen
+    </a>
+
+    <Header />
+
+    <main id="inhalt" class="flex-1">
+      <slot />
+    </main>
+
+    <Footer />
+    <AktionsbalkenMobil />
+  </body>
+</html>

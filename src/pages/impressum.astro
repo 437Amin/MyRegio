@@ -1,0 +1,149 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Icon from '~/components/Icon.astro';
+import { site, telefonLink, emailLink } from '~/config/site';
+
+const r = site.rechtliches;
+---
+
+<BaseLayout titel="Impressum" beschreibung="Impressum und Anbieterkennzeichnung." nichtIndexieren>
+  <section class="abschnitt">
+    <div class="huelle">
+      <div class="mx-auto max-w-3xl">
+        <h1 class="text-4xl">Impressum</h1>
+
+        <div
+          class="karte mt-8 flex gap-4 border-amber-400/30 bg-amber-400/8 p-5 text-sm leading-relaxed text-amber-100/90"
+        >
+          <Icon name="schild" size={20} class="mt-0.5 shrink-0 text-amber-300" />
+          <div>
+            <strong class="text-amber-200">
+              Hinweis an den Betreiber – bitte vor der Veröffentlichung prüfen:
+            </strong>
+            <p class="mt-1.5">
+              Dies ist ein Entwurf. Die mit „bitte ergänzen“ markierten Angaben
+              müssen ausgefüllt und der gesamte Text von einer Rechtsanwältin
+              oder einem Rechtsanwalt geprüft werden. Ein unvollständiges
+              Impressum ist abmahnfähig.
+            </p>
+          </div>
+        </div>
+
+        <div class="fliesstext mt-10">
+          <h2>Angaben gemäß § 5 DDG</h2>
+          <p>
+            <strong>{site.unternehmen.firmenname}</strong><br />
+            {site.unternehmen.strasse}<br />
+            {site.unternehmen.plz} {site.unternehmen.ort}<br />
+            {site.unternehmen.land}
+          </p>
+
+          <h2>Vertreten durch</h2>
+          <p>{site.unternehmen.inhaber}</p>
+
+          <h2>Kontakt</h2>
+          <p>
+            Telefon: <a href={telefonLink}>{site.kontakt.telefonAnzeige}</a><br />
+            E-Mail: <a href={emailLink}>{site.kontakt.email}</a>
+          </p>
+
+          <h2>Umsatzsteuer-Identifikationsnummer</h2>
+          <p>
+            Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br />
+            {
+              r.ustId && r.ustId !== 'DE000000000' ? (
+                r.ustId
+              ) : (
+                <em class="text-amber-300">bitte ergänzen</em>
+              )
+            }
+          </p>
+
+          <h2>Aufsichts- und Genehmigungsbehörde</h2>
+          <p>
+            Die Genehmigung zum Verkehr mit Mietwagen nach § 49 des
+            Personenbeförderungsgesetzes (PBefG) wurde erteilt durch:<br />
+            {
+              r.aufsichtsbehoerde ? (
+                r.aufsichtsbehoerde
+              ) : (
+                <em class="text-amber-300">bitte ergänzen</em>
+              )
+            }
+          </p>
+          {
+            r.konzession && (
+              <p>
+                Konzessionsnummer: {r.konzession}
+              </p>
+            )
+          }
+
+          <h2>Berufsbezeichnung und berufsrechtliche Regelungen</h2>
+          <p>
+            Berufsbezeichnung: Mietwagenunternehmer (verliehen in der
+            Bundesrepublik Deutschland)<br />
+            Es gelten insbesondere das Personenbeförderungsgesetz (PBefG) sowie
+            die Berufszugangsverordnung für den Straßenpersonenverkehr (PBZugV).
+            Die Regelungen sind einsehbar unter
+            <a href="https://www.gesetze-im-internet.de" rel="noopener" target="_blank">
+              gesetze-im-internet.de</a
+            >.
+          </p>
+
+          <h2>Redaktionell verantwortlich</h2>
+          <p>
+            {site.unternehmen.inhaber}<br />
+            Anschrift wie oben
+          </p>
+
+          <h2>Verbraucherstreitbeilegung</h2>
+          <p>
+            Wir sind nicht bereit und nicht verpflichtet, an
+            Streitbeilegungsverfahren vor einer
+            Verbraucherschlichtungsstelle teilzunehmen.
+          </p>
+
+          <h2>Haftung für Inhalte</h2>
+          <p>
+            Als Diensteanbieter sind wir gemäß § 7 Abs. 1 DDG für eigene Inhalte
+            auf diesen Seiten nach den allgemeinen Gesetzen verantwortlich. Nach
+            §§ 8 bis 10 DDG sind wir als Diensteanbieter jedoch nicht
+            verpflichtet, übermittelte oder gespeicherte fremde Informationen zu
+            überwachen oder nach Umständen zu forschen, die auf eine
+            rechtswidrige Tätigkeit hinweisen.
+          </p>
+          <p>
+            Verpflichtungen zur Entfernung oder Sperrung der Nutzung von
+            Informationen nach den allgemeinen Gesetzen bleiben hiervon
+            unberührt. Eine diesbezügliche Haftung ist jedoch erst ab dem
+            Zeitpunkt der Kenntnis einer konkreten Rechtsverletzung möglich. Bei
+            Bekanntwerden von entsprechenden Rechtsverletzungen werden wir diese
+            Inhalte umgehend entfernen.
+          </p>
+
+          <h2>Haftung für Links</h2>
+          <p>
+            Unser Angebot enthält Links zu externen Websites Dritter, auf deren
+            Inhalte wir keinen Einfluss haben. Deshalb können wir für diese
+            fremden Inhalte auch keine Gewähr übernehmen. Für die Inhalte der
+            verlinkten Seiten ist stets der jeweilige Anbieter oder Betreiber
+            der Seiten verantwortlich. Die verlinkten Seiten wurden zum
+            Zeitpunkt der Verlinkung auf mögliche Rechtsverstöße überprüft.
+            Rechtswidrige Inhalte waren zum Zeitpunkt der Verlinkung nicht
+            erkennbar.
+          </p>
+
+          <h2>Urheberrecht</h2>
+          <p>
+            Die durch die Seitenbetreiber erstellten Inhalte und Werke auf
+            diesen Seiten unterliegen dem deutschen Urheberrecht. Die
+            Vervielfältigung, Bearbeitung, Verbreitung und jede Art der
+            Verwertung außerhalb der Grenzen des Urheberrechtes bedürfen der
+            schriftlichen Zustimmung des jeweiligen Autors bzw. Erstellers.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

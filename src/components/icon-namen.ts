@@ -1,0 +1,32 @@
+/** Alle verfuegbaren Symbolnamen - siehe Icon.astro. */
+export const ICON_NAMEN = [
+  'flugzeug',
+  'herz',
+  'aktentasche',
+  'paket',
+  'stern',
+  'route',
+  'parken',
+  'whatsapp',
+  'telefon',
+  'mail',
+  'uhr',
+  'pin',
+  'check',
+  'bahn',
+  'schild',
+  'menue',
+  'schliessen',
+  'pfeil-rechts',
+  'pfeil-links',
+  'personen',
+  'gepaeck',
+  'kalender',
+  'euro',
+  'ausweis',
+  'dokument',
+  'haendedruck',
+  'plus',
+] as const;
+
+export type IconName = (typeof ICON_NAMEN)[number];

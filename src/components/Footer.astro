@@ -1,0 +1,172 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { getCollection } from 'astro:content';
+import { hauptmenue, rechtsmenue } from '~/config/navigation';
+import {
+  site,
+  telefonLink,
+  emailLink,
+  whatsappLink,
+  whatsappStandardtext,
+} from '~/config/site';
+
+const leistungen = (await getCollection('leistungen')).sort(
+  (a, b) => a.data.reihenfolge - b.data.reihenfolge,
+);
+
+const jahr = new Date().getFullYear();
+---
+
+<footer class="mt-auto border-t border-white/8 bg-nacht-900/60">
+  <div class="huelle py-14">
+    <div class="grid gap-10 md:grid-cols-2 lg:grid-cols-4 lg:gap-8">
+      <!-- Spalte 1: Marke und Adresse -->
+      <div class="lg:col-span-1">
+        <Logo />
+        <p class="mt-4 max-w-xs text-sm leading-relaxed text-nebel-400">
+          Ihr Mietwagenunternehmen mit Fahrer in Stuttgart-Feuerbach. Fahrten
+          auf Vorbestellung – zum Festpreis, ohne Vermittler dazwischen.
+        </p>
+
+        <address class="mt-5 not-italic text-sm text-nebel-300">
+          <div class="flex gap-2.5">
+            <Icon name="pin" size={17} class="mt-0.5 shrink-0 text-cyan-500" />
+            <div>
+              <div class="font-semibold text-white">
+                {site.unternehmen.firmenname}
+              </div>
+              <div>{site.unternehmen.strasse}</div>
+              <div>{site.unternehmen.plz} {site.unternehmen.ort}</div>
+            </div>
+          </div>
+        </address>
+      </div>
+
+      <!-- Spalte 2: Leistungen -->
+      <div>
+        <h2 class="text-sm font-bold uppercase tracking-widest text-white">
+          Leistungen
+        </h2>
+        <ul class="mt-4 space-y-2.5 text-sm">
+          <li>
+            <a
+              href="/park-and-fly"
+              class="inline-flex items-center gap-1.5 font-semibold text-cyan-400 hover:text-cyan-300"
+            >
+              Park &amp; Fly
+            </a>
+          </li>
+          {
+            leistungen.map((leistung) => (
+              <li>
+                <a
+                  href={`/leistungen/${leistung.id}`}
+                  class="text-nebel-400 transition-colors hover:text-white"
+                >
+                  {leistung.data.titel}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <!-- Spalte 3: Menue -->
+      <div>
+        <h2 class="text-sm font-bold uppercase tracking-widest text-white">
+          Übersicht
+        </h2>
+        <ul class="mt-4 space-y-2.5 text-sm">
+          {
+            hauptmenue.map((punkt) => (
+              <li>
+                <a
+                  href={punkt.pfad}
+                  class="text-nebel-400 transition-colors hover:text-white"
+                >
+                  {punkt.titel}
+                </a>
+              </li>
+            ))
+          }
+          {
+            rechtsmenue.map((punkt) => (
+              <li>
+                <a
+                  href={punkt.pfad}
+                  class="text-nebel-400 transition-colors hover:text-white"
+                >
+                  {punkt.titel}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <!-- Spalte 4: Kontakt -->
+      <div>
+        <h2 class="text-sm font-bold uppercase tracking-widest text-white">
+          Direkt buchen
+        </h2>
+
+        <div class="mt-4 space-y-2.5">
+          <a
+            href={whatsappLink(whatsappStandardtext)}
+            target="_blank"
+            rel="noopener"
+            class="knopf knopf-whatsapp w-full text-sm"
+          >
+            <Icon name="whatsapp" size={18} />
+            Per WhatsApp anfragen
+          </a>
+          <a href={telefonLink} class="knopf knopf-rand w-full text-sm">
+            <Icon name="telefon" size={17} />
+            {site.kontakt.telefonAnzeige}
+          </a>
+        </div>
+
+        <ul class="mt-5 space-y-2.5 text-sm text-nebel-400">
+          <li class="flex items-center gap-2.5">
+            <Icon name="mail" size={16} class="shrink-0 text-cyan-500" />
+            <a href={emailLink} class="hover:text-white">{site.kontakt.email}</a>
+          </li>
+          <li class="flex items-center gap-2.5">
+            <Icon name="uhr" size={16} class="shrink-0 text-cyan-500" />
+            {site.oeffnungszeiten.text}
+          </li>
+          <li class="flex items-start gap-2.5">
+            <Icon name="bahn" size={16} class="mt-0.5 shrink-0 text-cyan-500" />
+            <span>
+              {site.anfahrt.fussMinuten} Gehminuten zur Haltestelle {
+                site.anfahrt.haltestelle
+              }
+            </span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Einzugsgebiet: gut fuer die lokale Auffindbarkeit -->
+    <div class="mt-12 border-t border-white/8 pt-8">
+      <h2 class="text-xs font-bold uppercase tracking-widest text-nebel-500">
+        Wir fahren in und um Stuttgart
+      </h2>
+      <p class="mt-3 text-sm leading-relaxed text-nebel-500">
+        {site.einzugsgebiet.join(' · ')}
+      </p>
+    </div>
+
+    <div
+      class="mt-8 flex flex-col gap-4 border-t border-white/8 pt-8 text-xs text-nebel-500 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p>
+        © {jahr} {site.unternehmen.firmenname}. Alle Rechte vorbehalten.
+      </p>
+      <p>
+        Mietwagenunternehmen mit Fahrer nach § 49 PBefG – kein Taxiverkehr.
+      </p>
+    </div>
+  </div>
+</footer>

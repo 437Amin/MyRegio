@@ -1,0 +1,156 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Icon from '~/components/Icon.astro';
+import Buchungsassistent from '~/components/Buchungsassistent.astro';
+import {
+  site,
+  adresseEinzeilig,
+  telefonLink,
+  emailLink,
+  whatsappLink,
+  whatsappStandardtext,
+} from '~/config/site';
+
+const a = site.anfahrt;
+const kartenLink = `https://www.openstreetmap.org/?mlat=${a.breitengrad}&mlon=${a.laengengrad}#map=17/${a.breitengrad}/${a.laengengrad}`;
+---
+
+<BaseLayout
+  titel="Kontakt & Anfahrt"
+  beschreibung={`${site.unternehmen.firmenname}, ${adresseEinzeilig}. Erreichbar per WhatsApp, Telefon und E-Mail. ${site.oeffnungszeiten.text}.`}
+>
+  <section class="border-b border-white/8">
+    <div class="huelle pb-12 pt-14 md:pb-16 md:pt-18">
+      <nav aria-label="Sie sind hier" class="mb-6 text-sm text-nebel-500">
+        <a href="/" class="hover:text-white">Start</a>
+        <span class="mx-2">/</span>
+        <span class="text-nebel-300">Kontakt</span>
+      </nav>
+
+      <h1 class="text-4xl leading-[1.1] sm:text-5xl">
+        Schreiben Sie uns –<br />
+        <span class="text-cyan-400">wir antworten schnell.</span>
+      </h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-nebel-300">
+        Am schnellsten geht es per WhatsApp: kurz die Strecke und den
+        Wunschtermin nennen, und Sie bekommen umgehend einen Festpreis zurück.
+      </p>
+    </div>
+  </section>
+
+  <section class="abschnitt">
+    <div class="huelle">
+      <div class="grid gap-4 md:grid-cols-3">
+        <a
+          href={whatsappLink(whatsappStandardtext)}
+          target="_blank"
+          rel="noopener"
+          class="karte karte-hover flex flex-col p-6"
+        >
+          <span class="icon-rahmen !border-green-500/50 !bg-green-500/10 !text-green-400">
+            <Icon name="whatsapp" size={22} />
+          </span>
+          <h2 class="mt-4 font-bold text-white">WhatsApp</h2>
+          <p class="mt-1.5 flex-1 text-sm text-nebel-400">
+            Der direkte Draht. Ideal für Anfragen mit Adresse und Uhrzeit.
+          </p>
+          <span class="mt-4 text-sm font-semibold text-green-400">
+            Chat öffnen
+          </span>
+        </a>
+
+        <a href={telefonLink} class="karte karte-hover flex flex-col p-6">
+          <span class="icon-rahmen">
+            <Icon name="telefon" size={22} />
+          </span>
+          <h2 class="mt-4 font-bold text-white">Telefon</h2>
+          <p class="mt-1.5 flex-1 text-sm text-nebel-400">
+            Wenn es eilig ist oder Sie lieber sprechen möchten.
+          </p>
+          <span class="mt-4 text-sm font-semibold text-cyan-400">
+            {site.kontakt.telefonAnzeige}
+          </span>
+        </a>
+
+        <a href={emailLink} class="karte karte-hover flex flex-col p-6">
+          <span class="icon-rahmen">
+            <Icon name="mail" size={22} />
+          </span>
+          <h2 class="mt-4 font-bold text-white">E-Mail</h2>
+          <p class="mt-1.5 flex-1 text-sm text-nebel-400">
+            Für Firmenanfragen, Angebote und Rechnungen.
+          </p>
+          <span class="mt-4 break-all text-sm font-semibold text-cyan-400">
+            {site.kontakt.email}
+          </span>
+        </a>
+      </div>
+
+      <div class="mt-4 grid gap-4 md:grid-cols-2">
+        <div class="karte p-6 md:p-7">
+          <h2 class="flex items-center gap-2.5 text-lg font-bold text-white">
+            <Icon name="pin" size={19} class="text-cyan-500" />
+            Betriebssitz
+          </h2>
+          <address class="mt-4 not-italic leading-relaxed text-nebel-300">
+            <strong class="text-white">{site.unternehmen.firmenname}</strong><br />
+            {site.unternehmen.strasse}<br />
+            {site.unternehmen.plz} {site.unternehmen.ort}<br />
+            {site.unternehmen.land}
+          </address>
+
+          <a
+            href={kartenLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="knopf knopf-rand mt-5"
+          >
+            <Icon name="pin" size={17} />
+            Route planen
+          </a>
+
+          <p class="mt-5 border-t border-white/8 pt-5 text-sm text-nebel-500">
+            Wir sind ein Mietwagenunternehmen mit Fahrer: Fahrten werden vorab
+            bestellt. Ein Heranwinken auf der Straße ist – anders als beim Taxi –
+            nicht möglich.
+          </p>
+        </div>
+
+        <div class="karte p-6 md:p-7">
+          <h2 class="flex items-center gap-2.5 text-lg font-bold text-white">
+            <Icon name="uhr" size={19} class="text-cyan-500" />
+            Erreichbarkeit
+          </h2>
+
+          {
+            site.oeffnungszeiten.durchgehend ? (
+              <p class="mt-4 text-nebel-300">{site.oeffnungszeiten.text}</p>
+            ) : (
+              <dl class="mt-4 space-y-2.5">
+                {site.oeffnungszeiten.zeiten.map((zeit) => (
+                  <div class="flex items-baseline justify-between gap-4 border-b border-white/8 pb-2.5 text-sm">
+                    <dt class="text-nebel-400">{zeit.tage}</dt>
+                    <dd class="font-semibold text-white">
+                      {zeit.von} – {zeit.bis} Uhr
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+            )
+          }
+
+          <h3 class="mt-6 flex items-center gap-2.5 font-bold text-white">
+            <Icon name="bahn" size={18} class="text-cyan-500" />
+            Mit dem Nahverkehr
+          </h3>
+          <p class="mt-2 text-sm leading-relaxed text-nebel-400">
+            Haltestelle {a.haltestelle} ({a.linien.join(', ')}) –
+            {' '}{a.fussMinuten} Gehminuten, etwa {a.fussMeter} Meter.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <Buchungsassistent />
+</BaseLayout>

@@ -1,0 +1,205 @@
+---
+import { getCollection, render } from 'astro:content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Icon from '~/components/Icon.astro';
+import type { IconName } from '~/components/icon-namen';
+import { site, telefonLink, whatsappLink } from '~/config/site';
+
+const stellen = (await getCollection('jobs'))
+  .filter((stelle) => stelle.data.aktiv)
+  .sort((a, b) => a.data.reihenfolge - b.data.reihenfolge);
+
+const inhalte = await Promise.all(
+  stellen.map(async (stelle) => ({
+    stelle,
+    Content: (await render(stelle)).Content,
+  })),
+);
+
+// Symbole in der Reihenfolge des vorhandenen Flyers
+const anforderungsIcons: IconName[] = [
+  'ausweis',
+  'dokument',
+  'schild',
+  'haendedruck',
+];
+
+const bewerbungText =
+  'Hallo, ich interessiere mich für die Stelle als Fahrer/Fahrerin bei MyRegioCar.';
+---
+
+<BaseLayout
+  titel="Fahrer / Fahrerin gesucht in Stuttgart-Feuerbach"
+  beschreibung={`${site.unternehmen.firmenname} sucht zuverlässige Fahrerinnen und Fahrer in Stuttgart-Feuerbach. Vollzeit, Teilzeit oder Minijob. Unterstützung bei der Beantragung des P-Scheins.`}
+>
+  <section class="relative overflow-hidden border-b border-white/8">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10"
+      aria-hidden="true"
+      style="background-image: radial-gradient(40rem 24rem at 30% 0%, rgb(34 184 240 / 0.15), transparent 70%);"
+    >
+    </div>
+
+    <div class="huelle pb-14 pt-14 md:pb-18 md:pt-18">
+      <nav aria-label="Sie sind hier" class="mb-6 text-sm text-nebel-500">
+        <a href="/" class="hover:text-white">Start</a>
+        <span class="mx-2">/</span>
+        <span class="text-nebel-300">Jobs</span>
+      </nav>
+
+      <span class="augenbraue">Wir stellen ein</span>
+      <h1 class="mt-5 max-w-3xl text-4xl leading-[1.1] sm:text-5xl">
+        Fahren Sie mit uns –<br />
+        <span class="text-cyan-400">in Feuerbach zu Hause.</span>
+      </h1>
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-nebel-300">
+        Wir sind ein kleines Unternehmen mit kurzen Wegen. Bei uns erreichen Sie
+        den Chef direkt, die Schichten sprechen wir gemeinsam ab, und das Geld
+        kommt pünktlich.
+      </p>
+
+      <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+        <a
+          href={`mailto:${site.kontakt.bewerbungEmail}?subject=${encodeURIComponent('Bewerbung als Fahrer/in')}`}
+          class="knopf knopf-cyan"
+        >
+          <Icon name="mail" size={18} />
+          Jetzt bewerben
+        </a>
+        <a
+          href={whatsappLink(bewerbungText)}
+          target="_blank"
+          rel="noopener"
+          class="knopf knopf-rand"
+        >
+          <Icon name="whatsapp" size={18} />
+          Kurz per WhatsApp fragen
+        </a>
+      </div>
+    </div>
+  </section>
+
+  {
+    stellen.length === 0 ? (
+      <section class="abschnitt">
+        <div class="huelle">
+          <div class="karte mx-auto max-w-xl p-8 text-center">
+            <span class="icon-rahmen mx-auto">
+              <Icon name="uhr" size={22} />
+            </span>
+            <h2 class="mt-4 text-xl">Zurzeit keine offene Stelle</h2>
+            <p class="mt-3 text-nebel-400">
+              Aktuell suchen wir niemanden. Eine Initiativbewerbung schauen wir
+              uns trotzdem gern an – schreiben Sie uns einfach.
+            </p>
+            <a
+              href={`mailto:${site.kontakt.bewerbungEmail}`}
+              class="knopf knopf-rand mt-6"
+            >
+              <Icon name="mail" size={17} />
+              {site.kontakt.bewerbungEmail}
+            </a>
+          </div>
+        </div>
+      </section>
+    ) : (
+      inhalte.map(({ stelle, Content }) => (
+        <section class="abschnitt">
+          <div class="huelle">
+            <div class="flex flex-wrap items-center gap-3">
+              <h2 class="text-3xl md:text-4xl">{stelle.data.titel}</h2>
+              <span class="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3.5 py-1.5 text-sm font-semibold text-cyan-300">
+                {stelle.data.art}
+              </span>
+              <span class="inline-flex items-center gap-1.5 text-sm text-nebel-400">
+                <Icon name="pin" size={15} class="text-cyan-500" />
+                {stelle.data.standort}
+              </span>
+            </div>
+
+            {/* Diese Kacheln entsprechen dem vorhandenen Flyer */}
+            {stelle.data.anforderungen.length > 0 && (
+              <div class="mt-8">
+                <h3 class="text-sm font-bold uppercase tracking-widest text-nebel-500">
+                  Das bringen Sie mit
+                </h3>
+                <ul class="mt-4 grid gap-3 sm:grid-cols-2">
+                  {stelle.data.anforderungen.map((punkt, index) => (
+                    <li class="karte flex items-center gap-4 p-5">
+                      <span class="icon-rahmen">
+                        <Icon
+                          name={anforderungsIcons[index] ?? 'check'}
+                          size={22}
+                        />
+                      </span>
+                      <span class="font-medium text-nebel-100">{punkt}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div class="mt-10 grid gap-8 lg:grid-cols-[1.4fr_1fr] lg:items-start">
+              <div class="fliesstext">
+                <Content />
+              </div>
+
+              {stelle.data.wirBieten.length > 0 && (
+                <div class="karte p-6 md:p-7">
+                  <h3 class="text-sm font-bold uppercase tracking-widest text-nebel-500">
+                    Das bieten wir
+                  </h3>
+                  <ul class="mt-4 space-y-3.5">
+                    {stelle.data.wirBieten.map((punkt) => (
+                      <li class="flex items-start gap-3">
+                        <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-400">
+                          <Icon name="check" size={12} />
+                        </span>
+                        <span class="text-sm leading-relaxed text-nebel-300">
+                          {punkt}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <a
+                    href={`mailto:${site.kontakt.bewerbungEmail}?subject=${encodeURIComponent(`Bewerbung: ${stelle.data.titel}`)}`}
+                    class="knopf knopf-cyan mt-6 w-full"
+                  >
+                    <Icon name="mail" size={18} />
+                    Auf diese Stelle bewerben
+                  </a>
+                </div>
+              )}
+            </div>
+          </div>
+        </section>
+      ))
+    )
+  }
+
+  <section class="abschnitt border-t border-white/8">
+    <div class="huelle">
+      <div class="karte px-6 py-12 text-center md:px-12">
+        <h2 class="text-2xl md:text-3xl">Fragen zur Stelle?</h2>
+        <p class="mx-auto mt-3 max-w-lg text-nebel-400">
+          Rufen Sie einfach an oder schreiben Sie kurz – auch wenn Sie den
+          P-Schein noch nicht haben.
+        </p>
+        <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row">
+          <a
+            href={`mailto:${site.kontakt.bewerbungEmail}`}
+            class="knopf knopf-cyan"
+          >
+            <Icon name="mail" size={18} />
+            {site.kontakt.bewerbungEmail}
+          </a>
+          <a href={telefonLink} class="knopf knopf-rand">
+            <Icon name="telefon" size={18} />
+            {site.kontakt.telefonAnzeige}
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

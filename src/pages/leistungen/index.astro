@@ -1,0 +1,77 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Icon from '~/components/Icon.astro';
+import LeistungenRaster from '~/components/LeistungenRaster.astro';
+import Buchungsassistent from '~/components/Buchungsassistent.astro';
+import { site } from '~/config/site';
+---
+
+<BaseLayout
+  titel="Leistungen – Mietwagen mit Fahrer in Stuttgart"
+  beschreibung="Flughafentransfer, Park & Fly, Krankenfahrten, Geschäftsfahrten, Kurierfahrten und Eventfahrten in Stuttgart und Umgebung. Festpreis vorab, Buchung per WhatsApp."
+>
+  <section class="border-b border-white/8">
+    <div class="huelle pb-12 pt-14 md:pb-16 md:pt-18">
+      <nav aria-label="Sie sind hier" class="mb-6 text-sm text-nebel-500">
+        <a href="/" class="hover:text-white">Start</a>
+        <span class="mx-2">/</span>
+        <span class="text-nebel-300">Leistungen</span>
+      </nav>
+
+      <h1 class="max-w-3xl text-4xl leading-[1.1] sm:text-5xl">
+        Fahrten für jeden Anlass –<br />
+        <span class="text-cyan-400">zum Preis, den wir vorher nennen.</span>
+      </h1>
+
+      <p class="mt-6 max-w-2xl text-lg leading-relaxed text-nebel-300">
+        Wir sind ein Mietwagenunternehmen mit Fahrer in {
+          site.unternehmen.ort
+        }-Feuerbach. Das heißt: Sie bestellen vorab, wir vereinbaren einen
+        Festpreis, und Sie wissen schon beim Buchen, was die Fahrt kostet.
+      </p>
+
+      <div class="mt-8">
+        <a href="#buchen" class="knopf knopf-cyan">
+          Fahrt anfragen
+          <Icon name="pfeil-rechts" size={18} />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Park & Fly wird bewusst zuerst hervorgehoben -->
+  <section class="pt-12">
+    <div class="huelle">
+      <a
+        href="/park-and-fly"
+        class="karte karte-hover flex flex-col gap-6 p-7 md:flex-row md:items-center md:p-9"
+      >
+        <span class="icon-rahmen !h-14 !w-14 shrink-0">
+          <Icon name="parken" size={26} />
+        </span>
+        <div class="flex-1">
+          <span class="augenbraue">Unser Standortvorteil</span>
+          <h2 class="mt-2 text-2xl">Park &amp; Fly ab Feuerbach</h2>
+          <p class="mt-2 max-w-2xl leading-relaxed text-nebel-400">
+            Auto bei uns abstellen, {site.anfahrt.fussMinuten} Minuten laufen,
+            mit der {site.anfahrt.linien[0]} ohne Umsteigen zum Flughafen.
+            Shuttle bis zum Terminal auf Wunsch.
+          </p>
+        </div>
+        <span
+          class="inline-flex items-center gap-1.5 whitespace-nowrap font-semibold text-cyan-400"
+        >
+          Mehr erfahren
+          <Icon name="pfeil-rechts" size={16} />
+        </span>
+      </a>
+    </div>
+  </section>
+
+  <LeistungenRaster
+    ueberschrift="Alle Leistungen im Überblick"
+    einleitung="Was hier nicht steht, fragen Sie einfach an – wir sagen Ihnen ehrlich, ob wir es übernehmen können."
+  />
+
+  <Buchungsassistent />
+</BaseLayout>

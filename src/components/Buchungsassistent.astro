@@ -1,0 +1,675 @@
+---
+import Icon from './Icon.astro';
+import {
+  site,
+  telefonLink,
+  emailLink,
+  whatsappLink,
+  whatsappStandardtext,
+} from '~/config/site';
+
+interface Props {
+  /** Fahrtart schon vorwählen, z. B. "park-and-fly" auf der Park-&-Fly-Seite */
+  vorauswahl?: string;
+  ueberschrift?: string;
+  einleitung?: string;
+  id?: string;
+}
+
+const {
+  vorauswahl = '',
+  ueberschrift = 'Fahrt anfragen – in unter einer Minute',
+  einleitung = 'Beantworten Sie ein paar kurze Fragen. Am Ende öffnet sich WhatsApp mit einer fertig geschriebenen Nachricht – Sie müssen sie nur noch abschicken.',
+  id = 'buchen',
+} = Astro.props;
+
+const fahrtarten = [
+  { wert: 'Flughafentransfer', icon: 'flugzeug' as const },
+  { wert: 'Park & Fly', icon: 'parken' as const },
+  { wert: 'Stadt- oder Überlandfahrt', icon: 'route' as const },
+  { wert: 'Krankenfahrt', icon: 'herz' as const },
+  { wert: 'Geschäftsfahrt', icon: 'aktentasche' as const },
+  { wert: 'Kurierfahrt', icon: 'paket' as const },
+];
+
+const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
+---
+
+<section id={id} class="abschnitt scroll-mt-24">
+  <div class="huelle">
+    <div class="mx-auto max-w-3xl text-center">
+      <span class="augenbraue">
+        <Icon name="whatsapp" size={15} />
+        Buchung ohne Anruf
+      </span>
+      <h2 class="mt-4 text-3xl md:text-4xl">{ueberschrift}</h2>
+      <p class="mx-auto mt-4 max-w-2xl text-nebel-400">{einleitung}</p>
+    </div>
+
+    <!-- Ohne JavaScript: direkte Kontaktwege statt eines toten Formulars -->
+    <div class="assistent-ersatz mx-auto mt-10 max-w-2xl">
+      <div class="karte p-6 text-center">
+        <p class="text-nebel-300">
+          Schreiben Sie uns einfach direkt – wir melden uns umgehend mit einem
+          Festpreis zurück.
+        </p>
+        <div class="mt-5 grid gap-3 sm:grid-cols-2">
+          <a
+            href={whatsappLink(whatsappStandardtext)}
+            target="_blank"
+            rel="noopener"
+            class="knopf knopf-whatsapp w-full"
+          >
+            <Icon name="whatsapp" size={20} />
+            WhatsApp öffnen
+          </a>
+          <a href={telefonLink} class="knopf knopf-rand w-full">
+            <Icon name="telefon" size={18} />
+            {site.kontakt.telefonAnzeige}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="assistent mx-auto mt-10 max-w-3xl"
+      data-assistent
+      data-whatsapp={site.kontakt.whatsapp}
+      data-vorauswahl={vorauswahl}
+      data-marke={site.unternehmen.marke}
+    >
+      <!-- Fortschritt -->
+      <ol class="mb-6 flex items-center gap-1.5" aria-hidden="true">
+        {
+          schritte.map((name, index) => (
+            <li class="flex flex-1 flex-col gap-1.5">
+              <span
+                class="h-1 rounded-full bg-white/10 transition-colors duration-300"
+                data-fortschritt={index + 1}
+              />
+              <span
+                class="hidden text-[0.7rem] font-medium text-nebel-500 transition-colors sm:block"
+                data-fortschritt-text={index + 1}
+              >
+                {name}
+              </span>
+            </li>
+          ))
+        }
+      </ol>
+
+      <form class="karte p-5 md:p-7" data-formular novalidate>
+        <p class="nur-vorlesen" role="status" aria-live="polite" data-ansage></p>
+
+        <!-- ============================ Schritt 1 ============================ -->
+        <fieldset data-schritt="1" hidden>
+          <legend class="text-xl font-bold text-white md:text-2xl" tabindex="-1">
+            Worum geht es?
+          </legend>
+          <p class="mt-2 text-sm text-nebel-400">
+            Wählen Sie den passenden Anlass – die nächsten Fragen richten sich
+            danach.
+          </p>
+
+          <div class="mt-5 grid gap-2.5 sm:grid-cols-2">
+            {
+              fahrtarten.map((art) => (
+                <label class="auswahl-karte">
+                  <input
+                    type="radio"
+                    name="art"
+                    value={art.wert}
+                    class="peer sr-only"
+                    checked={vorauswahl === art.wert}
+                  />
+                  <span class="auswahl-inhalt">
+                    <span class="icon-rahmen !h-10 !w-10">
+                      <Icon name={art.icon} size={20} />
+                    </span>
+                    <span class="font-semibold">{art.wert}</span>
+                    <span class="haken">
+                      <Icon name="check" size={14} />
+                    </span>
+                  </span>
+                </label>
+              ))
+            }
+          </div>
+        </fieldset>
+
+        <!-- ============================ Schritt 2 ============================ -->
+        <fieldset data-schritt="2" hidden>
+          <legend class="text-xl font-bold text-white md:text-2xl" tabindex="-1">
+            <span data-nur-art="Park & Fly">Ihr Fahrzeug</span>
+            <span data-ohne-art="Park & Fly">Wohin soll es gehen?</span>
+          </legend>
+
+          <!-- Normale Fahrten -->
+          <div class="mt-5 space-y-4" data-ohne-art="Park & Fly">
+            <div class="feld">
+              <label for="feld-von">Abholadresse</label>
+              <input
+                id="feld-von"
+                name="von"
+                type="text"
+                autocomplete="street-address"
+                enterkeyhint="next"
+                placeholder="Straße, Hausnummer, Ort"
+              />
+            </div>
+            <div class="feld">
+              <label for="feld-nach">Zieladresse</label>
+              <input
+                id="feld-nach"
+                name="nach"
+                type="text"
+                enterkeyhint="next"
+                placeholder="z. B. Flughafen Stuttgart, Terminal 1"
+              />
+            </div>
+            <label class="schalter">
+              <input type="checkbox" name="rueckfahrt" />
+              <span>Ich brauche auch eine Rückfahrt</span>
+            </label>
+          </div>
+
+          <!-- Park & Fly -->
+          <div class="mt-5 space-y-4" data-nur-art="Park & Fly" hidden>
+            <p class="text-sm text-nebel-400">
+              Sie stellen Ihr Auto bei uns in der {site.unternehmen.strasse} ab.
+              Von dort sind es {site.anfahrt.fussMinuten} Gehminuten bis zur
+              Haltestelle {site.anfahrt.haltestelle}.
+            </p>
+            <div class="feld">
+              <label for="feld-kennzeichen">Kennzeichen Ihres Fahrzeugs</label>
+              <input
+                id="feld-kennzeichen"
+                name="kennzeichen"
+                type="text"
+                autocapitalize="characters"
+                enterkeyhint="next"
+                placeholder="z. B. S-AB 1234"
+              />
+            </div>
+            <div class="feld">
+              <label for="feld-fahrzeug">Fahrzeugmodell und Farbe</label>
+              <input
+                id="feld-fahrzeug"
+                name="fahrzeug"
+                type="text"
+                enterkeyhint="next"
+                placeholder="z. B. VW Golf, dunkelblau"
+              />
+            </div>
+            <label class="schalter">
+              <input type="checkbox" name="shuttle" />
+              <span>
+                Ich möchte zusätzlich den Shuttle bis vor das Terminal
+              </span>
+            </label>
+          </div>
+        </fieldset>
+
+        <!-- ============================ Schritt 3 ============================ -->
+        <fieldset data-schritt="3" hidden>
+          <legend class="text-xl font-bold text-white md:text-2xl" tabindex="-1">
+            <span data-nur-art="Park & Fly">Wann geht Ihr Flug?</span>
+            <span data-ohne-art="Park & Fly">Wann sollen wir da sein?</span>
+          </legend>
+
+          <div class="mt-5 flex flex-wrap gap-2" data-ohne-art="Park & Fly">
+            <button type="button" class="chip" data-schnellwahl="jetzt">
+              So bald wie möglich
+            </button>
+            <button type="button" class="chip" data-schnellwahl="heute-abend">
+              Heute Abend
+            </button>
+            <button type="button" class="chip" data-schnellwahl="morgen-frueh">
+              Morgen früh
+            </button>
+          </div>
+
+          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+            <div class="feld">
+              <label for="feld-datum">
+                <span data-nur-art="Park & Fly">Auto abstellen am</span>
+                <span data-ohne-art="Park & Fly">Datum</span>
+              </label>
+              <input id="feld-datum" name="datum" type="date" />
+            </div>
+            <div class="feld">
+              <label for="feld-zeit">Uhrzeit</label>
+              <input id="feld-zeit" name="zeit" type="time" step="300" />
+            </div>
+          </div>
+
+          <div class="mt-4 grid gap-4 sm:grid-cols-2" data-nur-art="Park & Fly" hidden>
+            <div class="feld">
+              <label for="feld-rueckkehr">Voraussichtliche Rückkehr am</label>
+              <input id="feld-rueckkehr" name="rueckkehr" type="date" />
+            </div>
+            <div class="feld">
+              <label for="feld-rueckzeit">Uhrzeit der Rückkehr</label>
+              <input id="feld-rueckzeit" name="rueckzeit" type="time" step="300" />
+            </div>
+          </div>
+
+          <div class="mt-4 space-y-4" data-ohne-art="Park & Fly">
+            <div class="feld" data-nur-art="Flughafentransfer" hidden>
+              <label for="feld-flug">Flugnummer <span class="opt">optional</span></label>
+              <input
+                id="feld-flug"
+                name="flugnummer"
+                type="text"
+                autocapitalize="characters"
+                placeholder="z. B. LH 1234"
+              />
+              <p class="hilfe">
+                Damit behalten wir Ihre tatsächliche Ankunftszeit im Blick.
+              </p>
+            </div>
+          </div>
+        </fieldset>
+
+        <!-- ============================ Schritt 4 ============================ -->
+        <fieldset data-schritt="4" hidden>
+          <legend class="text-xl font-bold text-white md:text-2xl" tabindex="-1">
+            Wer fährt mit?
+          </legend>
+
+          <div class="mt-5 space-y-3">
+            <div class="zaehler" data-zaehler="personen" data-min="1" data-max="8">
+              <span class="zaehler-titel">
+                <Icon name="personen" size={18} class="text-cyan-500" />
+                Personen
+              </span>
+              <div class="zaehler-bedienung">
+                <button type="button" data-minus aria-label="Weniger Personen">−</button>
+                <output data-wert>1</output>
+                <button type="button" data-plus aria-label="Mehr Personen">+</button>
+              </div>
+              <input type="hidden" name="personen" value="1" />
+            </div>
+
+            <div class="zaehler" data-zaehler="gepaeck" data-min="0" data-max="10">
+              <span class="zaehler-titel">
+                <Icon name="gepaeck" size={18} class="text-cyan-500" />
+                Gepäckstücke
+              </span>
+              <div class="zaehler-bedienung">
+                <button type="button" data-minus aria-label="Weniger Gepäck">−</button>
+                <output data-wert>0</output>
+                <button type="button" data-plus aria-label="Mehr Gepäck">+</button>
+              </div>
+              <input type="hidden" name="gepaeck" value="0" />
+            </div>
+
+            <div class="zaehler" data-zaehler="kindersitze" data-min="0" data-max="4">
+              <span class="zaehler-titel">
+                <Icon name="schild" size={18} class="text-cyan-500" />
+                Kindersitze
+              </span>
+              <div class="zaehler-bedienung">
+                <button type="button" data-minus aria-label="Weniger Kindersitze">−</button>
+                <output data-wert>0</output>
+                <button type="button" data-plus aria-label="Mehr Kindersitze">+</button>
+              </div>
+              <input type="hidden" name="kindersitze" value="0" />
+            </div>
+          </div>
+
+          <div class="feld mt-5">
+            <label for="feld-anmerkung">
+              Anmerkung <span class="opt">optional</span>
+            </label>
+            <textarea
+              id="feld-anmerkung"
+              name="anmerkung"
+              rows="3"
+              placeholder="z. B. Rollator dabei, bitte klingeln, Firmenrechnung gewünscht"
+            ></textarea>
+          </div>
+        </fieldset>
+
+        <!-- ============================ Schritt 5 ============================ -->
+        <fieldset data-schritt="5" hidden>
+          <legend class="text-xl font-bold text-white md:text-2xl" tabindex="-1">
+            Fast geschafft
+          </legend>
+
+          <div class="feld mt-5">
+            <label for="feld-name">Ihr Name</label>
+            <input
+              id="feld-name"
+              name="name"
+              type="text"
+              autocomplete="name"
+              enterkeyhint="done"
+              placeholder="Vor- und Nachname"
+            />
+          </div>
+
+          <div class="mt-6">
+            <h3 class="text-sm font-bold uppercase tracking-widest text-nebel-500">
+              Das schicken wir ab
+            </h3>
+            <pre
+              class="mt-3 max-h-60 overflow-auto whitespace-pre-wrap rounded-xl border border-white/10 bg-nacht-950/60 p-4 font-sans text-sm leading-relaxed text-nebel-300"
+              data-vorschau>…</pre>
+          </div>
+
+          <p class="mt-4 flex items-start gap-2 text-xs leading-relaxed text-nebel-500">
+            <Icon name="schild" size={15} class="mt-px shrink-0 text-cyan-600" />
+            <span>
+              Ihre Angaben bleiben bis hierhin ausschließlich in Ihrem Browser.
+              Erst wenn Sie auf den Knopf tippen, öffnet sich WhatsApp mit dem
+              obigen Text – abgeschickt wird er von Ihnen.
+            </span>
+          </p>
+        </fieldset>
+
+        <!-- Fehlerhinweis -->
+        <p
+          class="mt-4 hidden items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 px-3.5 py-2.5 text-sm text-red-200"
+          data-fehler
+          role="alert"
+        >
+        </p>
+
+        <!-- Steuerung -->
+        <div class="mt-6 flex items-center gap-3 border-t border-white/8 pt-5">
+          <button type="button" class="knopf knopf-rand !px-4" data-zurueck hidden>
+            <Icon name="pfeil-links" size={18} />
+            <span class="nur-vorlesen">Zurück</span>
+          </button>
+
+          <button type="button" class="knopf knopf-cyan flex-1" data-weiter>
+            Weiter
+            <Icon name="pfeil-rechts" size={18} />
+          </button>
+
+          <a
+            class="knopf knopf-whatsapp flex-1"
+            data-senden
+            href={whatsappLink(whatsappStandardtext)}
+            target="_blank"
+            rel="noopener"
+            hidden
+          >
+            <Icon name="whatsapp" size={20} />
+            Per WhatsApp senden
+          </a>
+        </div>
+
+        <!-- Alternativen, falls WhatsApp nicht genutzt wird -->
+        <div class="mt-4 hidden text-center text-sm text-nebel-500" data-alternativen>
+          Kein WhatsApp?
+          <a href={telefonLink} class="text-cyan-400 underline underline-offset-4">
+            Anrufen
+          </a>
+          oder
+          <a data-mailto href={emailLink} class="text-cyan-400 underline underline-offset-4">
+            per E-Mail senden
+          </a>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* Der Assistent erscheint nur, wenn JavaScript laeuft. Sonst bleibt der
+     direkte Kontaktweg darueber stehen - nie ein totes Formular. */
+  .assistent {
+    display: none;
+  }
+  :global(html.js) .assistent {
+    display: block;
+  }
+  :global(html.js) .assistent-ersatz {
+    display: none;
+  }
+
+  /* --- Auswahlkarten (Schritt 1) --- */
+  .auswahl-karte {
+    display: block;
+    cursor: pointer;
+  }
+
+  .auswahl-inhalt {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3.75rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 0.875rem;
+    background-color: rgb(255 255 255 / 0.025);
+    color: var(--color-nebel-100);
+    font-size: 0.9375rem;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+  }
+
+  .auswahl-karte:hover .auswahl-inhalt {
+    border-color: rgb(34 184 240 / 0.4);
+  }
+
+  .peer:checked + .auswahl-inhalt {
+    border-color: var(--color-cyan-500);
+    background-color: rgb(34 184 240 / 0.1);
+  }
+
+  .peer:focus-visible + .auswahl-inhalt {
+    outline: 2px solid var(--color-cyan-400);
+    outline-offset: 2px;
+  }
+
+  .haken {
+    display: none;
+    margin-left: auto;
+    align-items: center;
+    justify-content: center;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 999px;
+    background-color: var(--color-cyan-500);
+    color: var(--color-nacht-950);
+  }
+
+  .peer:checked + .auswahl-inhalt .haken {
+    display: inline-flex;
+  }
+
+  /* --- Eingabefelder --- */
+  .feld label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-nebel-100);
+  }
+
+  .feld .opt {
+    font-weight: 400;
+    color: var(--color-nebel-500);
+  }
+
+  .feld input,
+  .feld textarea {
+    width: 100%;
+    min-height: 3rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 0.75rem;
+    background-color: rgb(5 7 10 / 0.6);
+    color: #fff;
+    transition: border-color 0.2s ease;
+  }
+
+  .feld textarea {
+    min-height: 5rem;
+    resize: vertical;
+  }
+
+  .feld input::placeholder,
+  .feld textarea::placeholder {
+    color: var(--color-nebel-500);
+  }
+
+  .feld input:focus,
+  .feld textarea:focus {
+    border-color: var(--color-cyan-500);
+    outline: none;
+    box-shadow: 0 0 0 3px rgb(34 184 240 / 0.16);
+  }
+
+  .feld input[aria-invalid='true'] {
+    border-color: rgb(248 113 113 / 0.7);
+  }
+
+  /* Das Kalendersymbol der Browser ist im Dunkelmodus sonst kaum sichtbar */
+  .feld input[type='date']::-webkit-calendar-picker-indicator,
+  .feld input[type='time']::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.55;
+    cursor: pointer;
+  }
+
+  .hilfe {
+    margin-top: 0.4rem;
+    font-size: 0.8125rem;
+    color: var(--color-nebel-500);
+  }
+
+  /* --- Schalter --- */
+  .schalter {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 3rem;
+    padding: 0.5rem 0.875rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 0.75rem;
+    background-color: rgb(255 255 255 / 0.025);
+    cursor: pointer;
+    font-size: 0.9375rem;
+    color: var(--color-nebel-300);
+  }
+
+  .schalter input {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+    accent-color: var(--color-cyan-500);
+  }
+
+  .schalter:has(input:checked) {
+    border-color: rgb(34 184 240 / 0.5);
+    background-color: rgb(34 184 240 / 0.08);
+    color: #fff;
+  }
+
+  /* --- Schnellwahl --- */
+  .chip {
+    min-height: 2.75rem;
+    padding-inline: 1rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 999px;
+    background-color: rgb(255 255 255 / 0.03);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-nebel-300);
+    transition: all 0.2s ease;
+  }
+
+  .chip:hover {
+    border-color: rgb(34 184 240 / 0.5);
+    color: #fff;
+  }
+
+  .chip[aria-pressed='true'] {
+    border-color: var(--color-cyan-500);
+    background-color: rgb(34 184 240 / 0.14);
+    color: var(--color-cyan-300);
+  }
+
+  /* --- Zaehler --- */
+  .zaehler {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.625rem 0.875rem;
+    border: 1px solid rgb(255 255 255 / 0.1);
+    border-radius: 0.75rem;
+    background-color: rgb(255 255 255 / 0.025);
+  }
+
+  .zaehler-titel {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+  }
+
+  .zaehler-bedienung {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .zaehler-bedienung button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    border-radius: 0.625rem;
+    background-color: rgb(255 255 255 / 0.04);
+    font-size: 1.25rem;
+    line-height: 1;
+    color: #fff;
+    transition: all 0.15s ease;
+  }
+
+  .zaehler-bedienung button:hover:not(:disabled) {
+    border-color: var(--color-cyan-500);
+    background-color: rgb(34 184 240 / 0.14);
+  }
+
+  .zaehler-bedienung button:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .zaehler-bedienung output {
+    min-width: 2.25rem;
+    text-align: center;
+    font-size: 1.0625rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Fortschrittsbalken */
+  [data-fortschritt].erledigt {
+    background-color: var(--color-cyan-600);
+  }
+  [data-fortschritt].aktiv {
+    background-color: var(--color-cyan-400);
+  }
+  [data-fortschritt-text].aktiv {
+    color: var(--color-cyan-400);
+  }
+</style>
+
+<script>
+  import { assistentStarten } from '~/scripts/buchungsassistent';
+  assistentStarten();
+</script>
+
+<script is:inline>
+  // Sofort ausgefuehrt, damit der Assistent ohne Aufblitzen erscheint.
+  document.documentElement.classList.add('js');
+</script>

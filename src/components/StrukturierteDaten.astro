@@ -1,0 +1,114 @@
+---
+import { site, faq } from '~/config/site';
+
+/**
+ * Strukturierte Daten fuer Google (JSON-LD).
+ * Sorgt dafuer, dass Adresse, Oeffnungszeiten und haeufige Fragen direkt in
+ * den Suchergebnissen erscheinen koennen.
+ */
+interface Props {
+  /** Haeufige Fragen mit ausgeben - nur auf der Startseite sinnvoll */
+  mitFaq?: boolean;
+  leistungen?: { titel: string; kurz: string; slug: string }[];
+}
+
+const { mitFaq = false, leistungen = [] } = Astro.props;
+
+const basisUrl = Astro.site?.href.replace(/\/$/, '') ?? '';
+const wochentage = [
+  'Monday',
+  'Tuesday',
+  'Wednesday',
+  'Thursday',
+  'Friday',
+  'Saturday',
+  'Sunday',
+];
+
+const oeffnungszeiten = site.oeffnungszeiten.durchgehend
+  ? [
+      {
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: wochentage,
+        opens: '00:00',
+        closes: '23:59',
+      },
+    ]
+  : site.oeffnungszeiten.zeiten.map((eintrag) => ({
+      '@type': 'OpeningHoursSpecification',
+      description: eintrag.tage,
+      opens: eintrag.von,
+      closes: eintrag.bis,
+    }));
+
+const unternehmen = {
+  '@context': 'https://schema.org',
+  '@type': 'LocalBusiness',
+  '@id': `${basisUrl}/#unternehmen`,
+  name: site.unternehmen.marke,
+  legalName: site.unternehmen.firmenname,
+  description: site.unternehmen.slogan,
+  url: basisUrl,
+  telephone: site.kontakt.telefonWaehlen,
+  email: site.kontakt.email,
+  founder: site.unternehmen.inhaber,
+  priceRange: '€€',
+  address: {
+    '@type': 'PostalAddress',
+    streetAddress: site.unternehmen.strasse,
+    postalCode: site.unternehmen.plz,
+    addressLocality: site.unternehmen.ort,
+    addressRegion: 'Baden-Württemberg',
+    addressCountry: 'DE',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: site.anfahrt.breitengrad,
+    longitude: site.anfahrt.laengengrad,
+  },
+  openingHoursSpecification: oeffnungszeiten,
+  areaServed: site.einzugsgebiet.map((ort) => ({ '@type': 'Place', name: ort })),
+  knowsLanguage: ['de-DE'],
+  hasOfferCatalog: {
+    '@type': 'OfferCatalog',
+    name: 'Leistungen',
+    itemListElement: leistungen.map((leistung, index) => ({
+      '@type': 'Offer',
+      position: index + 1,
+      itemOffered: {
+        '@type': 'Service',
+        name: leistung.titel,
+        description: leistung.kurz,
+        url: `${basisUrl}/leistungen/${leistung.slug}`,
+        provider: { '@id': `${basisUrl}/#unternehmen` },
+      },
+    })),
+  },
+};
+
+const fragenAntworten = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: faq.map((eintrag) => ({
+    '@type': 'Question',
+    name: eintrag.frage,
+    acceptedAnswer: { '@type': 'Answer', text: eintrag.antwort },
+  })),
+};
+---
+
+<script
+  type="application/ld+json"
+  is:inline
+  set:html={JSON.stringify(unternehmen)}
+/>
+
+{
+  mitFaq && faq.length > 0 && (
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify(fragenAntworten)}
+    />
+  )
+}

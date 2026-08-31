@@ -1,0 +1,76 @@
+# =============================================================================
+#  PREISE  -  Fahrpreise und Park-&-Fly-Konditionen
+# =============================================================================
+#
+#  WICHTIG - der Schalter ganz unten:
+#
+#  Aktuell werden auf der Website ABSICHTLICH KEINE Preise angezeigt.
+#  Die Preisnennung laeuft ueber den WhatsApp-Chat.
+#
+#  Wenn Sie die Preistabelle spaeter doch oeffentlich zeigen moechten:
+#  ganz unten bei "anzeigen" das Wort false in true aendern. Sonst nichts.
+#
+#  Rechtlicher Hinweis: Als Mietwagenunternehmen sind Sie frei in der
+#  Preisgestaltung, ABER ein einmal veroeffentlichter Preis ist fuer Sie
+#  bindend. Pruefen Sie die Zahlen daher genau, bevor Sie auf true stellen.
+# =============================================================================
+
+waehrung: "EUR"
+
+# --- Festpreise fuer haeufige Strecken ---------------------------------------
+# Ab Betriebssitz / Stuttgart-Feuerbach. Weitere Zeilen koennen Sie
+# nach dem gleichen Muster ergaenzen.
+strecken:
+  - ziel: "Flughafen Stuttgart (STR)"
+    preis: 0
+    hinweis: "Festpreis, bis 4 Personen"
+  - ziel: "Messe Stuttgart"
+    preis: 0
+    hinweis: "Festpreis, bis 4 Personen"
+  - ziel: "Stuttgart Hauptbahnhof"
+    preis: 0
+    hinweis: "Festpreis, bis 4 Personen"
+  - ziel: "Ludwigsburg"
+    preis: 0
+    hinweis: "Festpreis, bis 4 Personen"
+
+# --- Park & Fly --------------------------------------------------------------
+parkAndFly:
+  preisProTag: 0
+  preisProWoche: 0
+  # Wie viele Stellplaetze stehen zur Verfuegung?
+  stellplaetze: 0
+  # Ist der Platz ueberdacht?
+  ueberdacht: false
+  # Ist das Gelaende umzaeunt / videoueberwacht?
+  gesichert: true
+  # Muss der Autoschluessel abgegeben werden?
+  schluesselabgabe: false
+  # Aufpreis fuer den Shuttle bis zum Terminal (0 = im Preis enthalten)
+  shuttleAufpreis: 0
+
+# --- Zuschlaege --------------------------------------------------------------
+zuschlaege:
+  - bezeichnung: "Nachtfahrt (22:00 - 06:00)"
+    preis: 0
+  - bezeichnung: "Kindersitz"
+    preis: 0
+    hinweis: "Bitte bei der Buchung angeben"
+  - bezeichnung: "Zusätzliches Gepäckstück"
+    preis: 0
+
+# --- Zahlungsarten -----------------------------------------------------------
+# Zeilen, die nicht zutreffen, einfach loeschen.
+zahlungsarten:
+  - "Bar"
+  - "EC-Karte"
+  - "Kreditkarte"
+  - "PayPal"
+  - "Rechnung für Geschäftskunden"
+
+# =============================================================================
+#  SCHALTER: Preise oeffentlich auf der Website anzeigen?
+#     false = Preise bleiben verborgen, Anfrage laeuft ueber WhatsApp  (aktuell)
+#     true  = Preistabelle erscheint auf der Seite
+# =============================================================================
+anzeigen: false

@@ -1,0 +1,109 @@
+# =============================================================================
+#  EINSTELLUNGEN  -  Kontaktdaten, Oeffnungszeiten, Anfahrt
+# =============================================================================
+#
+#  Diese Datei steuert die Kontaktdaten auf der GESAMTEN Website.
+#  Aendern Sie hier die Telefonnummer, erscheint sie automatisch ueberall:
+#  im Kopf, im Fuss, auf dem Handy-Balken unten und bei Google.
+#
+#  SO BEARBEITEN SIE DIESE DATEI:
+#    - Aendern Sie nur den Text RECHTS vom Doppelpunkt.
+#    - Text immer in "Anfuehrungszeichen" lassen.
+#    - Die Einrueckung (Leerzeichen am Zeilenanfang) NICHT veraendern.
+#    - Zeilen, die mit # beginnen, sind Notizen und haben keine Wirkung.
+#
+#  Falls etwas schiefgeht: Die Website bleibt online und zeigt weiter die
+#  letzte funktionierende Fassung. Sie koennen nichts kaputt machen.
+# =============================================================================
+
+unternehmen:
+  # Kurzer Markenname - erscheint im Logo und im Seitentitel
+  marke: "MyRegioCar"
+  # Vollstaendiger, offizieller Firmenname - erscheint im Impressum
+  firmenname: "Önder Sarak Mietwagenunternehmen"
+  inhaber: "Önder Sarak"
+  strasse: "Steiermärker Str. 3-5"
+  plz: "70469"
+  ort: "Stuttgart"
+  land: "Deutschland"
+  # Kurzbeschreibung - erscheint bei Google unter dem Seitentitel
+  slogan: "Ihr Mietwagen mit Fahrer in Stuttgart"
+
+kontakt:
+  # ---------------------------------------------------------------------------
+  #  WICHTIG: Hier die echten Nummern eintragen (siehe TODO-KUNDE.md)
+  # ---------------------------------------------------------------------------
+  # Telefonnummer, so wie sie auf der Seite ANGEZEIGT wird:
+  telefonAnzeige: "+49 711 000000"
+  # Dieselbe Nummer zum Anklicken - NUR Ziffern und ein + am Anfang:
+  telefonWaehlen: "+4971100000"
+  # WhatsApp-Nummer - NUR ZIFFERN, ohne +, ohne Leerzeichen, ohne Klammern.
+  # Deutschland beginnt mit 49 statt der 0.
+  # Beispiel: aus 0171 2345678  wird  491712345678
+  whatsapp: "491700000000"
+  email: "info@myregiocar.com"
+  # Adresse fuer Bewerbungen (steht auch auf dem Flyer)
+  bewerbungEmail: "bewerbung@myregiocar.com"
+
+oeffnungszeiten:
+  # Text, der auf der Seite steht
+  text: "Täglich 24 Stunden erreichbar"
+  # Kurzform fuer den Handy-Balken und den Seitenkopf
+  kurz: "24/7 erreichbar"
+  # Steht die Nummer wirklich rund um die Uhr zur Verfuegung?
+  # true  = Es wird "24/7" beworben
+  # false = Es werden die Zeiten unten angezeigt
+  durchgehend: true
+  # Diese Zeiten gelten nur, wenn durchgehend auf false steht:
+  zeiten:
+    - tage: "Montag - Freitag"
+      von: "06:00"
+      bis: "22:00"
+    - tage: "Samstag, Sonntag & Feiertage"
+      von: "08:00"
+      bis: "22:00"
+
+hinweisBanner:
+  # Ein farbiger Hinweisstreifen ganz oben auf der Seite.
+  # Ideal fuer Urlaub, Feiertage oder besondere Aktionen.
+  # Auf true stellen, damit er erscheint:
+  anzeigen: false
+  text: "Vom 24.12. bis 02.01. eingeschränkte Erreichbarkeit. Buchungen bitte frühzeitig per WhatsApp."
+
+anfahrt:
+  # Geokoordinaten des Betriebssitzes - fuer Google Maps und Suchmaschinen.
+  # Nur aendern, wenn das Unternehmen umzieht.
+  breitengrad: 48.8143644
+  laengengrad: 9.1653890
+  # Naechste Haltestelle - Grundlage fuer das Park-&-Fly-Angebot
+  haltestelle: "Feuerbach Bahnhof"
+  fussMeter: 150
+  fussMinuten: 2
+  linien: ["U6", "U13", "S6", "S60"]
+  # Fahrzeit mit der U6 bis Flughafen/Messe, in Minuten
+  flughafenMinuten: 30
+  # Wie oft die U6 faehrt, in Minuten
+  taktMinuten: 10
+
+einzugsgebiet:
+  # Orte, in denen gefahren wird. Erscheinen im Text und bei Google.
+  # Neue Orte einfach als weitere Zeile mit Bindestrich ergaenzen.
+  - "Stuttgart-Feuerbach"
+  - "Zuffenhausen"
+  - "Weilimdorf"
+  - "Botnang"
+  - "Bad Cannstatt"
+  - "Stuttgart-Mitte"
+  - "Korntal-Münchingen"
+  - "Gerlingen"
+  - "Ludwigsburg"
+  - "Flughafen Stuttgart"
+  - "Messe Stuttgart"
+
+rechtliches:
+  # Fuer das Impressum - bitte vom Steuerberater bestaetigen lassen
+  ustId: "DE000000000"
+  # Genehmigungsbehoerde nach Personenbefoerderungsgesetz
+  aufsichtsbehoerde: "Landeshauptstadt Stuttgart, Amt für öffentliche Ordnung"
+  # Ihre Konzessionsnummer nach PBefG, falls vorhanden
+  konzession: ""

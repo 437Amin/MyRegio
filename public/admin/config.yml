@@ -1,0 +1,325 @@
+# =============================================================================
+#  Redaktionsbereich (Decap CMS)
+# =============================================================================
+#
+#  Diese Datei beschreibt, welche Felder Oender unter /admin bearbeiten kann.
+#
+#  WICHTIG FUER ENTWICKLER:
+#  Der Editor schreibt die Inhaltsdateien komplett neu. Ein Feld, das hier
+#  FEHLT, wird beim Speichern aus der Datei GELOESCHT. Wer in content/*.yaml
+#  ein Feld ergaenzt, muss es also auch hier eintragen.
+#
+#  Ebenso: Kommentare in den YAML-Dateien ueberleben das Speichern durch den
+#  Editor nicht. Erklaerungen gehoeren deshalb in die "hint"-Zeilen hier.
+# =============================================================================
+
+backend:
+  name: git-gateway
+  # ↓↓↓ Diese beiden Zeilen nach der Einrichtung bei DecapBridge ersetzen ↓↓↓
+  repo: BENUTZERNAME/myregiocar
+  identity_url: https://auth.decapbridge.com/sites/SITE-ID-VON-DECAPBRIDGE
+  # ↑↑↑ siehe TODO-KUNDE.md, Abschnitt "Redaktionsbereich einrichten" ↑↑↑
+  gateway_url: https://gateway.decapbridge.com
+  branch: main
+  commit_messages:
+    create: 'Neu angelegt: {{collection}} "{{slug}}"'
+    update: 'Geändert: {{collection}} "{{slug}}"'
+    delete: 'Gelöscht: {{collection}} "{{slug}}"'
+    uploadMedia: 'Bild hochgeladen: {{path}}'
+    deleteMedia: 'Bild gelöscht: {{path}}'
+
+locale: de
+site_url: https://www.myregiocar.com
+display_url: https://www.myregiocar.com
+logo_url: https://www.myregiocar.com/apple-touch-icon.png
+
+# Aenderungen gehen sofort live. Wer erst gegenlesen lassen will,
+# stellt hier auf: editorial_workflow
+publish_mode: simple
+
+media_folder: public/img
+public_folder: /img
+
+collections:
+  # ===========================================================================
+  #  1. Kontakt & Öffnungszeiten
+  # ===========================================================================
+  - name: einstellungen
+    label: 'Kontakt & Öffnungszeiten'
+    description: 'Telefonnummer, WhatsApp, Adresse und Erreichbarkeit. Änderungen hier gelten sofort auf der ganzen Website.'
+    editor:
+      preview: false
+    files:
+      - name: allgemein
+        label: 'Kontaktdaten'
+        file: content/einstellungen.yaml
+        fields:
+          - name: unternehmen
+            label: 'Unternehmen'
+            widget: object
+            collapsed: true
+            fields:
+              - { name: marke, label: 'Markenname', widget: string, hint: 'Erscheint im Logo und im Seitentitel.' }
+              - { name: firmenname, label: 'Vollständiger Firmenname', widget: string, hint: 'Wie im Impressum, z. B. Önder Sarak Mietwagenunternehmen.' }
+              - { name: inhaber, label: 'Inhaber', widget: string }
+              - { name: strasse, label: 'Straße und Hausnummer', widget: string }
+              - name: plz
+                label: 'Postleitzahl'
+                widget: string
+                pattern: ['^\d{5}$', 'Bitte genau 5 Ziffern eingeben, z. B. 70469']
+              - { name: ort, label: 'Ort', widget: string }
+              - { name: land, label: 'Land', widget: string }
+              - { name: slogan, label: 'Kurzbeschreibung', widget: string, hint: 'Ein Satz. Erscheint bei Google unter dem Seitentitel.' }
+
+          - name: kontakt
+            label: 'So erreicht man Sie'
+            widget: object
+            fields:
+              - { name: telefonAnzeige, label: 'Telefonnummer (Anzeige)', widget: string, hint: 'So, wie sie auf der Seite stehen soll – Leerzeichen sind erlaubt. Beispiel: +49 711 123456' }
+              - name: telefonWaehlen
+                label: 'Telefonnummer (zum Anklicken)'
+                widget: string
+                hint: 'Dieselbe Nummer, aber NUR Ziffern nach dem Pluszeichen. Beispiel: +49711123456'
+                pattern: ['^\+[0-9]{7,17}$', 'Muss mit + beginnen, danach nur Ziffern – keine Leerzeichen oder Klammern']
+              - name: whatsapp
+                label: 'WhatsApp-Nummer'
+                widget: string
+                hint: 'NUR Ziffern. Kein Pluszeichen, keine Leerzeichen. Die 0 am Anfang wird durch 49 ersetzt: aus 0171 2345678 wird 491712345678'
+                pattern: ['^[0-9]{8,15}$', 'Nur Ziffern – ohne +, ohne Leerzeichen, ohne die 0 am Anfang']
+              - { name: email, label: 'E-Mail-Adresse', widget: string }
+              - { name: bewerbungEmail, label: 'E-Mail für Bewerbungen', widget: string }
+
+          - name: oeffnungszeiten
+            label: 'Erreichbarkeit'
+            widget: object
+            fields:
+              - { name: text, label: 'Ausführlicher Text', widget: string, hint: 'Beispiel: Täglich 24 Stunden erreichbar' }
+              - { name: kurz, label: 'Kurzform', widget: string, hint: 'Für den Seitenkopf. Beispiel: 24/7 erreichbar' }
+              - name: durchgehend
+                label: 'Rund um die Uhr erreichbar?'
+                widget: boolean
+                hint: 'Ist der Haken gesetzt, wird 24/7 beworben. Sonst gelten die Zeiten darunter.'
+              - name: zeiten
+                label: 'Zeiten (nur wenn oben kein Haken gesetzt ist)'
+                widget: list
+                collapsed: true
+                summary: '{{fields.tage}}: {{fields.von}} – {{fields.bis}}'
+                fields:
+                  - { name: tage, label: 'Tage', widget: string, hint: 'Beispiel: Montag - Freitag' }
+                  - name: von
+                    label: 'Von'
+                    widget: string
+                    pattern: ['^\d{2}:\d{2}$', 'Bitte als 08:00 schreiben']
+                  - name: bis
+                    label: 'Bis'
+                    widget: string
+                    pattern: ['^\d{2}:\d{2}$', 'Bitte als 22:00 schreiben']
+
+          - name: hinweisBanner
+            label: 'Hinweisstreifen (Urlaub, Feiertage)'
+            widget: object
+            fields:
+              - { name: anzeigen, label: 'Streifen anzeigen', widget: boolean, hint: 'Blendet oben auf jeder Seite einen farbigen Hinweis ein.' }
+              - { name: text, label: 'Text des Hinweises', widget: string, required: false }
+
+          - name: anfahrt
+            label: 'Anfahrt & Haltestelle'
+            widget: object
+            collapsed: true
+            fields:
+              - { name: breitengrad, label: 'Breitengrad', widget: number, value_type: float, hint: 'Nur ändern, wenn das Unternehmen umzieht.' }
+              - { name: laengengrad, label: 'Längengrad', widget: number, value_type: float, hint: 'Nur ändern, wenn das Unternehmen umzieht.' }
+              - { name: haltestelle, label: 'Nächste Haltestelle', widget: string }
+              - { name: fussMeter, label: 'Entfernung zu Fuß (Meter)', widget: number, value_type: int, min: 1 }
+              - { name: fussMinuten, label: 'Gehzeit (Minuten)', widget: number, value_type: int, min: 1 }
+              - { name: linien, label: 'Linien', widget: list, hint: 'Mit Komma trennen, z. B. U6, U13, S6, S60' }
+              - { name: flughafenMinuten, label: 'Fahrzeit zum Flughafen (Minuten)', widget: number, value_type: int, min: 1 }
+              - { name: taktMinuten, label: 'Takt der Bahn (Minuten)', widget: number, value_type: int, min: 1 }
+
+          - name: einzugsgebiet
+            label: 'Orte, in denen Sie fahren'
+            widget: list
+            hint: 'Erscheinen im Fußbereich und helfen bei Google. Mit Komma trennen.'
+
+          - name: rechtliches
+            label: 'Angaben fürs Impressum'
+            widget: object
+            collapsed: true
+            fields:
+              - { name: ustId, label: 'Umsatzsteuer-ID', widget: string, required: false }
+              - { name: aufsichtsbehoerde, label: 'Genehmigungsbehörde', widget: string, required: false, hint: 'Die Behörde, die Ihre Konzession nach PBefG erteilt hat.' }
+              - { name: konzession, label: 'Konzessionsnummer', widget: string, required: false }
+
+  # ===========================================================================
+  #  2. Preise
+  # ===========================================================================
+  - name: preise
+    label: 'Preise'
+    description: 'Aktuell werden auf der Website absichtlich keine Preise gezeigt. Der Schalter ganz unten steuert das.'
+    editor:
+      preview: false
+    files:
+      - name: alle
+        label: 'Preise & Park-&-Fly-Konditionen'
+        file: content/preise.yaml
+        fields:
+          - { name: waehrung, label: 'Währung', widget: hidden, default: 'EUR' }
+
+          - name: strecken
+            label: 'Festpreise für häufige Strecken'
+            widget: list
+            collapsed: true
+            summary: '{{fields.ziel}} – {{fields.preis}} €'
+            fields:
+              - { name: ziel, label: 'Ziel', widget: string }
+              - { name: preis, label: 'Preis in Euro', widget: number, value_type: float, min: 0 }
+              - { name: hinweis, label: 'Zusatz', widget: string, required: false, hint: 'Beispiel: Festpreis, bis 4 Personen' }
+
+          - name: parkAndFly
+            label: 'Park & Fly'
+            widget: object
+            fields:
+              - { name: preisProTag, label: 'Preis pro Tag (Euro)', widget: number, value_type: float, min: 0 }
+              - { name: preisProWoche, label: 'Preis pro Woche (Euro)', widget: number, value_type: float, min: 0 }
+              - { name: stellplaetze, label: 'Anzahl Stellplätze', widget: number, value_type: int, min: 0 }
+              - { name: ueberdacht, label: 'Überdacht', widget: boolean }
+              - { name: gesichert, label: 'Umzäunt oder videoüberwacht', widget: boolean }
+              - { name: schluesselabgabe, label: 'Schlüssel muss abgegeben werden', widget: boolean }
+              - { name: shuttleAufpreis, label: 'Aufpreis Shuttle (Euro)', widget: number, value_type: float, min: 0, hint: '0 bedeutet: im Preis enthalten.' }
+
+          - name: zuschlaege
+            label: 'Zuschläge'
+            widget: list
+            collapsed: true
+            summary: '{{fields.bezeichnung}} – {{fields.preis}} €'
+            fields:
+              - { name: bezeichnung, label: 'Bezeichnung', widget: string }
+              - { name: preis, label: 'Preis in Euro', widget: number, value_type: float, min: 0 }
+              - { name: hinweis, label: 'Zusatz', widget: string, required: false }
+
+          - name: zahlungsarten
+            label: 'Zahlungsarten'
+            widget: list
+            hint: 'Mit Komma trennen. Was nicht zutrifft, einfach löschen.'
+
+          - name: anzeigen
+            label: 'Preise öffentlich auf der Website anzeigen'
+            widget: boolean
+            hint: 'ACHTUNG: Ein veröffentlichter Preis ist für Sie verbindlich. Solange überall 0 steht, bleibt die Tabelle auch mit Haken verborgen.'
+
+  # ===========================================================================
+  #  3. Häufige Fragen
+  # ===========================================================================
+  - name: faq
+    label: 'Häufige Fragen'
+    description: 'Erscheinen auf der Startseite und werden von Google ausgelesen.'
+    editor:
+      preview: false
+    files:
+      - name: fragen
+        label: 'Fragen & Antworten'
+        file: content/faq.yaml
+        fields:
+          - name: fragen
+            label: 'Fragen'
+            label_singular: 'Frage'
+            widget: list
+            collapsed: true
+            summary: '{{fields.frage}}'
+            fields:
+              - name: id
+                label: 'Kennung'
+                widget: string
+                hint: 'Nur Kleinbuchstaben, Ziffern und Bindestriche. Keine Umlaute, keine Leerzeichen. Muss einmalig sein.'
+                pattern: ['^[a-z0-9-]+$', 'Nur Kleinbuchstaben, Ziffern und Bindestriche erlaubt']
+              - { name: frage, label: 'Frage', widget: string }
+              - { name: antwort, label: 'Antwort', widget: text }
+
+  # ===========================================================================
+  #  4. Leistungen
+  # ===========================================================================
+  - name: leistungen
+    label: 'Leistungen'
+    label_singular: 'Leistung'
+    description: 'Je eine Unterseite pro Leistung.'
+    folder: content/leistungen
+    extension: md
+    format: frontmatter
+    create: true
+    slug: '{{slug}}'
+    identifier_field: titel
+    summary: '{{titel}}'
+    fields:
+      - { name: titel, label: 'Titel', widget: string }
+      - { name: kurz, label: 'Ein-Satz-Beschreibung', widget: text, hint: 'Erscheint auf der Übersichtskachel.' }
+      - name: icon
+        label: 'Symbol'
+        widget: select
+        options:
+          - { label: 'Flugzeug', value: flugzeug }
+          - { label: 'Herz (Krankenfahrten)', value: herz }
+          - { label: 'Aktentasche (Geschäftlich)', value: aktentasche }
+          - { label: 'Paket (Kurier)', value: paket }
+          - { label: 'Stern (Event)', value: stern }
+          - { label: 'Route (Stadtfahrten)', value: route }
+          - { label: 'Parken', value: parken }
+      - { name: reihenfolge, label: 'Reihenfolge', widget: number, value_type: int, min: 1, hint: 'Legt fest, an welcher Stelle die Leistung erscheint. 1 steht ganz vorn.' }
+      - { name: seoTitel, label: 'Titel bei Google', widget: string, hint: 'Höchstens 70 Zeichen.' }
+      - { name: seoBeschreibung, label: 'Beschreibung bei Google', widget: text, hint: 'Höchstens 175 Zeichen.' }
+      - { name: vorteile, label: 'Das ist inbegriffen', widget: list, hint: 'Erscheint als Häkchenliste neben der Überschrift.' }
+      - { name: body, label: 'Ausführlicher Text', widget: markdown }
+
+  # ===========================================================================
+  #  5. Stellenanzeigen
+  # ===========================================================================
+  - name: jobs
+    label: 'Stellenanzeigen'
+    label_singular: 'Stellenanzeige'
+    folder: content/jobs
+    extension: md
+    format: frontmatter
+    create: true
+    slug: '{{slug}}'
+    identifier_field: titel
+    summary: '{{titel}}'
+    fields:
+      - { name: titel, label: 'Titel der Stelle', widget: string }
+      - { name: art, label: 'Anstellungsart', widget: string, hint: 'Beispiel: Vollzeit, Teilzeit oder Minijob' }
+      - { name: standort, label: 'Standort', widget: string }
+      - name: aktiv
+        label: 'Anzeige ist offen'
+        widget: boolean
+        default: true
+        hint: 'Haken entfernen, sobald die Stelle besetzt ist. Die Anzeige verschwindet dann von der Website, bleibt aber gespeichert.'
+      - { name: reihenfolge, label: 'Reihenfolge', widget: number, value_type: int, min: 1 }
+      - { name: anforderungen, label: 'Das bringen Sie mit', widget: list }
+      - { name: wirBieten, label: 'Das bieten wir', widget: list }
+      - { name: body, label: 'Ausführlicher Text', widget: markdown }
+
+  # ===========================================================================
+  #  6. Kundenstimmen
+  # ===========================================================================
+  - name: kundenstimmen
+    label: 'Kundenstimmen'
+    label_singular: 'Kundenstimme'
+    description: 'Nur echte Bewertungen veröffentlichen – erfundene sind wettbewerbswidrig und abmahnbar.'
+    folder: content/kundenstimmen
+    extension: yml
+    format: yaml
+    create: true
+    slug: '{{slug}}'
+    identifier_field: name
+    summary: '{{name}} – {{anlass}}'
+    editor:
+      preview: false
+    fields:
+      - { name: name, label: 'Name', widget: string, hint: 'Vorname und Stadtteil genügen. Bitte vorher um Erlaubnis fragen.' }
+      - { name: ort, label: 'Ort', widget: string, required: false }
+      - { name: anlass, label: 'Anlass der Fahrt', widget: string, required: false, hint: 'Beispiel: Flughafentransfer' }
+      - { name: sterne, label: 'Sterne', widget: number, value_type: int, min: 1, max: 5, default: 5 }
+      - { name: text, label: 'Text der Bewertung', widget: text }
+      - name: freigegeben
+        label: 'Auf der Website anzeigen'
+        widget: boolean
+        default: false
+        hint: 'Erst anhaken, wenn der Text echt ist und die Person zugestimmt hat.'

@@ -1,0 +1,35 @@
+---
+import Icon from './Icon.astro';
+import { telefonLink, whatsappLink, whatsappStandardtext } from '~/config/site';
+
+/**
+ * Fester Balken am unteren Bildschirmrand - nur auf dem Handy.
+ * Damit ist Buchen und Anrufen von jeder Stelle der Seite aus einen Griff
+ * entfernt, ohne nach oben scrollen zu muessen.
+ */
+---
+
+<div
+  class="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-nacht-950/95 backdrop-blur-lg lg:hidden"
+  style="padding-bottom: env(safe-area-inset-bottom);"
+>
+  <div class="grid grid-cols-[1fr_auto] gap-2 px-3 py-2.5">
+    <a
+      href={whatsappLink(whatsappStandardtext)}
+      target="_blank"
+      rel="noopener"
+      class="knopf knopf-whatsapp w-full"
+    >
+      <Icon name="whatsapp" size={20} />
+      Fahrt anfragen
+    </a>
+    <a
+      href={telefonLink}
+      class="knopf knopf-rand !px-5"
+      aria-label="Jetzt anrufen"
+    >
+      <Icon name="telefon" size={20} />
+      <span class="nur-vorlesen">Anrufen</span>
+    </a>
+  </div>
+</div>

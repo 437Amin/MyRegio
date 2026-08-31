@@ -1,0 +1,348 @@
+@import 'tailwindcss';
+
+/* Schriften werden aus node_modules mitgeliefert und selbst ausgeliefert.
+   Kein Google-Fonts-CDN - dadurch keine Datenuebertragung an Dritte und
+   damit auch kein Cookie-Banner noetig. */
+@import '@fontsource-variable/outfit';
+@import '@fontsource-variable/inter';
+
+/* ===========================================================================
+   Design-Tokens - abgeleitet aus dem vorhandenen MyRegioCar-Flyer
+   =========================================================================== */
+@theme {
+  --color-nacht-950: #05070a;
+  --color-nacht-900: #0a0e14;
+  --color-nacht-850: #0f141d;
+  --color-nacht-800: #141b26;
+  --color-nacht-700: #1e2733;
+
+  --color-cyan-300: #7dd8fa;
+  --color-cyan-400: #45c6f5;
+  --color-cyan-500: #22b8f0;
+  --color-cyan-600: #0f9ad2;
+  --color-cyan-700: #0b7aa8;
+
+  --color-nebel-100: #e8edf3;
+  --color-nebel-300: #b3bfcd;
+  --color-nebel-400: #8d9aab;
+  --color-nebel-500: #6b7887;
+
+  --color-gruen-500: #25d366; /* WhatsApp */
+  --color-gruen-600: #1eb655;
+
+  --font-display: 'Outfit Variable', 'Outfit', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'Inter Variable', 'Inter', ui-sans-serif, system-ui, sans-serif;
+
+  --radius-karte: 1rem;
+
+  --shadow-leuchten: 0 0 0 1px rgb(34 184 240 / 0.25), 0 8px 32px -8px rgb(34 184 240 / 0.35);
+}
+
+/* ===========================================================================
+   Grundlagen
+   =========================================================================== */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Verhindert, dass iOS beim Drehen die Schrift eigenmaechtig vergroessert */
+    -webkit-text-size-adjust: 100%;
+    scroll-padding-top: 5rem;
+  }
+
+  body {
+    background-color: var(--color-nacht-950);
+    color: var(--color-nebel-100);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    /* Dezenter Farbverlauf statt flachem Schwarz */
+    background-image:
+      radial-gradient(60rem 40rem at 50% -10%, rgb(34 184 240 / 0.09), transparent 65%),
+      radial-gradient(40rem 30rem at 100% 0%, rgb(34 184 240 / 0.05), transparent 60%);
+    background-attachment: fixed;
+    /* Platz fuer den festen Aktionsbalken am unteren Rand (nur mobil) */
+    padding-bottom: calc(4.5rem + env(safe-area-inset-bottom));
+  }
+
+  @media (min-width: 1024px) {
+    body {
+      padding-bottom: 0;
+    }
+  }
+
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  /* Kein blauer Kasten beim Antippen auf Android */
+  a, button, [role='button'], input, select, textarea, summary {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* 16px verhindert das automatische Hineinzoomen von iOS Safari beim Tippen */
+  input, select, textarea {
+    font-size: 16px;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-cyan-400);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Muss die display-Regeln der Bausteine schlagen - sonst bleiben mit
+     hidden ausgeblendete Schaltflaechen sichtbar. */
+  [hidden] {
+    display: none !important;
+  }
+
+  ::selection {
+    background: var(--color-cyan-500);
+    color: var(--color-nacht-950);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+
+/* ===========================================================================
+   Wiederkehrende Bausteine
+   =========================================================================== */
+@layer components {
+  .huelle {
+    width: 100%;
+    max-width: 78rem;
+    margin-inline: auto;
+    padding-inline: 1.25rem;
+  }
+
+  @media (min-width: 768px) {
+    .huelle {
+      padding-inline: 2rem;
+    }
+  }
+
+  /* Karten mit feiner Kante, wie die Icon-Kaesten auf dem Flyer */
+  .karte {
+    background: linear-gradient(
+      160deg,
+      rgb(255 255 255 / 0.045),
+      rgb(255 255 255 / 0.015)
+    );
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: var(--radius-karte);
+    backdrop-filter: blur(8px);
+  }
+
+  .karte-hover {
+    transition: border-color 0.25s ease, transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .karte-hover:hover {
+    border-color: rgb(34 184 240 / 0.45);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px -16px rgb(34 184 240 / 0.5);
+  }
+
+  /* Alle Schaltflaechen erfuellen die 48px-Mindestgroesse fuer Finger */
+  .knopf {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 3rem;
+    padding-inline: 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 1rem;
+    line-height: 1;
+    text-align: center;
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  }
+
+  .knopf:active {
+    transform: scale(0.98);
+  }
+
+  .knopf-whatsapp {
+    background-color: var(--color-gruen-500);
+    color: #06240f;
+  }
+
+  .knopf-whatsapp:hover {
+    background-color: var(--color-gruen-600);
+  }
+
+  .knopf-cyan {
+    background-color: var(--color-cyan-500);
+    color: var(--color-nacht-950);
+  }
+
+  .knopf-cyan:hover {
+    background-color: var(--color-cyan-400);
+  }
+
+  .knopf-rand {
+    border: 1px solid rgb(255 255 255 / 0.18);
+    color: var(--color-nebel-100);
+    background-color: rgb(255 255 255 / 0.03);
+  }
+
+  .knopf-rand:hover {
+    border-color: rgb(34 184 240 / 0.5);
+    background-color: rgb(34 184 240 / 0.08);
+  }
+
+  /* Der cyanfarbene Icon-Rahmen vom Flyer */
+  .icon-rahmen {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    flex-shrink: 0;
+    border: 1.5px solid rgb(34 184 240 / 0.55);
+    border-radius: 0.7rem;
+    color: var(--color-cyan-400);
+    background-color: rgb(34 184 240 / 0.07);
+  }
+
+  .abschnitt {
+    padding-block: 4rem;
+  }
+
+  @media (min-width: 768px) {
+    .abschnitt {
+      padding-block: 6rem;
+    }
+  }
+
+  /* Kleine Ueberschrift ueber der eigentlichen Ueberschrift */
+  .augenbraue {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-cyan-400);
+  }
+
+  /* Fliesstext in den Markdown-Seiten */
+  .fliesstext :where(h2) {
+    font-size: 1.5rem;
+    margin-top: 2.5rem;
+    margin-bottom: 0.875rem;
+    color: #fff;
+  }
+
+  .fliesstext :where(h3) {
+    font-size: 1.175rem;
+    margin-top: 2rem;
+    margin-bottom: 0.625rem;
+    color: #fff;
+  }
+
+  .fliesstext :where(p) {
+    margin-block: 1rem;
+    color: var(--color-nebel-300);
+    line-height: 1.75;
+  }
+
+  .fliesstext :where(ul, ol) {
+    margin-block: 1rem;
+    padding-left: 1.25rem;
+    color: var(--color-nebel-300);
+    line-height: 1.75;
+  }
+
+  .fliesstext :where(ul) {
+    list-style: none;
+    padding-left: 0;
+  }
+
+  .fliesstext :where(ul > li) {
+    position: relative;
+    padding-left: 1.5rem;
+    margin-block: 0.5rem;
+  }
+
+  .fliesstext :where(ul > li)::before {
+    content: '';
+    position: absolute;
+    left: 0.125rem;
+    top: 0.7em;
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 999px;
+    background-color: var(--color-cyan-500);
+  }
+
+  .fliesstext :where(ol) {
+    list-style: decimal;
+  }
+
+  .fliesstext :where(ol > li) {
+    margin-block: 0.5rem;
+    padding-left: 0.25rem;
+  }
+
+  .fliesstext :where(ol > li)::marker {
+    color: var(--color-cyan-400);
+    font-weight: 700;
+  }
+
+  .fliesstext :where(a) {
+    color: var(--color-cyan-400);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .fliesstext :where(strong) {
+    color: #fff;
+    font-weight: 600;
+  }
+
+  .fliesstext :where(blockquote) {
+    margin-block: 1.5rem;
+    padding: 1rem 1.25rem;
+    border-left: 3px solid var(--color-cyan-600);
+    background-color: rgb(34 184 240 / 0.06);
+    border-radius: 0 0.5rem 0.5rem 0;
+    color: var(--color-nebel-300);
+  }
+
+  .fliesstext :where(blockquote p) {
+    margin-block: 0;
+  }
+}
+
+/* Nur fuer Screenreader sichtbar */
+@layer utilities {
+  .nur-vorlesen {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+  }
+}

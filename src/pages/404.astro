@@ -1,0 +1,58 @@
+---
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Icon from '~/components/Icon.astro';
+import { hauptmenue } from '~/config/navigation';
+import { site, telefonLink, whatsappLink, whatsappStandardtext } from '~/config/site';
+---
+
+<BaseLayout
+  titel="Seite nicht gefunden"
+  beschreibung="Diese Seite existiert nicht. Hier geht es zurück zur Startseite."
+  nichtIndexieren
+>
+  <section class="abschnitt">
+    <div class="huelle">
+      <div class="mx-auto max-w-xl text-center">
+        <span class="font-display text-7xl font-bold text-cyan-500/25">404</span>
+        <h1 class="mt-4 text-3xl md:text-4xl">Diese Seite gibt es nicht</h1>
+        <p class="mt-4 text-nebel-400">
+          Vielleicht hat sich die Adresse geändert oder ein Buchstabe verirrt.
+          Ihre Fahrt können Sie trotzdem direkt anfragen.
+        </p>
+
+        <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <a
+            href={whatsappLink(whatsappStandardtext)}
+            target="_blank"
+            rel="noopener"
+            class="knopf knopf-whatsapp"
+          >
+            <Icon name="whatsapp" size={20} />
+            Fahrt anfragen
+          </a>
+          <a href={telefonLink} class="knopf knopf-rand">
+            <Icon name="telefon" size={18} />
+            {site.kontakt.telefonAnzeige}
+          </a>
+        </div>
+
+        <nav aria-label="Alle Seiten" class="mt-12 border-t border-white/8 pt-8">
+          <ul class="flex flex-wrap justify-center gap-2">
+            {
+              hauptmenue.map((punkt) => (
+                <li>
+                  <a
+                    href={punkt.pfad}
+                    class="inline-flex min-h-11 items-center rounded-full border border-white/12 bg-white/3 px-4 text-sm text-nebel-300 transition-colors hover:border-cyan-500/50 hover:text-white"
+                  >
+                    {punkt.titel}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

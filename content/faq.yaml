@@ -1,0 +1,84 @@
+# =============================================================================
+#  HAEUFIGE FRAGEN
+# =============================================================================
+#
+#  Diese Fragen erscheinen auf der Startseite und werden auch von Google
+#  ausgelesen - gute Antworten bringen zusaetzliche Sichtbarkeit.
+#
+#  Am bequemsten bearbeiten Sie sie im Redaktionsbereich unter /admin.
+#  Dort koennen Sie Fragen auch per Ziehen neu anordnen.
+# =============================================================================
+
+fragen:
+  - id: "vorlauf"
+    frage: "Wie kurzfristig kann ich eine Fahrt buchen?"
+    antwort: >-
+      Am besten buchen Sie so früh wie möglich, dann ist Ihr Wunschtermin sicher.
+      Kurzfristige Fahrten sind je nach Auslastung oft trotzdem möglich –
+      schreiben Sie uns einfach per WhatsApp, Sie erhalten in der Regel innerhalb
+      weniger Minuten eine Rückmeldung.
+
+  - id: "preis"
+    frage: "Was kostet meine Fahrt?"
+    antwort: >-
+      Sie erhalten vor der Fahrt einen verbindlichen Festpreis. Als
+      Mietwagenunternehmen mit Fahrer rechnen wir nicht nach Taxameter ab,
+      sondern vereinbaren den Preis vorher mit Ihnen. Keine Überraschungen am
+      Ziel, kein Aufschlag bei Stau.
+
+  - id: "flug-verspaetung"
+    frage: "Was passiert, wenn mein Flug Verspätung hat?"
+    antwort: >-
+      Geben Sie uns bei der Buchung einfach Ihre Flugnummer an. Wir behalten die
+      Ankunftszeit im Blick und passen die Abholung an – ohne Aufpreis für die
+      Wartezeit bei einer Flugverspätung.
+
+  - id: "park-and-fly-ablauf"
+    frage: "Wie läuft Park & Fly bei Ihnen ab?"
+    antwort: >-
+      Sie stellen Ihr Auto auf unserem Gelände in der Steiermärker Straße ab. Von
+      dort sind es rund 150 Meter zu Fuß bis zur Haltestelle Feuerbach Bahnhof.
+      Die U6 bringt Sie ohne Umsteigen direkt zum Flughafen. Wer lieber gefahren
+      wird, bucht zusätzlich unseren Shuttle bis vor das Terminal.
+
+  - id: "krankenfahrt"
+    frage: "Übernimmt die Krankenkasse meine Fahrt?"
+    antwort: >-
+      Bei ärztlich verordneten Fahrten – etwa zur Dialyse, Chemotherapie oder
+      Strahlentherapie – übernimmt die Krankenkasse die Kosten in der Regel nach
+      Vorlage einer Verordnung. Bringen Sie die Verordnung bitte zur Fahrt mit.
+      Klären Sie den konkreten Fall vorab mit Ihrer Krankenkasse.
+
+  - id: "zahlung"
+    frage: "Wie kann ich bezahlen?"
+    antwort: >-
+      Sie können bar oder bargeldlos bezahlen. Geschäftskunden rechnen wir auf
+      Wunsch monatlich per Rechnung ab.
+
+  - id: "kindersitz"
+    frage: "Haben Sie Kindersitze?"
+    antwort: >-
+      Ja. Bitte geben Sie bei der Buchung an, wie viele Kinder mitfahren und wie
+      alt sie sind, damit wir den passenden Sitz einbauen können.
+
+  - id: "gepaeck"
+    frage: "Wie viel Gepäck passt ins Fahrzeug?"
+    antwort: >-
+      In unserem Kombi haben vier Personen mit üblichem Reisegepäck bequem Platz.
+      Bei sperrigem Gepäck, Sportausrüstung oder größeren Gruppen sagen Sie uns
+      kurz Bescheid – wir finden eine Lösung.
+
+  - id: "unterschied-taxi"
+    frage: "Was ist der Unterschied zu einem Taxi?"
+    antwort: >-
+      Wir sind ein Mietwagenunternehmen mit Fahrer nach § 49 PBefG. Das heißt:
+      Fahrten werden vorab bestellt und der Preis wird vorher vereinbart, statt
+      nach Taxameter abgerechnet zu werden. Sie wissen also schon bei der
+      Buchung, was die Fahrt kostet.
+
+  - id: "gebiet"
+    frage: "Fahren Sie auch außerhalb von Stuttgart?"
+    antwort: >-
+      Ja. Unser Schwerpunkt liegt in Stuttgart und der Region, wir fahren aber
+      ebenso Fernstrecken und andere Flughäfen an. Fragen Sie einfach per
+      WhatsApp nach einem Festpreis für Ihre Strecke.

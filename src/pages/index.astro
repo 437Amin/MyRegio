@@ -1,0 +1,254 @@
+---
+import { getCollection } from 'astro:content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Icon from '~/components/Icon.astro';
+import Buchungsassistent from '~/components/Buchungsassistent.astro';
+import LeistungenRaster from '~/components/LeistungenRaster.astro';
+import FaqListe from '~/components/FaqListe.astro';
+import Kundenstimmen from '~/components/Kundenstimmen.astro';
+import PreisTabelle from '~/components/PreisTabelle.astro';
+import { site, telefonLink } from '~/config/site';
+
+const leistungen = (await getCollection('leistungen'))
+  .sort((a, b) => a.data.reihenfolge - b.data.reihenfolge)
+  .map((eintrag) => ({
+    titel: eintrag.data.titel,
+    kurz: eintrag.data.kurz,
+    slug: eintrag.id,
+  }));
+
+const merkmale = [
+  {
+    icon: 'euro' as const,
+    titel: 'Festpreis vorab',
+    text: 'Sie kennen den Preis, bevor Sie einsteigen – kein Taxameter, kein Aufschlag im Stau.',
+  },
+  {
+    icon: 'uhr' as const,
+    titel: site.oeffnungszeiten.kurz,
+    text: 'Auch für frühe Flüge und späte Rückfahrten. Schreiben Sie einfach, wann Sie uns brauchen.',
+  },
+  {
+    icon: 'bahn' as const,
+    titel: 'Direkt am Bahnhof Feuerbach',
+    text: `Unser Betriebssitz liegt ${site.anfahrt.fussMinuten} Gehminuten von der Stadtbahn entfernt – die Grundlage für Park & Fly.`,
+  },
+  {
+    icon: 'haendedruck' as const,
+    titel: 'Ohne Vermittler',
+    text: 'Sie schreiben direkt dem Unternehmer. Keine Warteschleife, keine App, keine Provision.',
+  },
+];
+
+const ablauf = [
+  {
+    titel: 'Anfrage stellen',
+    text: 'Ein paar Angaben im Assistenten – daraus wird eine fertige WhatsApp-Nachricht, die Sie nur noch abschicken.',
+  },
+  {
+    titel: 'Festpreis erhalten',
+    text: 'Sie bekommen umgehend eine Rückmeldung mit dem verbindlichen Preis und der Bestätigung Ihres Termins.',
+  },
+  {
+    titel: 'Entspannt ankommen',
+    text: 'Wir sind pünktlich zur Stelle, helfen beim Gepäck und bringen Sie sicher ans Ziel.',
+  },
+];
+---
+
+<BaseLayout
+  titel={`Mietwagen mit Fahrer in Stuttgart | ${site.unternehmen.marke}`}
+  beschreibung="Ihr Fahrdienst in Stuttgart-Feuerbach: Flughafentransfer, Park & Fly, Krankenfahrten und Geschäftsfahrten. Festpreis vorab, Buchung bequem per WhatsApp."
+  mitFaqDaten
+  leistungenFuerDaten={leistungen}
+>
+  <!-- ================================ Hero ================================ -->
+  <section class="relative overflow-hidden">
+    <div
+      class="pointer-events-none absolute inset-0 -z-10"
+      aria-hidden="true"
+      style="background-image: radial-gradient(45rem 28rem at 15% 0%, rgb(34 184 240 / 0.16), transparent 70%);"
+    >
+    </div>
+
+    <div class="huelle pb-16 pt-14 md:pb-24 md:pt-20">
+      <div class="grid items-center gap-12 lg:grid-cols-[1.15fr_1fr]">
+        <div>
+          <span class="augenbraue">
+            <span class="relative flex h-2 w-2">
+              <span
+                class="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400 opacity-60"
+              ></span>
+              <span class="relative inline-flex h-2 w-2 rounded-full bg-cyan-400"
+              ></span>
+            </span>
+            {site.unternehmen.ort}-Feuerbach · {site.oeffnungszeiten.kurz}
+          </span>
+
+          <h1 class="mt-5 text-4xl leading-[1.08] sm:text-5xl lg:text-6xl">
+            Ihr Fahrer in Stuttgart.<br />
+            <span class="text-cyan-400">Direkt gebucht,</span><br />
+            fest vereinbart.
+          </h1>
+
+          <p class="mt-6 max-w-xl text-lg leading-relaxed text-nebel-300">
+            Mietwagen mit Fahrer für Flughafen, Termin und Alltag. Sie schreiben
+            uns per WhatsApp, bekommen einen Festpreis – und wir sind da. Ohne
+            App, ohne Vermittler, ohne Überraschungen.
+          </p>
+
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href="#buchen" class="knopf knopf-cyan">
+              Fahrt anfragen
+              <Icon name="pfeil-rechts" size={18} />
+            </a>
+            <a href="/park-and-fly" class="knopf knopf-rand">
+              <Icon name="parken" size={18} />
+              Park &amp; Fly entdecken
+            </a>
+          </div>
+
+          <p class="mt-6 text-sm text-nebel-500">
+            Lieber telefonisch?
+            <a
+              href={telefonLink}
+              class="font-semibold text-cyan-400 underline underline-offset-4"
+            >
+              {site.kontakt.telefonAnzeige}
+            </a>
+          </p>
+        </div>
+
+        <!-- Park-&-Fly-Kachel als Blickfang -->
+        <div class="karte relative overflow-hidden p-7 lg:p-8">
+          <div
+            class="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-cyan-500/12 blur-3xl"
+            aria-hidden="true"
+          >
+          </div>
+
+          <span class="augenbraue">Unser Standortvorteil</span>
+          <h2 class="mt-3 text-2xl">
+            Parken in Feuerbach,<br />einsteigen, weg.
+          </h2>
+          <p class="mt-3 text-sm leading-relaxed text-nebel-400">
+            Auto bei uns abstellen, {site.anfahrt.fussMinuten} Minuten laufen –
+            und die {site.anfahrt.linien[0]} bringt Sie ohne Umsteigen zum Flughafen.
+          </p>
+
+          <dl class="mt-6 grid grid-cols-3 gap-3 border-t border-white/8 pt-6">
+            <div>
+              <dt class="text-xs text-nebel-500">zu Fuß</dt>
+              <dd class="font-display text-2xl font-bold text-cyan-400">
+                {site.anfahrt.fussMinuten}<span class="text-base"> Min</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs text-nebel-500">zum Flughafen</dt>
+              <dd class="font-display text-2xl font-bold text-cyan-400">
+                {site.anfahrt.flughafenMinuten}<span class="text-base"> Min</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="text-xs text-nebel-500">Umstiege</dt>
+              <dd class="font-display text-2xl font-bold text-cyan-400">0</dd>
+            </div>
+          </dl>
+
+          <a
+            href="/park-and-fly"
+            class="mt-6 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-400 hover:text-cyan-300"
+          >
+            So funktioniert Park &amp; Fly
+            <Icon name="pfeil-rechts" size={15} />
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================== Merkmale ============================== -->
+  <section class="border-y border-white/8 bg-nacht-900/40">
+    <div class="huelle py-12">
+      <ul class="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        {
+          merkmale.map((merkmal) => (
+            <li>
+              <span class="icon-rahmen">
+                <Icon name={merkmal.icon} size={22} />
+              </span>
+              <h2 class="mt-4 font-bold text-white">{merkmal.titel}</h2>
+              <p class="mt-1.5 text-sm leading-relaxed text-nebel-400">
+                {merkmal.text}
+              </p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <!-- ========================== Buchungsassistent ========================== -->
+  <Buchungsassistent />
+
+  <!-- =============================== Ablauf =============================== -->
+  <section class="abschnitt border-t border-white/8">
+    <div class="huelle">
+      <div class="max-w-2xl">
+        <span class="augenbraue">In drei Schritten</span>
+        <h2 class="mt-4 text-3xl md:text-4xl">So einfach läuft es ab</h2>
+      </div>
+
+      <ol class="mt-10 grid gap-4 md:grid-cols-3">
+        {
+          ablauf.map((schritt, index) => (
+            <li class="karte relative p-6">
+              <span class="font-display text-5xl font-bold leading-none text-cyan-500/25">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <h3 class="mt-3 text-lg font-bold text-white">{schritt.titel}</h3>
+              <p class="mt-2 text-sm leading-relaxed text-nebel-400">
+                {schritt.text}
+              </p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <!-- ============================= Leistungen ============================= -->
+  <LeistungenRaster />
+
+  <PreisTabelle />
+  <Kundenstimmen />
+  <FaqListe />
+
+  <!-- ============================ Schlussaufruf ============================ -->
+  <section class="abschnitt border-t border-white/8">
+    <div class="huelle">
+      <div class="karte relative overflow-hidden px-6 py-12 text-center md:px-12 md:py-16">
+        <div
+          class="pointer-events-none absolute inset-x-0 top-0 h-40 bg-cyan-500/8 blur-3xl"
+          aria-hidden="true"
+        >
+        </div>
+        <h2 class="text-3xl md:text-4xl">Wann dürfen wir Sie fahren?</h2>
+        <p class="mx-auto mt-4 max-w-xl text-nebel-400">
+          Schreiben Sie uns Ihre Strecke und den Wunschtermin – Sie bekommen
+          umgehend einen Festpreis zurück.
+        </p>
+        <div class="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
+          <a href="#buchen" class="knopf knopf-cyan">
+            Fahrt anfragen
+            <Icon name="pfeil-rechts" size={18} />
+          </a>
+          <a href={telefonLink} class="knopf knopf-rand">
+            <Icon name="telefon" size={18} />
+            {site.kontakt.telefonAnzeige}
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

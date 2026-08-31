@@ -1,0 +1,47 @@
+---
+import Icon from './Icon.astro';
+import { kundenstimmen } from '~/config/site';
+
+/**
+ * Zeigt nur Bewertungen, die in der YAML-Datei ausdruecklich auf
+ * "freigegeben: true" stehen. Solange keine echten Stimmen hinterlegt sind,
+ * erscheint dieser Abschnitt gar nicht - lieber nichts als Erfundenes.
+ */
+---
+
+{
+  kundenstimmen.length > 0 && (
+    <section class="abschnitt" id="stimmen">
+      <div class="huelle">
+        <div class="max-w-2xl">
+          <span class="augenbraue">Kundenstimmen</span>
+          <h2 class="mt-4 text-3xl md:text-4xl">Was unsere Fahrgäste sagen</h2>
+        </div>
+
+        <ul class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {kundenstimmen.map((stimme) => (
+            <li class="karte flex flex-col p-6">
+              <div class="flex gap-0.5 text-cyan-400" aria-hidden="true">
+                {Array.from({ length: stimme.sterne }).map(() => (
+                  <Icon name="stern" size={16} />
+                ))}
+              </div>
+              <p class="nur-vorlesen">{stimme.sterne} von 5 Sternen</p>
+
+              <blockquote class="mt-4 flex-1 leading-relaxed text-nebel-300">
+                „{stimme.text}“
+              </blockquote>
+
+              <footer class="mt-5 border-t border-white/8 pt-4 text-sm">
+                <div class="font-semibold text-white">{stimme.name}</div>
+                <div class="text-nebel-500">
+                  {[stimme.ort, stimme.anlass].filter(Boolean).join(' · ')}
+                </div>
+              </footer>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  )
+}

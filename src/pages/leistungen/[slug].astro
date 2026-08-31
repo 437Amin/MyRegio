@@ -1,0 +1,108 @@
+---
+import { getCollection, render, type CollectionEntry } from 'astro:content';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Icon from '~/components/Icon.astro';
+import type { IconName } from '~/components/icon-namen';
+import Buchungsassistent from '~/components/Buchungsassistent.astro';
+import LeistungenRaster from '~/components/LeistungenRaster.astro';
+import { site, telefonLink } from '~/config/site';
+
+export async function getStaticPaths() {
+  const leistungen = await getCollection('leistungen');
+  return leistungen.map((eintrag) => ({
+    params: { slug: eintrag.id },
+    props: { eintrag },
+  }));
+}
+
+interface Props {
+  eintrag: CollectionEntry<'leistungen'>;
+}
+
+const { eintrag } = Astro.props;
+const { Content } = await render(eintrag);
+const daten = eintrag.data;
+
+// Auf der Detailseite wird die Fahrtart im Assistenten passend vorgewählt.
+const vorauswahlNachSlug: Record<string, string> = {
+  flughafentransfer: 'Flughafentransfer',
+  krankenfahrten: 'Krankenfahrt',
+  geschaeftsfahrten: 'Geschäftsfahrt',
+  kurierfahrten: 'Kurierfahrt',
+  'event-und-hochzeit': 'Stadt- oder Überlandfahrt',
+  'stadt-und-ueberlandfahrten': 'Stadt- oder Überlandfahrt',
+};
+---
+
+<BaseLayout titel={daten.seoTitel} beschreibung={daten.seoBeschreibung}>
+  <section class="border-b border-white/8">
+    <div class="huelle pb-12 pt-14 md:pb-16 md:pt-18">
+      <nav aria-label="Sie sind hier" class="mb-6 text-sm text-nebel-500">
+        <a href="/" class="hover:text-white">Start</a>
+        <span class="mx-2">/</span>
+        <a href="/leistungen" class="hover:text-white">Leistungen</a>
+        <span class="mx-2">/</span>
+        <span class="text-nebel-300">{daten.titel}</span>
+      </nav>
+
+      <div class="grid gap-10 lg:grid-cols-[1.2fr_1fr] lg:items-start">
+        <div>
+          <span class="icon-rahmen !h-14 !w-14">
+            <Icon name={daten.icon as IconName} size={26} />
+          </span>
+
+          <h1 class="mt-5 text-4xl leading-[1.12] sm:text-5xl">{daten.titel}</h1>
+
+          <p class="mt-5 max-w-2xl text-lg leading-relaxed text-nebel-300">
+            {daten.kurz}
+          </p>
+
+          <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+            <a href="#buchen" class="knopf knopf-cyan">
+              Jetzt anfragen
+              <Icon name="pfeil-rechts" size={18} />
+            </a>
+            <a href={telefonLink} class="knopf knopf-rand">
+              <Icon name="telefon" size={18} />
+              {site.kontakt.telefonAnzeige}
+            </a>
+          </div>
+        </div>
+
+        <ul class="karte space-y-4 p-6 md:p-7">
+          <li class="text-sm font-bold uppercase tracking-widest text-nebel-500">
+            Das ist inbegriffen
+          </li>
+          {
+            daten.vorteile.map((vorteil) => (
+              <li class="flex items-start gap-3">
+                <span class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cyan-500/15 text-cyan-400">
+                  <Icon name="check" size={12} />
+                </span>
+                <span class="text-sm leading-relaxed text-nebel-300">
+                  {vorteil}
+                </span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <article class="abschnitt">
+    <div class="huelle">
+      <div class="fliesstext max-w-3xl">
+        <Content />
+      </div>
+    </div>
+  </article>
+
+  <Buchungsassistent vorauswahl={vorauswahlNachSlug[eintrag.id] ?? ''} />
+
+  <LeistungenRaster
+    ausser={eintrag.id}
+    ueberschrift="Das könnte Sie auch betreffen"
+    einleitung="Wir übernehmen mehr als eine Fahrtart – oft lässt sich beides in einem Termin verbinden."
+  />
+</BaseLayout>

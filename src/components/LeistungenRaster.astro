@@ -1,0 +1,59 @@
+---
+import { getCollection } from 'astro:content';
+import Icon from './Icon.astro';
+import type { IconName } from './icon-namen';
+
+interface Props {
+  /** Diese Leistung im Raster auslassen (auf der Detailseite sinnvoll) */
+  ausser?: string;
+  ueberschrift?: string;
+  einleitung?: string;
+}
+
+const {
+  ausser,
+  ueberschrift = 'Wofür Sie uns buchen können',
+  einleitung = 'Ob einmalige Fahrt oder feste Strecke jede Woche – sagen Sie uns, worum es geht, und Sie bekommen einen Festpreis.',
+} = Astro.props;
+
+const leistungen = (await getCollection('leistungen'))
+  .filter((eintrag) => eintrag.id !== ausser)
+  .sort((a, b) => a.data.reihenfolge - b.data.reihenfolge);
+---
+
+<section class="abschnitt" id="leistungen">
+  <div class="huelle">
+    <div class="max-w-2xl">
+      <span class="augenbraue">Leistungen</span>
+      <h2 class="mt-4 text-3xl md:text-4xl">{ueberschrift}</h2>
+      <p class="mt-4 text-nebel-400">{einleitung}</p>
+    </div>
+
+    <ul class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        leistungen.map((leistung) => (
+          <li>
+            <a
+              href={`/leistungen/${leistung.id}`}
+              class="karte karte-hover flex h-full flex-col p-6"
+            >
+              <span class="icon-rahmen">
+                <Icon name={leistung.data.icon as IconName} size={22} />
+              </span>
+              <h3 class="mt-4 text-lg font-bold text-white">
+                {leistung.data.titel}
+              </h3>
+              <p class="mt-2 flex-1 text-sm leading-relaxed text-nebel-400">
+                {leistung.data.kurz}
+              </p>
+              <span class="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-400">
+                Mehr erfahren
+                <Icon name="pfeil-rechts" size={15} />
+              </span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>

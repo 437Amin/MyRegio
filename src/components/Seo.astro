@@ -1,0 +1,59 @@
+---
+import { site, adresseEinzeilig } from '~/config/site';
+
+interface Props {
+  titel: string;
+  beschreibung: string;
+  /** Kein Eintrag bei Google (fuer Impressum/Datenschutz) */
+  nichtIndexieren?: boolean;
+  bild?: string;
+}
+
+const {
+  titel,
+  beschreibung,
+  nichtIndexieren = false,
+  bild = '/og-bild.jpg',
+} = Astro.props;
+
+const kanonisch = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site);
+const bildUrl = new URL(bild, Astro.site);
+const vollerTitel = titel.includes(site.unternehmen.marke)
+  ? titel
+  : `${titel} | ${site.unternehmen.marke}`;
+---
+
+<title>{vollerTitel}</title>
+<meta name="description" content={beschreibung} />
+<link rel="canonical" href={kanonisch.href} />
+
+{nichtIndexieren && <meta name="robots" content="noindex, follow" />}
+
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={site.unternehmen.marke} />
+<meta property="og:locale" content="de_DE" />
+<meta property="og:title" content={vollerTitel} />
+<meta property="og:description" content={beschreibung} />
+<meta property="og:url" content={kanonisch.href} />
+<meta property="og:image" content={bildUrl.href} />
+
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={vollerTitel} />
+<meta name="twitter:description" content={beschreibung} />
+<meta name="twitter:image" content={bildUrl.href} />
+
+<meta name="geo.region" content="DE-BW" />
+<meta name="geo.placename" content={site.unternehmen.ort} />
+<meta
+  name="geo.position"
+  content={`${site.anfahrt.breitengrad};${site.anfahrt.laengengrad}`}
+/>
+<meta
+  name="ICBM"
+  content={`${site.anfahrt.breitengrad}, ${site.anfahrt.laengengrad}`}
+/>
+<meta name="author" content={site.unternehmen.firmenname} />
+<meta
+  name="keywords"
+  content={`Mietwagen mit Fahrer Stuttgart, Fahrdienst ${site.unternehmen.ort}, Flughafentransfer Stuttgart, Park and Fly Stuttgart, Krankenfahrten, ${adresseEinzeilig}`}
+/>
