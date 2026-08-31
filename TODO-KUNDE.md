@@ -8,6 +8,50 @@ Abhaken, was erledigt ist.
 
 ---
 
+## 🔧 Redaktionsbereich einrichten (macht der Entwickler)
+
+Damit Önder unter `/admin` selbst Inhalte pflegen kann, fehlen noch drei
+Schritte. Alle drei brauchen ein Konto und lassen sich nicht vorbereiten.
+
+- [ ] **1. Repository auf GitHub anlegen** (dein Konto, nicht Önders)
+  - Neues, **privates** Repository erstellen, z. B. `myregiocar`
+  - Lokal ist bereits alles vorbereitet und eingecheckt. Es fehlt nur:
+    ```
+    git remote add origin https://github.com/DEINNAME/myregiocar.git
+    git push -u origin main
+    ```
+
+- [ ] **2. Netlify mit dem Repository verbinden**
+  - Im Netlify-Projekt: *Site configuration → Build & deploy → Link repository*
+  - Build-Befehl `npm run build`, Verzeichnis `dist` (steht schon in
+    `netlify.toml`)
+  - Ab dann baut Netlify bei jeder Änderung automatisch neu – das Hochladen
+    von Zip-Dateien entfällt
+
+- [ ] **3. DecapBridge einrichten** (kostenlos für bis zu 3 Websites)
+  - Auf **decapbridge.com** registrieren, eine „Site" anlegen und das
+    GitHub-Repository verbinden
+  - DecapBridge zeigt danach zwei Werte an. Diese in
+    `public/admin/config.yml` eintragen – die Stellen sind dort mit
+    `↓↓↓` markiert:
+    - `repo:` → `DEINNAME/myregiocar`
+    - `identity_url:` → `https://auth.decapbridge.com/sites/<deine-site-id>`
+  - Önder per E-Mail einladen. Er bekommt eine Einladung, vergibt ein
+    Passwort und meldet sich danach direkt unter `/admin` an – **ohne
+    GitHub-Konto**
+
+- [ ] **4. Danach einmal prüfen**
+  - Unter `/admin` anmelden, eine Kleinigkeit ändern, veröffentlichen
+  - Prüfen, ob Netlify neu baut und die Änderung live erscheint
+  - `node scripts/cms-pruefen.mjs` ausführen – meldet, falls im Editor ein
+    Feld fehlt, das sonst beim Speichern verloren ginge
+
+> **Hinweis für später:** Wer in `content/*.yaml` ein neues Feld ergänzt, muss
+> es auch in `public/admin/config.yml` eintragen. Sonst löscht der Editor es
+> beim nächsten Speichern. Das Prüfskript aus Schritt 4 findet solche Lücken.
+
+---
+
 ## 🔴 Muss vor dem Livegang erledigt sein
 
 ### Kontaktdaten → `content/einstellungen.yaml`

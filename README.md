@@ -25,7 +25,9 @@ Die Seite läuft dann auf <http://localhost:4321>.
 | `npm run dev` | Entwicklungsserver mit sofortiger Aktualisierung |
 | `npm run build` | Baut die fertige Website nach `dist/` |
 | `npm run preview` | Zeigt das Ergebnis von `build` lokal an |
+| `node scripts/cms-pruefen.mjs` | Prüft, ob der Redaktionsbereich alle Inhaltsfelder kennt |
 | `node scripts/bilder-erzeugen.mjs` | Erzeugt Favicons und das Social-Vorschaubild neu |
+| `node scripts/vorschau-bauen.mjs` | Baut ein Vorschau-Paket zum Verschicken (mit `noindex`) |
 
 ---
 
@@ -85,6 +87,39 @@ src/
 
 scripts/bilder-erzeugen.mjs   Erzeugt Favicons und og-bild.jpg aus dem Logo
 ```
+
+### Redaktionsbereich unter `/admin`
+
+Decap CMS mit **DecapBridge** als Anmeldedienst: Önder meldet sich mit E-Mail
+und Passwort an und braucht **kein GitHub-Konto**. Seine Änderungen landen als
+Commit im Repository, Netlify baut daraufhin neu.
+
+Einrichtung siehe [`TODO-KUNDE.md`](TODO-KUNDE.md), Abschnitt „Redaktionsbereich
+einrichten". In `public/admin/config.yml` sind `repo` und `identity_url` als
+Platzhalter markiert.
+
+Zwei Dinge, die man dabei wissen muss:
+
+**Fehlende Felder werden gelöscht.** Decap schreibt eine Inhaltsdatei beim
+Speichern komplett aus den Feldern in `config.yml` neu. Ein Feld, das dort
+fehlt, verschwindet aus der Datei. Deshalb gibt es:
+
+```bash
+node scripts/cms-pruefen.mjs
+```
+
+Das Skript vergleicht `config.yml` mit allen Dateien in `content/` und meldet
+Lücken. Nach jeder Änderung an der Inhaltsstruktur ausführen.
+
+**Kommentare überleben das Speichern nicht.** Die erklärenden Kommentarköpfe in
+den YAML-Dateien sind weg, sobald Önder eine Datei über den Editor speichert.
+Die Erklärungen stehen deshalb zusätzlich als `hint:` an den Feldern in
+`config.yml` – dort sieht er sie direkt beim Bearbeiten.
+
+Ausnahme von der Drittanbieter-Regel: Die Seite `/admin` lädt den Editor von
+unpkg. Das betrifft ausschließlich diese Redaktionsseite – die öffentliche
+Website lädt weiterhin nichts von fremden Servern. `/admin` ist in
+`robots.txt` gesperrt und trägt `noindex`.
 
 ### Inhalte sind gegen Tippfehler abgesichert
 
