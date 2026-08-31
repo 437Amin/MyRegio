@@ -84,9 +84,11 @@ const pf = preise.parkAndFly;
                     Shuttle bis zum Terminal
                   </span>
                   <span class="font-display text-lg font-bold text-cyan-400">
-                    {pf.shuttleAufpreis > 0
-                      ? preisFormat(pf.shuttleAufpreis)
-                      : 'inklusive'}
+                    {pf.shuttleNachAbsprache
+                      ? 'auf Anfrage'
+                      : pf.shuttleAufpreis > 0
+                        ? preisFormat(pf.shuttleAufpreis)
+                        : 'inklusive'}
                   </span>
                 </li>
               </ul>

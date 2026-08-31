@@ -41,6 +41,22 @@ fragen:
       Die U6 bringt Sie ohne Umsteigen direkt zum Flughafen. Wer lieber gefahren
       wird, bucht zusätzlich unseren Shuttle bis vor das Terminal.
 
+  - id: "park-and-fly-haftung"
+    frage: "Wer haftet, wenn meinem Auto beim Parken etwas passiert?"
+    antwort: >-
+      Der Stellplatz ist überdacht und videoüberwacht. Rechtlich handelt es
+      sich aber um eine reine Stellplatzüberlassung und nicht um eine
+      Verwahrung: Für Schäden am abgestellten Fahrzeug ist die Versicherung
+      des Halters zuständig. Lassen Sie bitte keine Wertsachen im Auto.
+
+  - id: "park-and-fly-kosten"
+    frage: "Was kostet Park & Fly bei Ihnen?"
+    antwort: >-
+      Den Tagespreis für den Stellplatz nennen wir Ihnen direkt – schreiben Sie
+      uns einfach kurz mit Ihrem Reisezeitraum per WhatsApp. Möchten Sie
+      zusätzlich den Shuttle bis vor das Terminal, stimmen wir den Aufpreis
+      gleich mit ab.
+
   - id: "krankenfahrt"
     frage: "Übernimmt die Krankenkasse meine Fahrt?"
     antwort: >-

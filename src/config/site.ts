@@ -144,6 +144,7 @@ const preiseSchema = z.object({
     gesichert: z.boolean(),
     schluesselabgabe: z.boolean(),
     shuttleAufpreis: z.number().nonnegative('Der Aufpreis muss eine Zahl sein.'),
+    shuttleNachAbsprache: z.boolean().default(false),
   }),
   zuschlaege: z
     .array(

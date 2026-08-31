@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Icon from '~/components/Icon.astro';
 import { site, telefonLink, emailLink } from '~/config/site';
 
 const r = site.rechtliches;
@@ -11,23 +10,6 @@ const r = site.rechtliches;
     <div class="huelle">
       <div class="mx-auto max-w-3xl">
         <h1 class="text-4xl">Impressum</h1>
-
-        <div
-          class="karte mt-8 flex gap-4 border-amber-400/30 bg-amber-400/8 p-5 text-sm leading-relaxed text-amber-100/90"
-        >
-          <Icon name="schild" size={20} class="mt-0.5 shrink-0 text-amber-300" />
-          <div>
-            <strong class="text-amber-200">
-              Hinweis an den Betreiber – bitte vor der Veröffentlichung prüfen:
-            </strong>
-            <p class="mt-1.5">
-              Dies ist ein Entwurf. Die mit „bitte ergänzen“ markierten Angaben
-              müssen ausgefüllt und der gesamte Text von einer Rechtsanwältin
-              oder einem Rechtsanwalt geprüft werden. Ein unvollständiges
-              Impressum ist abmahnfähig.
-            </p>
-          </div>
-        </div>
 
         <div class="fliesstext mt-10">
           <h2>Angaben gemäß § 5 DDG</h2>

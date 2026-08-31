@@ -186,7 +186,8 @@ collections:
               - { name: ueberdacht, label: 'Überdacht', widget: boolean }
               - { name: gesichert, label: 'Umzäunt oder videoüberwacht', widget: boolean }
               - { name: schluesselabgabe, label: 'Schlüssel muss abgegeben werden', widget: boolean }
-              - { name: shuttleAufpreis, label: 'Aufpreis Shuttle (Euro)', widget: number, value_type: float, min: 0, hint: '0 bedeutet: im Preis enthalten.' }
+              - { name: shuttleAufpreis, label: 'Aufpreis Shuttle (Euro)', widget: number, value_type: float, min: 0, hint: '0 bedeutet: im Preis enthalten. Wird unten "nach Absprache" angehakt, spielt dieser Wert keine Rolle.' }
+              - { name: shuttleNachAbsprache, label: 'Shuttle-Preis nach Absprache', widget: boolean, hint: 'Angehakt erscheint auf der Seite "auf Anfrage" statt eines Betrags.' }
 
           - name: zuschlaege
             label: 'Zuschläge'

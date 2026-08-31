@@ -36,18 +36,22 @@ strecken:
 
 # --- Park & Fly --------------------------------------------------------------
 parkAndFly:
-  preisProTag: 0
+  preisProTag: 7
+  # 0 bedeutet: wird nicht angezeigt
   preisProWoche: 0
-  # Wie viele Stellplaetze stehen zur Verfuegung?
+  # Wie viele Stellplaetze stehen zur Verfuegung? 0 = keine Angabe
   stellplaetze: 0
   # Ist der Platz ueberdacht?
-  ueberdacht: false
+  ueberdacht: true
   # Ist das Gelaende umzaeunt / videoueberwacht?
   gesichert: true
   # Muss der Autoschluessel abgegeben werden?
   schluesselabgabe: false
   # Aufpreis fuer den Shuttle bis zum Terminal (0 = im Preis enthalten)
   shuttleAufpreis: 0
+  # Wird der Shuttle-Preis individuell vereinbart? Dann steht auf der
+  # Seite "auf Anfrage" statt einer Zahl.
+  shuttleNachAbsprache: true
 
 # --- Zuschlaege --------------------------------------------------------------
 zuschlaege:

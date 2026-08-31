@@ -3,9 +3,22 @@ import BaseLayout from '~/layouts/BaseLayout.astro';
 import Icon from '~/components/Icon.astro';
 import Buchungsassistent from '~/components/Buchungsassistent.astro';
 import PreisTabelle from '~/components/PreisTabelle.astro';
-import { site, adresseEinzeilig, telefonLink } from '~/config/site';
+import { site, adresseEinzeilig, telefonLink, preise } from '~/config/site';
 
 const a = site.anfahrt;
+const pf = preise.parkAndFly;
+
+// Aussagen zum Stellplatz kommen aus der Preisdatei, damit die Seite nicht
+// weiter mit "überdacht" wirbt, wenn sich daran einmal etwas ändert.
+const stellplatzMerkmale = [
+  pf.ueberdacht ? 'überdacht' : null,
+  pf.gesichert ? 'videoüberwacht' : null,
+].filter(Boolean) as string[];
+
+const merkmaleText =
+  stellplatzMerkmale.length === 2
+    ? `${stellplatzMerkmale[0]} und ${stellplatzMerkmale[1]}`
+    : (stellplatzMerkmale[0] ?? '');
 
 const schritte = [
   {
@@ -43,13 +56,17 @@ const gruende = [
   },
   {
     icon: 'schild' as const,
-    titel: 'Auf unserem Firmengelände',
-    text: 'Ihr Fahrzeug steht nicht anonym in einer öffentlichen Straße, sondern auf dem Gelände eines Betriebs, der jeden Tag dort ist.',
+    titel: merkmaleText
+      ? `Stellplatz ${merkmaleText}`
+      : 'Auf unserem Firmengelände',
+    text: `Ihr Fahrzeug steht nicht anonym in einer öffentlichen Straße, sondern ${
+      merkmaleText ? `${merkmaleText} ` : ''
+    }auf dem Gelände eines Betriebs, der jeden Tag dort ist.`,
   },
   {
     icon: 'haendedruck' as const,
     titel: 'Shuttle, wenn Sie möchten',
-    text: 'Viel Gepäck, kleine Kinder oder ein Flug um fünf Uhr morgens? Dann fahren wir Sie auf Wunsch direkt bis vor das Terminal.',
+    text: 'Viel Gepäck, kleine Kinder oder ein Flug um fünf Uhr morgens? Dann fahren wir Sie auf Wunsch direkt bis vor das Terminal. Den Aufpreis dafür stimmen wir vorher per WhatsApp mit Ihnen ab.',
   },
 ];
 
@@ -252,7 +269,24 @@ const kartenLink = `https://www.openstreetmap.org/?mlat=${a.breitengrad}&mlon=${
         }
       </ul>
 
-      <p class="mt-8 max-w-3xl text-sm leading-relaxed text-nebel-500">
+      <!-- Muss vor der Buchung sichtbar sein, nicht erst im Kleingedruckten -->
+      <div class="karte mt-8 flex gap-4 p-6">
+        <span class="icon-rahmen shrink-0">
+          <Icon name="schild" size={22} />
+        </span>
+        <div>
+          <h3 class="font-bold text-white">Wichtig zur Haftung</h3>
+          <p class="mt-2 max-w-3xl text-sm leading-relaxed text-nebel-400">
+            Das Abstellen erfolgt auf eigene Gefahr. Wir stellen Ihnen einen
+            Stellplatz zur Verfügung{merkmaleText ? ` – ${merkmaleText} –` : ''},
+            übernehmen aber keine Verwahrung Ihres Fahrzeugs. Für Schäden am
+            abgestellten Fahrzeug ist die Versicherung des Halters zuständig.
+            Bitte lassen Sie keine Wertsachen im Auto.
+          </p>
+        </div>
+      </div>
+
+      <p class="mt-6 max-w-3xl text-sm leading-relaxed text-nebel-500">
         Hinweis: Für die Fahrt mit Stadtbahn und S-Bahn benötigen Sie ein
         gültiges VVS-Ticket. Die angegebene Fahrzeit bezieht sich auf die
         reguläre Verbindung ab {a.haltestelle}; Bauarbeiten oder Störungen im

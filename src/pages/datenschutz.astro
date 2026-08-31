@@ -1,6 +1,5 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import Icon from '~/components/Icon.astro';
 import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
 ---
 
@@ -13,24 +12,6 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
     <div class="huelle">
       <div class="mx-auto max-w-3xl">
         <h1 class="text-4xl">Datenschutzerklärung</h1>
-
-        <div
-          class="karte mt-8 flex gap-4 border-amber-400/30 bg-amber-400/8 p-5 text-sm leading-relaxed text-amber-100/90"
-        >
-          <Icon name="schild" size={20} class="mt-0.5 shrink-0 text-amber-300" />
-          <div>
-            <strong class="text-amber-200">
-              Hinweis an den Betreiber – bitte vor der Veröffentlichung prüfen:
-            </strong>
-            <p class="mt-1.5">
-              Dies ist ein Entwurf, der den aktuellen Stand dieser Website
-              beschreibt (keine Cookies, kein Tracking, keine externen Dienste).
-              Er muss rechtlich geprüft und angepasst werden, sobald weitere
-              Dienste hinzukommen – etwa eine Karten-Einbettung, ein
-              Statistik-Werkzeug oder ein Kontaktformular mit Serverversand.
-            </p>
-          </div>
-        </div>
 
         <div class="fliesstext mt-10">
           <h2>1. Verantwortlicher</h2>
@@ -92,17 +73,6 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             Auftragsverarbeitung gemäß Art. 28 DSGVO. Rechtsgrundlage für den
             Einsatz ist Art. 6 Abs. 1 lit. f DSGVO; unser berechtigtes Interesse
             liegt im zuverlässigen und sicheren Betrieb dieser Website.
-          </p>
-          <p>
-            <em class="text-amber-300">
-              Hinweis an den Betreiber: Bitte prüfen und ggf. anpassen – (1) Der
-              Auftragsverarbeitungsvertrag muss im Hostinger-Konto unter „Legal“
-              tatsächlich abgeschlossen sein. (2) Als Serverstandort sollte
-              Deutschland bzw. die EU gewählt sein; wird außerhalb der EU
-              gehostet, ist hier zusätzlich die Grundlage der
-              Drittlandübermittlung zu nennen (in der Regel
-              EU-Standardvertragsklauseln).
-            </em>
           </p>
 
           <h2>5. Kontaktaufnahme über WhatsApp</h2>

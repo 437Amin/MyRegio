@@ -20,12 +20,8 @@ Stand: 31.08.2026 · Hosting: **Hostinger** · Domain: **myregiocar.com**
 
 ### Rechtliches
 
-- [ ] **Impressum und Datenschutzerklärung anwaltlich prüfen lassen**
-- [ ] **Danach den gelben Warnkasten auf beiden Seiten entfernen**
-      → in `src/pages/impressum.astro` und `src/pages/datenschutz.astro`
-      jeweils der Block mit `border-amber-400/30`.
-      ⚠️ Solange er drinsteht, liest jeder Besucher „Dies ist ein Entwurf" –
-      das wirkt unseriös. Er darf aber erst weg, **wenn** die Prüfung erfolgt ist.
+- [x] **Impressum und Datenschutzerklärung anwaltlich prüfen lassen**
+- [x] **Gelber Warnkasten entfernt** – Anwalt hat freigegeben (31.08.2026)
 - [ ] **Genehmigungsbehörde prüfen** – eingetragen ist „Landeshauptstadt
       Stuttgart, Amt für öffentliche Ordnung". Bitte mit der
       Konzessionsurkunde abgleichen
@@ -38,10 +34,10 @@ Stand: 31.08.2026 · Hosting: **Hostinger** · Domain: **myregiocar.com**
 
 ### Inhaltlich
 
-- [ ] **Öffnungszeiten prüfen** – aktuell wird „Täglich 24 Stunden erreichbar"
+- [x] **Öffnungszeiten prüfen** – aktuell wird „Täglich 24 Stunden erreichbar"
       beworben. Stimmt das? Falls nein: im Redaktionsbereich den Haken bei
       „Rund um die Uhr erreichbar" entfernen und die Zeiten eintragen
-- [ ] **Entscheiden: mit oder ohne `www`?**
+- [x] **Entscheiden: mit oder ohne `www`?**
       Beide Schreibweisen müssen auf dieselbe zeigen, sonst wertet Google die
       Seite doppelt. Aktuell eingestellt ist **mit www**:
       - `astro.config.mjs` → `SEITEN_URL`
@@ -123,19 +119,21 @@ Damit Önder unter `myregiocar.com/admin` selbst Inhalte pflegen kann –
 
 Ohne diese Angaben kann die Website nicht sagen, was Park & Fly kostet:
 
-- [ ] Preis pro Tag und pro Woche
+- [x] Preis pro Tag und pro Woche
 - [ ] Anzahl der Stellplätze
-- [ ] Überdacht? Umzäunt oder videoüberwacht? Schlüsselabgabe nötig?
-- [ ] Aufpreis für den Shuttle (oder inklusive?)
-- [ ] **Versicherungsfrage klären:** Wer haftet, wenn dem abgestellten Fahrzeug
-      auf dem Gelände etwas passiert? Gehört in die Geschäftsbedingungen –
-      bitte mit der Versicherung besprechen
+- [x] Überdacht? Umzäunt oder videoüberwacht? Schlüsselabgabe nötig?
+- [x] Aufpreis für den Shuttle (oder inklusive?)
+- [x] **Versicherungsfrage geklärt:** Haftung liegt beim Fahrzeughalter.
+      Steht als Hinweis sichtbar auf der Park-&-Fly-Seite und im FAQ.
+      ⚠️ Diese Formulierung war nicht Teil der Anwaltsprüfung – bei Gelegenheit
+      mitprüfen lassen und in Beförderungsbedingungen aufnehmen
 
 ### Bilder
 
 - [ ] **Original-Logo** als SVG oder PNG mit transparentem Hintergrund
       (aktuell nach dem Flyer nachgebaut)
-- [ ] **Fotos vom Fahrzeug und vom Gelände** – besonders die Einfahrt, der
+- [ ] **Fotos vom Fahrzeug und vom Gelände** (liegen derzeit nicht vor –
+      die Seite kommt ohne aus, gewinnt mit ihnen aber deutlich) – besonders die Einfahrt, der
       Stellplatzbereich und der Fußweg zur Haltestelle. Das schafft Vertrauen
       ⚠️ **Ohne Fremdlogos.** Der vorhandene Flyer zeigt das Uber-Logo an der
       Fahrzeugtür – das gehört nicht auf diese Website
