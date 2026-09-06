@@ -299,6 +299,135 @@ function einrichten(wurzel: HTMLElement): void {
     }
   }
 
+  /* --------------------------------------------------- Adressvorschläge */
+
+  /**
+   * Macht aus einem Textfeld eine Auswahlliste.
+   *
+   * Wichtig für den Festpreis: Erst wenn der Fahrgast einen Vorschlag antippt,
+   * kennen wir die genauen Koordinaten. Aus freiem Text lässt sich kein
+   * verlässlicher Preis ableiten - "Hamburg Hauptbahnhof" fände der
+   * Kartendienst sonst als irgendetwas Ähnliches in der Nähe.
+   */
+  function vorschlagfeldEinrichten(name: 'von' | 'nach'): void {
+    const huelle = wurzel.querySelector<HTMLElement>(
+      `[data-vorschlagfeld="${name}"]`,
+    );
+    if (!huelle || !vermittlungBasis) return;
+
+    const eingabe = huelle.querySelector<HTMLInputElement>('input[type="text"]');
+    const liste = huelle.querySelector<HTMLUListElement>('.vorschlaege');
+    const breite = pflichtfeld(`${name}Breite`);
+    const laenge = pflichtfeld(`${name}Laenge`);
+    if (!eingabe || !liste || !breite || !laenge) return;
+
+    let warteZeiger: number | undefined;
+    let markiert = -1;
+
+    const schliessen = () => {
+      liste.hidden = true;
+      liste.replaceChildren();
+      eingabe.setAttribute('aria-expanded', 'false');
+      markiert = -1;
+    };
+
+    const uebernehmen = (text: string, b: string, l: string) => {
+      eingabe.value = text;
+      breite.value = b;
+      laenge.value = l;
+      schliessen();
+      speichern();
+      // Adresse steht fest - jetzt lohnt sich der Preis
+      preisSchluessel = '';
+      void preisHolen();
+    };
+
+    const markiereEintrag = (richtung: number) => {
+      const eintraege = Array.from(liste.querySelectorAll('li'));
+      if (eintraege.length === 0) return;
+      markiert = (markiert + richtung + eintraege.length) % eintraege.length;
+      eintraege.forEach((eintrag, i) =>
+        eintrag.setAttribute('aria-selected', String(i === markiert)),
+      );
+      eintraege[markiert]?.scrollIntoView({ block: 'nearest' });
+    };
+
+    eingabe.addEventListener('input', () => {
+      // Getippt heißt: Die zuletzt gewählte Adresse gilt nicht mehr
+      breite.value = '';
+      laenge.value = '';
+
+      if (warteZeiger) window.clearTimeout(warteZeiger);
+      const gesuch = eingabe.value.trim();
+      if (gesuch.length < 3) {
+        schliessen();
+        return;
+      }
+
+      warteZeiger = window.setTimeout(async () => {
+        try {
+          const antwort = await fetch(
+            `${vermittlungBasis}/api/adressen?q=${encodeURIComponent(gesuch)}`,
+          );
+          const daten = (await antwort.json()) as {
+            vorschlaege?: { text: string; breite: number; laenge: number }[];
+          };
+          const treffer = daten.vorschlaege ?? [];
+
+          if (treffer.length === 0 || eingabe.value.trim() !== gesuch) {
+            schliessen();
+            return;
+          }
+
+          liste.replaceChildren(
+            ...treffer.map((eintrag) => {
+              const zeile = document.createElement('li');
+              zeile.textContent = eintrag.text;
+              zeile.setAttribute('role', 'option');
+              zeile.setAttribute('aria-selected', 'false');
+              zeile.addEventListener('mousedown', (ereignis) => {
+                // mousedown statt click: Sonst schließt der Fokusverlust die
+                // Liste, bevor der Klick ankommt.
+                ereignis.preventDefault();
+                uebernehmen(
+                  eintrag.text,
+                  String(eintrag.breite),
+                  String(eintrag.laenge),
+                );
+              });
+              return zeile;
+            }),
+          );
+          liste.hidden = false;
+          eingabe.setAttribute('aria-expanded', 'true');
+          markiert = -1;
+        } catch {
+          schliessen();
+        }
+      }, 300);
+    });
+
+    eingabe.addEventListener('keydown', (ereignis) => {
+      if (liste.hidden) return;
+      if (ereignis.key === 'ArrowDown') {
+        ereignis.preventDefault();
+        markiereEintrag(1);
+      } else if (ereignis.key === 'ArrowUp') {
+        ereignis.preventDefault();
+        markiereEintrag(-1);
+      } else if (ereignis.key === 'Enter' && markiert >= 0) {
+        ereignis.preventDefault();
+        liste.querySelectorAll('li')[markiert]?.dispatchEvent(
+          new MouseEvent('mousedown', { bubbles: true, cancelable: true }),
+        );
+      } else if (ereignis.key === 'Escape') {
+        schliessen();
+      }
+    });
+
+    eingabe.addEventListener('blur', () => window.setTimeout(schliessen, 120));
+  }
+
   /* ------------------------------------------------------------- Festpreis */
 
   function preisAnzeige(art: 'laedt' | 'fertig' | 'anfrage' | 'aus'): void {
@@ -328,7 +457,15 @@ function einrichten(wurzel: HTMLElement): void {
       return;
     }
 
-    const schluessel = `${w.von}|${w.nach}`;
+    // Ohne ausgewählte Punkte gibt es keinen verlässlichen Preis
+    if (!w.vonBreite || !w.nachBreite) {
+      preisAnzeige('anfrage');
+      angezeigterPreis = '';
+      preisSchluessel = '';
+      return;
+    }
+
+    const schluessel = `${w.vonBreite},${w.vonLaenge}|${w.nachBreite},${w.nachLaenge}`;
     if (schluessel === preisSchluessel) return;
     preisSchluessel = schluessel;
 
@@ -338,7 +475,18 @@ function einrichten(wurzel: HTMLElement): void {
       const antwort = await fetch(`${vermittlungBasis}/api/preis`, {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ von: w.von, nach: w.nach }),
+        body: JSON.stringify({
+          vonPunkt: {
+            breite: Number(w.vonBreite),
+            laenge: Number(w.vonLaenge),
+            bezeichnung: w.von,
+          },
+          nachPunkt: {
+            breite: Number(w.nachBreite),
+            laenge: Number(w.nachLaenge),
+            bezeichnung: w.nach,
+          },
+        }),
       });
       const daten = (await antwort.json()) as {
         preis?: number;
@@ -501,6 +649,20 @@ function einrichten(wurzel: HTMLElement): void {
             .join(' · '),
           name: w.name,
           telefon: w.telefon,
+          vonPunkt: w.vonBreite
+            ? {
+                breite: Number(w.vonBreite),
+                laenge: Number(w.vonLaenge),
+                bezeichnung: w.von,
+              }
+            : undefined,
+          nachPunkt: w.nachBreite
+            ? {
+                breite: Number(w.nachBreite),
+                laenge: Number(w.nachLaenge),
+                bezeichnung: w.nach,
+              }
+            : undefined,
         }),
       });
 
@@ -729,6 +891,9 @@ function einrichten(wurzel: HTMLElement): void {
   const gespeichert = sicherLesen();
   if (Object.keys(gespeichert).length > 0) werteSetzen(gespeichert);
   if (vorauswahl && !gespeichert.art) werteSetzen({ art: vorauswahl });
+
+  vorschlagfeldEinrichten('von');
+  vorschlagfeldEinrichten('nach');
 
   schrittZeigen(1, false);
 }

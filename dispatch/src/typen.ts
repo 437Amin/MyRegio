@@ -77,6 +77,9 @@ export interface Bestellung {
   gepaeck?: number;
   kindersitze?: number;
   anmerkung?: string;
+  /** Vom Fahrgast ausgewaehlte Punkte aus der Vorschlagsliste */
+  vonPunkt?: { breite: number; laenge: number; bezeichnung?: string };
+  nachPunkt?: { breite: number; laenge: number; bezeichnung?: string };
   preis?: number;
   streckeKm?: number;
   name: string;

@@ -149,26 +149,43 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
 
           <!-- Normale Fahrten -->
           <div class="mt-5 space-y-4" data-ohne-art="Park & Fly">
-            <div class="feld">
+            <div class="feld vorschlagfeld" data-vorschlagfeld="von">
               <label for="feld-von">Abholadresse</label>
               <input
                 id="feld-von"
                 name="von"
                 type="text"
-                autocomplete="street-address"
+                autocomplete="off"
                 enterkeyhint="next"
                 placeholder="Straße, Hausnummer, Ort"
+                role="combobox"
+                aria-expanded="false"
+                aria-autocomplete="list"
+                aria-controls="vorschlaege-von"
               />
+              <ul class="vorschlaege" id="vorschlaege-von" role="listbox" hidden></ul>
+              <input type="hidden" name="vonBreite" />
+              <input type="hidden" name="vonLaenge" />
+              <p class="hilfe">Bitte aus den Vorschlägen auswählen – nur dann können wir einen Festpreis nennen.</p>
             </div>
-            <div class="feld">
+
+            <div class="feld vorschlagfeld" data-vorschlagfeld="nach">
               <label for="feld-nach">Zieladresse</label>
               <input
                 id="feld-nach"
                 name="nach"
                 type="text"
+                autocomplete="off"
                 enterkeyhint="next"
-                placeholder="z. B. Flughafen Stuttgart, Terminal 1"
+                placeholder="z. B. Flughafen Stuttgart"
+                role="combobox"
+                aria-expanded="false"
+                aria-autocomplete="list"
+                aria-controls="vorschlaege-nach"
               />
+              <ul class="vorschlaege" id="vorschlaege-nach" role="listbox" hidden></ul>
+              <input type="hidden" name="nachBreite" />
+              <input type="hidden" name="nachLaenge" />
             </div>
             <label class="schalter">
               <input type="checkbox" name="rueckfahrt" />
@@ -819,6 +836,43 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
     font-size: 1.0625rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+  }
+
+  .vorschlagfeld {
+    position: relative;
+  }
+
+  .vorschlaege {
+    position: absolute;
+    z-index: 20;
+    left: 0;
+    right: 0;
+    margin: 0.25rem 0 0;
+    padding: 0.25rem;
+    list-style: none;
+    max-height: 15rem;
+    overflow-y: auto;
+    border: 1px solid rgb(34 184 240 / 0.4);
+    border-radius: 0.75rem;
+    background: #0a0e14;
+    box-shadow: 0 16px 40px -12px rgb(0 0 0 / 0.7);
+  }
+
+  .vorschlaege li {
+    padding: 0.7rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--color-nebel-100);
+    cursor: pointer;
+    min-height: 2.75rem;
+    display: flex;
+    align-items: center;
+  }
+
+  .vorschlaege li:hover,
+  .vorschlaege li[aria-selected='true'] {
+    background: rgb(34 184 240 / 0.16);
+    color: #fff;
   }
 
   .preisfeld {

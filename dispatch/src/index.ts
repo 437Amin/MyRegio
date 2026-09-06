@@ -2,7 +2,12 @@ import type { Bestellung, StatusAntwort, Umgebung } from './typen';
 import { quittiereKnopf, sendeNachricht, setzeTelegramBasis } from './telegram';
 import { adminRoute } from './admin';
 import { preisBerechnen, tarifAusEinstellungen } from './preis';
-import { adresseFinden, streckeMessen } from './strecke';
+import {
+  adresseFinden,
+  adressenVorschlagen,
+  streckeMessen,
+  streckeZwischenPunkten,
+} from './strecke';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -31,6 +36,10 @@ export default {
     try {
       if (pfad === '/api/bestellung' && anfrage.method === 'POST') {
         return await bestellungAnnehmen(anfrage, env);
+      }
+
+      if (pfad === '/api/adressen' && anfrage.method === 'GET') {
+        return await adressenAnfragen(url, env, anfrage);
       }
 
       if (pfad === '/api/preis' && anfrage.method === 'POST') {
@@ -112,6 +121,8 @@ async function bestellungAnnehmen(
     kurz(roh.abholung),
     kurz(roh.ziel ?? ''),
     env,
+    pruefePunkt(roh.vonPunkt),
+    pruefePunkt(roh.nachPunkt),
   );
 
   await env.DB.prepare(
@@ -355,6 +366,27 @@ function gueltigesDatum(wert: unknown): string {
   return Number.isNaN(datum.getTime()) ? '' : datum.toISOString();
 }
 
+/**
+ * Nimmt vom Browser uebergebene Koordinaten nur an, wenn sie plausibel sind.
+ * Der Preis wird daraus gerechnet - erfundene Werte wuerden ihn verfaelschen.
+ */
+function pruefePunkt(roh: unknown): Punkt | undefined {
+  if (!roh || typeof roh !== 'object') return undefined;
+  const p = roh as Record<string, unknown>;
+  const breite = Number(p.breite);
+  const laenge = Number(p.laenge);
+
+  // Grob Deutschland - alles andere kann keine Fahrt von hier aus sein
+  if (!Number.isFinite(breite) || breite < 47 || breite > 55.2) return undefined;
+  if (!Number.isFinite(laenge) || laenge < 5.5 || laenge > 15.1) return undefined;
+
+  return {
+    breite,
+    laenge,
+    bezeichnung: String(p.bezeichnung ?? '').slice(0, 200),
+  };
+}
+
 function plausibleTelefonnummer(wert: string): boolean {
   const ziffern = String(wert).replace(/[^0-9]/g, '');
   return ziffern.length >= 7 && ziffern.length <= 15;
@@ -407,9 +439,11 @@ async function preisAnfragen(anfrage: Request, env: Umgebung): Promise<Response>
   const roh = (await anfrage.json().catch(() => null)) as {
     von?: string;
     nach?: string;
+    vonPunkt?: Punkt;
+    nachPunkt?: Punkt;
   } | null;
 
-  if (!roh?.von || !roh?.nach) {
+  if (!roh || (!roh.von && !roh.vonPunkt) || (!roh.nach && !roh.nachPunkt)) {
     return antwort({ aufAnfrage: true, grund: 'unvollstaendig' }, 200, env, anfrage);
   }
 
@@ -427,9 +461,11 @@ async function preisAnfragen(anfrage: Request, env: Umgebung): Promise<Response>
     .run();
 
   const ergebnis = await festpreisErmitteln(
-    kurz(roh.von),
-    kurz(roh.nach),
+    kurz(roh.von ?? ''),
+    kurz(roh.nach ?? ''),
     env,
+    pruefePunkt(roh.vonPunkt),
+    pruefePunkt(roh.nachPunkt),
   );
 
   if (!ergebnis) {
@@ -461,10 +497,18 @@ async function preisAnfragen(anfrage: Request, env: Umgebung): Promise<Response>
  * beim Bestellen benutzt - so steht am Ende immer der Betrag im Auftrag, den
  * der Server gerechnet hat, nicht der aus dem Browser.
  */
+export interface Punkt {
+  breite: number;
+  laenge: number;
+  bezeichnung: string;
+}
+
 export async function festpreisErmitteln(
   vonText: string,
   nachText: string,
   env: Umgebung,
+  vonPunkt?: Punkt,
+  nachPunkt?: Punkt,
 ): Promise<{
   preis: number;
   km: number;
@@ -472,18 +516,34 @@ export async function festpreisErmitteln(
   vonErkannt: string;
   nachErkannt: string;
 } | null> {
-  if (!env.ORS_SCHLUESSEL || !vonText || !nachText) return null;
+  if (!env.ORS_SCHLUESSEL) return null;
 
   const fokusBreite = 48.8143644;
   const fokusLaenge = 9.165389;
 
-  const [von, nach] = await Promise.all([
-    adresseFinden(vonText, env.ORS_SCHLUESSEL, fokusBreite, fokusLaenge),
-    adresseFinden(nachText, env.ORS_SCHLUESSEL, fokusBreite, fokusLaenge),
-  ]);
+  // Hat der Fahrgast aus der Vorschlagsliste gewaehlt, nehmen wir genau
+  // diesen Punkt. Nur sonst wird der Freitext gedeutet - mit dem bekannten
+  // Risiko, dass eine aehnlich klingende Adresse in der Naehe gefunden wird.
+  const von =
+    vonPunkt ??
+    (vonText
+      ? await adresseFinden(vonText, env.ORS_SCHLUESSEL, fokusBreite, fokusLaenge)
+      : null);
+  const nach =
+    nachPunkt ??
+    (nachText
+      ? await adresseFinden(nachText, env.ORS_SCHLUESSEL, fokusBreite, fokusLaenge)
+      : null);
+
   if (!von || !nach) return null;
 
-  const strecke = await streckeMessen(von, nach, env.ORS_SCHLUESSEL);
+  const strecke = await streckeZwischenPunkten(
+    von.breite,
+    von.laenge,
+    nach.breite,
+    nach.laenge,
+    env.ORS_SCHLUESSEL,
+  );
   if (!strecke) return null;
 
   const einstellungen = await ladeEinstellungen(env);
@@ -504,4 +564,45 @@ async function ladeEinstellungen(env: Umgebung): Promise<Record<string, string>>
   const werte: Record<string, string> = {};
   for (const zeile of zeilen.results ?? []) werte[zeile.schluessel] = zeile.wert;
   return werte;
+}
+
+
+/** Adressvorschlaege fuer die Eingabefelder im Buchungsassistenten. */
+async function adressenAnfragen(
+  url: URL,
+  env: Umgebung,
+  anfrage: Request,
+): Promise<Response> {
+  const gesuch = (url.searchParams.get('q') ?? '').trim().slice(0, 120);
+  if (!env.ORS_SCHLUESSEL || gesuch.length < 3) {
+    return antwort({ vorschlaege: [] }, 200, env, anfrage);
+  }
+
+  const kennung = 'adr-' + (await ipKennung(anfrage, env));
+  if (await zuVieleBestellungen(kennung, env, 120)) {
+    return antwort({ vorschlaege: [] }, 200, env, anfrage);
+  }
+  await env.DB.prepare('INSERT INTO drosselung (kennung) VALUES (?)')
+    .bind(kennung)
+    .run();
+
+  const treffer = await adressenVorschlagen(
+    gesuch,
+    env.ORS_SCHLUESSEL,
+    48.8143644,
+    9.165389,
+  );
+
+  return antwort(
+    {
+      vorschlaege: treffer.map((ort) => ({
+        text: ort.bezeichnung,
+        breite: ort.breite,
+        laenge: ort.laenge,
+      })),
+    },
+    200,
+    env,
+    anfrage,
+  );
 }
