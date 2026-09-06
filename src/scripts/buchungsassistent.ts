@@ -73,6 +73,7 @@ function einrichten(wurzel: HTMLElement): void {
   const knopfSenden = wurzel.querySelector<HTMLAnchorElement>('[data-senden]');
   const knopfVermitteln = wurzel.querySelector<HTMLButtonElement>('[data-vermitteln]');
   const statusFeld = wurzel.querySelector<HTMLElement>('[data-status]');
+  const preisFeld = wurzel.querySelector<HTMLElement>('[data-preisfeld]');
   const fortschritt = wurzel.querySelector<HTMLElement>('ol');
   const vermittlungBasis = (wurzel.dataset.vermittlung ?? '').replace(/\/$/, '');
   const linkMail = wurzel.querySelector<HTMLAnchorElement>('[data-mailto]');
@@ -83,6 +84,10 @@ function einrichten(wurzel: HTMLElement): void {
 
   let schritt = 1;
   let statusTimer: number | undefined;
+  /** Merkt sich, für welche Strecke der Preis schon geholt wurde */
+  let preisSchluessel = '';
+  /** Zuletzt angezeigter Betrag - wandert in die WhatsApp-Nachricht */
+  let angezeigterPreis = '';
 
   /* ---------------------------------------------------------------- Werte */
 
@@ -272,6 +277,9 @@ function einrichten(wurzel: HTMLElement): void {
     if (w.kindersitze && w.kindersitze !== '0')
       zeilen.push(`Kindersitze: ${w.kindersitze}`);
     if (w.anmerkung) zeilen.push(`Anmerkung: ${w.anmerkung}`);
+    if (angezeigterPreis) {
+      zeilen.push(`Angezeigter Festpreis: ${angezeigterPreis}`);
+    }
 
     zeilen.push('');
     zeilen.push(`Mein Name: ${w.name || '(bitte noch ergänzen)'}`);
@@ -288,6 +296,88 @@ function einrichten(wurzel: HTMLElement): void {
     if (linkMail) {
       const betreff = encodeURIComponent(`Fahrtanfrage über die Website`);
       linkMail.href = `${linkMail.href.split('?')[0]}?subject=${betreff}&body=${encodeURIComponent(text)}`;
+    }
+  }
+
+  /* ------------------------------------------------------------- Festpreis */
+
+  function preisAnzeige(art: 'laedt' | 'fertig' | 'anfrage' | 'aus'): void {
+    if (!preisFeld) return;
+    preisFeld.hidden = art === 'aus';
+    (['laedt', 'fertig', 'anfrage'] as const).forEach((name) => {
+      const teil = preisFeld.querySelector<HTMLElement>(`[data-preis-${name}]`);
+      if (teil) teil.hidden = name !== art;
+    });
+  }
+
+  /**
+   * Holt den Festpreis für die eingegebene Strecke.
+   *
+   * Gerechnet wird auf dem Server. Kommt kein Preis zurück - etwa weil eine
+   * Adresse nicht eindeutig ist - zeigen wir "auf Anfrage", statt zu raten.
+   * Ein angezeigter Festpreis wäre bindend.
+   */
+  async function preisHolen(): Promise<void> {
+    if (!preisFeld || !vermittlungBasis) return;
+
+    const w = werteLesen();
+    if (!direktMoeglich() || !w.von || !w.nach) {
+      preisAnzeige('aus');
+      preisSchluessel = '';
+      angezeigterPreis = '';
+      return;
+    }
+
+    const schluessel = `${w.von}|${w.nach}`;
+    if (schluessel === preisSchluessel) return;
+    preisSchluessel = schluessel;
+
+    preisAnzeige('laedt');
+
+    try {
+      const antwort = await fetch(`${vermittlungBasis}/api/preis`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ von: w.von, nach: w.nach }),
+      });
+      const daten = (await antwort.json()) as {
+        preis?: number;
+        streckeKm?: number;
+        dauerMinuten?: number;
+        vonErkannt?: string;
+        nachErkannt?: string;
+      };
+
+      if (!antwort.ok || typeof daten.preis !== 'number') {
+        angezeigterPreis = '';
+        preisAnzeige('anfrage');
+        linksAktualisieren();
+        return;
+      }
+
+      const betrag = new Intl.NumberFormat('de-DE', {
+        style: 'currency',
+        currency: 'EUR',
+      }).format(daten.preis);
+      angezeigterPreis = betrag;
+
+      const setze = (name: string, wert: string) => {
+        const feld = preisFeld.querySelector<HTMLElement>(`[data-preis-${name}]`);
+        if (feld) feld.textContent = wert;
+      };
+      setze('betrag', betrag);
+      setze('km', String(daten.streckeKm ?? '–').replace('.', ','));
+      setze('dauer', String(daten.dauerMinuten ?? '–'));
+      setze('von', daten.vonErkannt ?? w.von);
+      setze('nach', daten.nachErkannt ?? w.nach);
+
+      preisAnzeige('fertig');
+      linksAktualisieren();
+    } catch {
+      // Netz weg oder Dienst nicht erreichbar - lieber kein Preis
+      angezeigterPreis = '';
+      preisAnzeige('anfrage');
+      linksAktualisieren();
     }
   }
 
@@ -471,6 +561,10 @@ function einrichten(wurzel: HTMLElement): void {
 
     fehlerZeigen(null);
     linksAktualisieren();
+
+    // Ab dem Termin-Schritt stehen die Adressen fest - jetzt lohnt die Abfrage
+    if (schritt >= 3) void preisHolen();
+    else preisAnzeige('aus');
 
     if (ansage) ansage.textContent = `Schritt ${schritt} von ${LETZTER_SCHRITT}`;
 

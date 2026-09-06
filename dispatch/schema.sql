@@ -50,6 +50,11 @@ CREATE TABLE IF NOT EXISTS auftraege (
   kindersitze    INTEGER NOT NULL DEFAULT 0,
   anmerkung      TEXT    NOT NULL DEFAULT '',
 
+  -- Vereinbarter Festpreis in Euro. 0 bedeutet: konnte nicht ermittelt
+  -- werden, der Preis wird individuell abgesprochen.
+  preis          REAL    NOT NULL DEFAULT 0,
+  strecke_km     REAL    NOT NULL DEFAULT 0,
+
   kunde_name     TEXT    NOT NULL,
   kunde_telefon  TEXT    NOT NULL,
 
@@ -86,7 +91,15 @@ CREATE TABLE IF NOT EXISTS einstellungen (
 INSERT OR IGNORE INTO einstellungen (schluessel, wert) VALUES
   ('nacht_von', '22:00'),
   ('nacht_bis', '06:00'),
-  ('antwortzeit_sekunden', '40');
+  ('antwortzeit_sekunden', '40'),
+  -- Festpreistarif. Liegt rund 13 % unter dem Stuttgarter Taxitarif
+  -- (4,20 Grundpreis, 3,00 bis 4 km, danach 2,50).
+  ('tarif_grundpreis', '3.50'),
+  ('tarif_km_grenze', '4'),
+  ('tarif_preis_nah', '2.60'),
+  ('tarif_preis_fern', '2.20'),
+  ('tarif_mindestpreis', '12'),
+  ('tarif_rundung', '0.50');
 
 -- --- Missbrauchsschutz -------------------------------------------------------
 -- Verhindert, dass jemand ueber das Bestellformular die Fahrerhandys flutet.

@@ -1,6 +1,8 @@
 import type { Bestellung, StatusAntwort, Umgebung } from './typen';
 import { quittiereKnopf, sendeNachricht, setzeTelegramBasis } from './telegram';
 import { adminRoute } from './admin';
+import { preisBerechnen, tarifAusEinstellungen } from './preis';
+import { adresseFinden, streckeMessen } from './strecke';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -29,6 +31,10 @@ export default {
     try {
       if (pfad === '/api/bestellung' && anfrage.method === 'POST') {
         return await bestellungAnnehmen(anfrage, env);
+      }
+
+      if (pfad === '/api/preis' && anfrage.method === 'POST') {
+        return await preisAnfragen(anfrage, env);
       }
 
       if (pfad.startsWith('/api/status/') && anfrage.method === 'GET') {
@@ -99,11 +105,20 @@ async function bestellungAnnehmen(
 
   const id = crypto.randomUUID();
 
+  // Der Preis wird hier neu gerechnet und NICHT aus dem Browser uebernommen.
+  // Faellt die Ermittlung aus, bleibt er bei 0 - dann wird er wie frueher
+  // individuell abgesprochen, statt einen falschen Betrag festzuschreiben.
+  const festpreis = await festpreisErmitteln(
+    kurz(roh.abholung),
+    kurz(roh.ziel ?? ''),
+    env,
+  );
+
   await env.DB.prepare(
     `INSERT INTO auftraege
        (id, art, abholung, ziel, wunschzeit, wunsch_iso, sofort, personen, gepaeck,
-        kindersitze, anmerkung, kunde_name, kunde_telefon)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        kindersitze, anmerkung, preis, strecke_km, kunde_name, kunde_telefon)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -117,6 +132,8 @@ async function bestellungAnnehmen(
       zahl(roh.gepaeck, 0, 0, 10),
       zahl(roh.kindersitze, 0, 0, 4),
       kurz(roh.anmerkung ?? ''),
+      festpreis?.preis ?? 0,
+      festpreis?.km ?? 0,
       kurz(roh.name),
       kurz(roh.telefon, 40),
     )
@@ -357,6 +374,7 @@ async function ipKennung(anfrage: Request, env: Umgebung): Promise<string> {
 async function zuVieleBestellungen(
   kennung: string,
   env: Umgebung,
+  grenze = BESTELLUNGEN_PRO_STUNDE,
 ): Promise<boolean> {
   // Alte Eintraege wegraeumen - laenger als eine Stunde brauchen wir sie nicht
   await env.DB.prepare(
@@ -370,5 +388,120 @@ async function zuVieleBestellungen(
     .bind(kennung)
     .first<{ anzahl: number }>();
 
-  return (zeile?.anzahl ?? 0) >= BESTELLUNGEN_PRO_STUNDE;
+  return (zeile?.anzahl ?? 0) >= grenze;
+}
+
+
+/* ========================================================================== */
+/*  Festpreis                                                                 */
+/* ========================================================================== */
+
+/**
+ * Ermittelt den Festpreis fuer eine Strecke.
+ *
+ * Kann eine Adresse nicht sicher zugeordnet werden, liefern wir bewusst
+ * keinen Preis. Ein falscher Festpreis waere bindend - "auf Anfrage" ist
+ * dann das ehrlichere Ergebnis.
+ */
+async function preisAnfragen(anfrage: Request, env: Umgebung): Promise<Response> {
+  const roh = (await anfrage.json().catch(() => null)) as {
+    von?: string;
+    nach?: string;
+  } | null;
+
+  if (!roh?.von || !roh?.nach) {
+    return antwort({ aufAnfrage: true, grund: 'unvollstaendig' }, 200, env, anfrage);
+  }
+
+  if (!env.ORS_SCHLUESSEL) {
+    return antwort({ aufAnfrage: true, grund: 'nicht-eingerichtet' }, 200, env, anfrage);
+  }
+
+  // Auch diese Abfrage kostet Kontingent beim Kartendienst
+  const kennung = 'preis-' + (await ipKennung(anfrage, env));
+  if (await zuVieleBestellungen(kennung, env, 40)) {
+    return antwort({ aufAnfrage: true, grund: 'zu-viele' }, 200, env, anfrage);
+  }
+  await env.DB.prepare('INSERT INTO drosselung (kennung) VALUES (?)')
+    .bind(kennung)
+    .run();
+
+  const ergebnis = await festpreisErmitteln(
+    kurz(roh.von),
+    kurz(roh.nach),
+    env,
+  );
+
+  if (!ergebnis) {
+    return antwort(
+      { aufAnfrage: true, grund: 'adresse-unklar' },
+      200,
+      env,
+      anfrage,
+    );
+  }
+
+  return antwort(
+    {
+      preis: ergebnis.preis,
+      streckeKm: ergebnis.km,
+      dauerMinuten: ergebnis.minuten,
+      // Zurueckgespiegelt, damit ein Tippfehler auffaellt, bevor bestellt wird
+      vonErkannt: ergebnis.vonErkannt,
+      nachErkannt: ergebnis.nachErkannt,
+    },
+    200,
+    env,
+    anfrage,
+  );
+}
+
+/**
+ * Ermittelt Strecke und Festpreis. Wird sowohl fuer die Voranzeige als auch
+ * beim Bestellen benutzt - so steht am Ende immer der Betrag im Auftrag, den
+ * der Server gerechnet hat, nicht der aus dem Browser.
+ */
+export async function festpreisErmitteln(
+  vonText: string,
+  nachText: string,
+  env: Umgebung,
+): Promise<{
+  preis: number;
+  km: number;
+  minuten: number;
+  vonErkannt: string;
+  nachErkannt: string;
+} | null> {
+  if (!env.ORS_SCHLUESSEL || !vonText || !nachText) return null;
+
+  const fokusBreite = 48.8143644;
+  const fokusLaenge = 9.165389;
+
+  const [von, nach] = await Promise.all([
+    adresseFinden(vonText, env.ORS_SCHLUESSEL, fokusBreite, fokusLaenge),
+    adresseFinden(nachText, env.ORS_SCHLUESSEL, fokusBreite, fokusLaenge),
+  ]);
+  if (!von || !nach) return null;
+
+  const strecke = await streckeMessen(von, nach, env.ORS_SCHLUESSEL);
+  if (!strecke) return null;
+
+  const einstellungen = await ladeEinstellungen(env);
+  return {
+    preis: preisBerechnen(strecke.km, tarifAusEinstellungen(einstellungen)),
+    km: strecke.km,
+    minuten: strecke.minuten,
+    vonErkannt: von.bezeichnung,
+    nachErkannt: nach.bezeichnung,
+  };
+}
+
+async function ladeEinstellungen(env: Umgebung): Promise<Record<string, string>> {
+  const zeilen = await env.DB.prepare(
+    'SELECT schluessel, wert FROM einstellungen',
+  ).all<{ schluessel: string; wert: string }>();
+
+  const werte: Record<string, string> = {};
+  for (const zeile of zeilen.results ?? []) werte[zeile.schluessel] = zeile.wert;
+  return werte;
 }

@@ -20,6 +20,14 @@ import {
  * Zwischenzeit nichts los war.
  */
 
+/** Formatiert einen Betrag als deutschen Eurobetrag. */
+function geld(betrag: number): string {
+  return new Intl.NumberFormat('de-DE', {
+    style: 'currency',
+    currency: 'EUR',
+  }).format(betrag);
+}
+
 interface Gesendet {
   fahrerId: number;
   chatId: string;
@@ -326,6 +334,13 @@ export class Vermittlung implements DurableObject {
 
     if (auftrag.anmerkung) zeilen.push(`<b>Hinweis:</b> ${sicher(auftrag.anmerkung)}`);
 
+    if (auftrag.preis > 0) {
+      zeilen.push('');
+      zeilen.push(
+        `<b>Festpreis: ${geld(auftrag.preis)}</b>${auftrag.strecke_km > 0 ? ` · ca. ${auftrag.strecke_km.toFixed(1)} km` : ''}`,
+      );
+    }
+
     zeilen.push('');
     // Name und Rufnummer bleiben zurueck, bis jemand zusagt. Sonst haetten
     // am Ende auch alle, die ablehnen, die Daten des Fahrgasts.
@@ -347,7 +362,9 @@ export class Vermittlung implements DurableObject {
       `<b>Telefon:</b> ${sicher(auftrag.kunde_telefon)}`,
       auftrag.anmerkung ? `<b>Hinweis:</b> ${sicher(auftrag.anmerkung)}` : '',
       '',
-      'Zahlung bar oder mit Karte im Fahrzeug.',
+      auftrag.preis > 0
+        ? `<b>Festpreis: ${geld(auftrag.preis)}</b> – bar oder mit Karte im Fahrzeug.`
+        : 'Preis mit dem Fahrgast absprechen. Zahlung bar oder mit Karte im Fahrzeug.',
     ]
       .filter(Boolean)
       .join('\n');
@@ -376,6 +393,7 @@ export class Vermittlung implements DurableObject {
   }
 
   /* --------------------------------------------------------------- Hilfen */
+
 
   private async entwerteNachricht(
     zustand: Zustand,

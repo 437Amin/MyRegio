@@ -1,4 +1,5 @@
 import type { Fahrer, Umgebung } from './typen';
+import { preisBerechnen, taxiVergleich, tarifAusEinstellungen } from './preis';
 
 /**
  * Fahrerbereich fuer den Chef.
@@ -168,10 +169,21 @@ async function einstellungenSpeichern(
   env: Umgebung,
 ): Promise<Response> {
   const f = await anfrage.formData();
+  const zahl = (feld: string, standard: number): string => {
+    const wert = Number(String(f.get(feld) ?? '').replace(',', '.'));
+    return String(Number.isFinite(wert) && wert >= 0 ? wert : standard);
+  };
+
   const werte: [string, string][] = [
     ['nacht_von', String(f.get('nacht_von') ?? '22:00')],
     ['nacht_bis', String(f.get('nacht_bis') ?? '06:00')],
     ['antwortzeit_sekunden', String(Number(f.get('antwortzeit') ?? 40) || 40)],
+    ['tarif_grundpreis', zahl('tarif_grundpreis', 3.5)],
+    ['tarif_km_grenze', zahl('tarif_km_grenze', 4)],
+    ['tarif_preis_nah', zahl('tarif_preis_nah', 2.6)],
+    ['tarif_preis_fern', zahl('tarif_preis_fern', 2.2)],
+    ['tarif_mindestpreis', zahl('tarif_mindestpreis', 12)],
+    ['tarif_rundung', zahl('tarif_rundung', 0.5)],
   ];
   for (const [schluessel, wert] of werte) {
     await env.DB.prepare(
@@ -212,6 +224,25 @@ async function uebersicht(env: Umgebung): Promise<string> {
   ).all<any>();
 
   const botName = env.TELEGRAM_BOT_NAME || 'DEIN_BOT';
+
+  const tarif = tarifAusEinstellungen(e);
+  const euro = (betrag: number) =>
+    new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(betrag);
+
+  // Zeigt sofort, wie sich eine Tarifaenderung auswirkt
+  const beispiele = [3, 5, 10, 22, 40]
+    .map((km) => {
+      const unser = preisBerechnen(km, tarif);
+      const taxi = taxiVergleich(km);
+      const ersparnis = Math.round((1 - unser / taxi) * 100);
+      return `<tr>
+        <td>${km} km${km === 22 ? ' <span class="klein">(Flughafen)</span>' : ''}</td>
+        <td><strong>${euro(unser)}</strong></td>
+        <td class="klein">${euro(taxi)}</td>
+        <td class="${ersparnis > 0 ? 'ja' : 'nein'}">${ersparnis > 0 ? '−' : '+'}${Math.abs(ersparnis)} %</td>
+      </tr>`;
+    })
+    .join('');
 
   const zeilen = (fahrer.results ?? [])
     .map((fa) => {
@@ -298,6 +329,30 @@ async function uebersicht(env: Umgebung): Promise<string> {
       <label>Antwortzeit <input name="antwortzeit" type="number" min="10" max="300" value="${e.antwortzeit_sekunden ?? '40'}" style="width:5rem"> Sek.</label>
       <button>Speichern</button>
     </form>
+
+    <h2>Festpreise</h2>
+    <p class="hinweis">
+      Diese Werte bestimmen, welchen Preis der Kunde vor der Bestellung
+      angezeigt bekommt. <strong>Ein angezeigter Preis ist verbindlich</strong> –
+      bitte nur mit Bedacht ändern.
+    </p>
+    <form method="post" action="/fahrer/einstellungen" class="zeile">
+      <input type="hidden" name="nacht_von" value="${e.nacht_von ?? '22:00'}">
+      <input type="hidden" name="nacht_bis" value="${e.nacht_bis ?? '06:00'}">
+      <input type="hidden" name="antwortzeit" value="${e.antwortzeit_sekunden ?? '40'}">
+      <label>Grundpreis <input name="tarif_grundpreis" value="${tarif.grundpreis}" style="width:5rem"> €</label>
+      <label>bis <input name="tarif_km_grenze" value="${tarif.kmGrenze}" style="width:4rem"> km je
+        <input name="tarif_preis_nah" value="${tarif.preisNah}" style="width:5rem"> €</label>
+      <label>danach je <input name="tarif_preis_fern" value="${tarif.preisFern}" style="width:5rem"> €</label>
+      <label>Mindestens <input name="tarif_mindestpreis" value="${tarif.mindestpreis}" style="width:5rem"> €</label>
+      <label>Aufrunden auf <input name="tarif_rundung" value="${tarif.rundung}" style="width:4.5rem"> €</label>
+      <button>Speichern</button>
+    </form>
+
+    <table>
+      <thead><tr><th>Strecke</th><th>Euer Preis</th><th>Taxi Stuttgart</th><th>Ersparnis</th></tr></thead>
+      <tbody>${beispiele}</tbody>
+    </table>
 
     <h2>Letzte Aufträge</h2>
     <p class="hinweis">

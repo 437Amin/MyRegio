@@ -17,6 +17,8 @@ export interface Umgebung {
   /** Woher Anfragen kommen duerfen, z. B. https://www.myregiocar.com */
   ERLAUBTE_HERKUNFT: string;
 
+  /** Schluessel fuer OpenRouteService - ohne ihn gibt es keine Festpreise */
+  ORS_SCHLUESSEL?: string;
   /** Nur fuer Tests: andere Adresse fuer die Telegram-Schnittstelle */
   TELEGRAM_BASIS?: string;
 }
@@ -54,6 +56,8 @@ export interface Auftrag {
   gepaeck: number;
   kindersitze: number;
   anmerkung: string;
+  preis: number;
+  strecke_km: number;
   kunde_name: string;
   kunde_telefon: string;
   fahrer_id: number | null;
@@ -73,6 +77,8 @@ export interface Bestellung {
   gepaeck?: number;
   kindersitze?: number;
   anmerkung?: string;
+  preis?: number;
+  streckeKm?: number;
   name: string;
   telefon: string;
 }
