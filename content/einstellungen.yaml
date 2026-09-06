@@ -85,6 +85,15 @@ anfahrt:
   # Wie oft die U6 faehrt, in Minuten
   taktMinuten: 10
 
+vermittlung:
+  # Sollen Fahrten direkt an die Fahrer vermittelt werden?
+  #   false = Bestellungen laufen wie bisher ueber WhatsApp
+  #   true  = auf der Seite erscheint zusaetzlich "Jetzt Fahrer anfordern"
+  # Erst auf true stellen, wenn der Vermittlungsdienst eingerichtet ist.
+  aktiv: false
+  # Adresse des Vermittlungsdienstes (wird bei der Einrichtung eingetragen)
+  adresse: ""
+
 einzugsgebiet:
   # Orte, in denen gefahren wird. Erscheinen im Text und bei Google.
   # Neue Orte einfach als weitere Zeile mit Bindestrich ergaenzen.

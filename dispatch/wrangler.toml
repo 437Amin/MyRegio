@@ -15,7 +15,9 @@ compatibility_date = "2025-07-18"
 
 # Diese Werte sind nicht geheim und duerfen im Repository stehen.
 [vars]
-ERLAUBTE_HERKUNFT = "https://www.myregiocar.com"
+# Mehrere Adressen mit Komma trennen. Die zweite ist der Entwicklungsserver
+# und kann nach dem Livegang entfernt werden.
+ERLAUBTE_HERKUNFT = "https://www.myregiocar.com,http://localhost:4321"
 TELEGRAM_BOT_NAME = "MyRegioCarBot"
 
 [[d1_databases]]

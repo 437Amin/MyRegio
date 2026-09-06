@@ -1,6 +1,12 @@
 ---
 import BaseLayout from '~/layouts/BaseLayout.astro';
-import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
+import {
+  site,
+  adresseEinzeilig,
+  telefonLink,
+  emailLink,
+  vermittlungAktiv,
+} from '~/config/site';
 ---
 
 <BaseLayout
@@ -14,7 +20,7 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
         <h1 class="text-4xl">Datenschutzerklärung</h1>
 
         <div class="fliesstext mt-10">
-          <h2>1. Verantwortlicher</h2>
+          <h2>Verantwortlicher</h2>
           <p>
             Verantwortlich für die Datenverarbeitung auf dieser Website im Sinne
             der Datenschutz-Grundverordnung (DSGVO) ist:
@@ -27,7 +33,7 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             E-Mail: <a href={emailLink}>{site.kontakt.email}</a>
           </p>
 
-          <h2>2. Grundsätzliches zu dieser Website</h2>
+          <h2>Grundsätzliches zu dieser Website</h2>
           <p>
             Diese Website ist bewusst datensparsam aufgebaut. Sie setzt
             <strong>keine Cookies</strong>, verwendet
@@ -37,8 +43,18 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             diesem Grund ist auf dieser Website auch kein Cookie-Banner
             erforderlich.
           </p>
+          {
+            vermittlungAktiv && (
+              <p>
+                Eine Ausnahme bildet die Fahrtbestellung: Wenn Sie eine Fahrt
+                über die Schaltfläche „Jetzt Fahrer anfordern“ bestellen, werden
+                die von Ihnen eingegebenen Angaben an uns übermittelt und
+                verarbeitet. Einzelheiten dazu finden Sie im Abschnitt „Fahrtbestellung über die Website“.
+              </p>
+            )
+          }
 
-          <h2>3. Aufruf der Website: Server-Logfiles</h2>
+          <h2>Aufruf der Website: Server-Logfiles</h2>
           <p>
             Beim Aufruf dieser Website werden durch den Hosting-Anbieter
             automatisch Informationen erfasst, die Ihr Browser übermittelt.
@@ -58,7 +74,7 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             anderen Datenquellen findet nicht statt.
           </p>
 
-          <h2>4. Hosting</h2>
+          <h2>Hosting</h2>
           <p>
             Diese Website wird gehostet bei:
           </p>
@@ -75,7 +91,7 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             liegt im zuverlässigen und sicheren Betrieb dieser Website.
           </p>
 
-          <h2>5. Kontaktaufnahme über WhatsApp</h2>
+          <h2>Kontaktaufnahme über WhatsApp</h2>
           <p>
             Auf dieser Website finden Sie Schaltflächen, die einen Chat mit uns
             über den Messenger-Dienst WhatsApp öffnen. Dabei gilt:
@@ -123,7 +139,81 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             bitte stattdessen Telefon oder E-Mail.
           </p>
 
-          <h2>6. Kontaktaufnahme per Telefon oder E-Mail</h2>
+          {
+            vermittlungAktiv && (
+              <>
+                <h2>Fahrtbestellung über die Website</h2>
+                <p>
+                  Bestellen Sie eine Fahrt über die Schaltfläche „Jetzt Fahrer
+                  anfordern“, verarbeiten wir die von Ihnen eingegebenen Angaben:
+                </p>
+                <ul>
+                  <li>Anlass der Fahrt, Abhol- und Zieladresse, gewünschter Zeitpunkt</li>
+                  <li>Anzahl der Personen, Gepäckstücke und Kindersitze</li>
+                  <li>Ihre Anmerkung, sofern Sie eine gemacht haben</li>
+                  <li>Ihr Name und Ihre Telefonnummer</li>
+                </ul>
+                <p>
+                  <strong>Zweck und Rechtsgrundlage.</strong> Die Verarbeitung
+                  dient der Vermittlung und Durchführung der von Ihnen
+                  gewünschten Beförderung. Rechtsgrundlage ist Art. 6 Abs. 1
+                  lit. b DSGVO. Zusätzlich sind wir als Mietwagenunternehmen
+                  nach § 49 des Personenbeförderungsgesetzes verpflichtet, den
+                  Eingang jedes Beförderungsauftrags aufzuzeichnen; insoweit ist
+                  Rechtsgrundlage Art. 6 Abs. 1 lit. c DSGVO.
+                </p>
+                <p>
+                  <strong>Weitergabe an unsere Fahrerinnen und Fahrer.</strong>{' '}
+                  Um einen Wagen zu finden, senden wir den Auftrag nacheinander
+                  an die eingeteilten Fahrerinnen und Fahrer. Diese erhalten
+                  zunächst nur Anlass, Abhol- und Zieladresse sowie den
+                  Zeitpunkt. <strong>Ihr Name und Ihre Telefonnummer werden erst
+                  übermittelt, nachdem eine Fahrerin oder ein Fahrer die Fahrt
+                  angenommen hat</strong> – wer ablehnt oder nicht reagiert,
+                  erhält diese Daten nicht.
+                </p>
+                <p>
+                  <strong>Übermittlung über Telegram.</strong> Für die
+                  Benachrichtigung unserer Fahrerinnen und Fahrer nutzen wir den
+                  Messenger-Dienst Telegram (Telegram FZ-LLC, Dubai, Vereinigte
+                  Arabische Emirate). Dabei werden die oben genannten
+                  Auftragsdaten an Server außerhalb der Europäischen Union
+                  übertragen. Für die VAE liegt kein Angemessenheitsbeschluss
+                  der Europäischen Kommission vor; die Übermittlung erfolgt auf
+                  Grundlage von Art. 49 Abs. 1 lit. b DSGVO, da sie zur
+                  Durchführung des von Ihnen gewünschten Auftrags erforderlich
+                  ist. Möchten Sie das vermeiden, bestellen Sie bitte
+                  telefonisch.
+                </p>
+                <p>
+                  <strong>Technischer Betrieb.</strong> Der Vermittlungsdienst
+                  läuft bei Cloudflare (Cloudflare Germany GmbH, Rosental 7,
+                  80331 München, sowie Cloudflare, Inc., USA). Mit Cloudflare
+                  besteht ein Vertrag über die Auftragsverarbeitung nach
+                  Art. 28 DSGVO einschließlich der
+                  EU-Standardvertragsklauseln.
+                </p>
+                <p>
+                  <strong>Missbrauchsschutz.</strong> Damit über das Formular
+                  keine Massenbestellungen abgesetzt werden können, speichern
+                  wir zu jeder Bestellung einen gesalzenen Hashwert Ihrer
+                  IP-Adresse. Die IP-Adresse selbst wird nicht gespeichert; die
+                  Hashwerte werden nach einer Stunde gelöscht. Rechtsgrundlage
+                  ist Art. 6 Abs. 1 lit. f DSGVO.
+                </p>
+                <p>
+                  <strong>Speicherdauer.</strong> Auftragsdaten werden gelöscht,
+                  sobald sie für die Durchführung der Fahrt und die Abrechnung
+                  nicht mehr erforderlich sind. Gesetzliche
+                  Aufbewahrungsfristen – insbesondere die Aufzeichnungspflicht
+                  nach dem Personenbeförderungsgesetz sowie handels- und
+                  steuerrechtliche Fristen – bleiben unberührt.
+                </p>
+              </>
+            )
+          }
+
+          <h2>Kontaktaufnahme per Telefon oder E-Mail</h2>
           <p>
             Wenn Sie uns anrufen oder eine E-Mail schreiben, verarbeiten wir die
             von Ihnen mitgeteilten Daten (Name, Telefonnummer bzw.
@@ -138,7 +228,7 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             steuerrechtliche Fristen von bis zu zehn Jahren – bleiben unberührt.
           </p>
 
-          <h2>7. Bewerbungen</h2>
+          <h2>Bewerbungen</h2>
           <p>
             Senden Sie uns eine Bewerbung an
             <a href={`mailto:${site.kontakt.bewerbungEmail}`}>
@@ -150,7 +240,7 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             keiner längeren Speicherung zugestimmt haben.
           </p>
 
-          <h2>8. Ihre Rechte</h2>
+          <h2>Ihre Rechte</h2>
           <p>Ihnen stehen gegenüber uns folgende Rechte zu:</p>
           <ul>
             <li>Auskunft über die zu Ihrer Person gespeicherten Daten (Art. 15 DSGVO)</li>
@@ -169,7 +259,7 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             Kontaktdaten.
           </p>
 
-          <h2>9. Beschwerderecht bei der Aufsichtsbehörde</h2>
+          <h2>Beschwerderecht bei der Aufsichtsbehörde</h2>
           <p>
             Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu
             beschweren. Zuständig ist für uns:
@@ -185,14 +275,14 @@ import { site, adresseEinzeilig, telefonLink, emailLink } from '~/config/site';
             >
           </p>
 
-          <h2>10. Sicherheit der Übertragung</h2>
+          <h2>Sicherheit der Übertragung</h2>
           <p>
             Diese Website nutzt eine SSL- bzw. TLS-Verschlüsselung. Sie erkennen
             eine verschlüsselte Verbindung daran, dass die Adresszeile Ihres
             Browsers mit „https://“ beginnt.
           </p>
 
-          <h2>11. Änderungen dieser Datenschutzerklärung</h2>
+          <h2>Änderungen dieser Datenschutzerklärung</h2>
           <p>
             Wir passen diese Datenschutzerklärung an, sobald sich die
             Datenverarbeitung auf dieser Website ändert – etwa durch neue

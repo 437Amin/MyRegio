@@ -23,7 +23,7 @@ export default {
     const pfad = url.pathname;
 
     if (anfrage.method === 'OPTIONS') {
-      return new Response(null, { status: 204, headers: kopfzeilen(env) });
+      return new Response(null, { status: 204, headers: kopfzeilen(env, anfrage) });
     }
 
     try {
@@ -32,7 +32,7 @@ export default {
       }
 
       if (pfad.startsWith('/api/status/') && anfrage.method === 'GET') {
-        return await statusAbfragen(pfad.split('/').pop()!, env);
+        return await statusAbfragen(pfad.split('/').pop()!, env, anfrage);
       }
 
       if (pfad === '/telegram/webhook' && anfrage.method === 'POST') {
@@ -43,10 +43,10 @@ export default {
         return await adminRoute(anfrage, env);
       }
 
-      return antwort({ fehler: 'Unbekannter Aufruf' }, 404, env);
+      return antwort({ fehler: 'Unbekannter Aufruf' }, 404, env, anfrage);
     } catch (fehler) {
       console.error('Unerwarteter Fehler:', fehler);
-      return antwort({ fehler: 'Interner Fehler' }, 500, env);
+      return antwort({ fehler: 'Interner Fehler' }, 500, env, anfrage);
     }
   },
 };
@@ -60,7 +60,8 @@ async function bestellungAnnehmen(
   env: Umgebung,
 ): Promise<Response> {
   const roh = (await anfrage.json().catch(() => null)) as Bestellung | null;
-  if (!roh) return antwort({ fehler: 'Ungültige Anfrage' }, 400, env);
+  if (!roh) return antwort({ fehler: 'Ungültige Anfrage' }, 400, env,
+      anfrage,);
 
   const fehlend = ['art', 'abholung', 'name', 'telefon'].filter(
     (feld) => !String((roh as unknown as Record<string, unknown>)[feld] ?? '').trim(),
@@ -79,6 +80,7 @@ async function bestellungAnnehmen(
       { fehler: 'Bitte geben Sie eine gültige Telefonnummer an.' },
       400,
       env,
+      anfrage,
     );
   }
 
@@ -91,6 +93,7 @@ async function bestellungAnnehmen(
       },
       429,
       env,
+      anfrage,
     );
   }
 
@@ -131,10 +134,15 @@ async function bestellungAnnehmen(
     body: JSON.stringify({ auftragId: id }),
   });
 
-  return antwort({ auftragId: id }, 201, env);
+  return antwort({ auftragId: id }, 201, env,
+      anfrage,);
 }
 
-async function statusAbfragen(id: string, env: Umgebung): Promise<Response> {
+async function statusAbfragen(
+  id: string,
+  env: Umgebung,
+  anfrage?: Request,
+): Promise<Response> {
   const zeile = await env.DB.prepare(
     `SELECT a.status, a.angenommen_um, f.name AS fahrername
        FROM auftraege a
@@ -144,7 +152,8 @@ async function statusAbfragen(id: string, env: Umgebung): Promise<Response> {
     .bind(id)
     .first<{ status: string; angenommen_um: string | null; fahrername: string | null }>();
 
-  if (!zeile) return antwort({ fehler: 'Unbekannter Auftrag' }, 404, env);
+  if (!zeile) return antwort({ fehler: 'Unbekannter Auftrag' }, 404, env,
+      anfrage,);
 
   const ergebnis: StatusAntwort = {
     status: zeile.status as StatusAntwort['status'],
@@ -152,7 +161,7 @@ async function statusAbfragen(id: string, env: Umgebung): Promise<Response> {
     fahrer: zeile.fahrername?.split(' ')[0],
     angenommenUm: zeile.angenommen_um ?? undefined,
   };
-  return antwort(ergebnis, 200, env);
+  return antwort(ergebnis, 200, env, anfrage);
 }
 
 /* ========================================================================== */
@@ -268,19 +277,46 @@ async function telegramEmpfangen(
 /*  Hilfen                                                                    */
 /* ========================================================================== */
 
-function kopfzeilen(env: Umgebung): HeadersInit {
+/**
+ * ERLAUBTE_HERKUNFT darf mehrere Adressen mit Komma getrennt enthalten -
+ * etwa die Live-Adresse und http://localhost:4321 zum Entwickeln.
+ * Zurueckgegeben wird immer nur die eine, die tatsaechlich angefragt hat.
+ */
+function kopfzeilen(env: Umgebung, anfrage?: Request): HeadersInit {
+  const erlaubte = (env.ERLAUBTE_HERKUNFT || '*')
+    .split(',')
+    .map((eintrag) => eintrag.trim())
+    .filter(Boolean);
+
+  const herkunft = anfrage?.headers.get('origin') ?? '';
+  const passend = erlaubte.includes('*')
+    ? '*'
+    : erlaubte.includes(herkunft)
+      ? herkunft
+      : (erlaubte[0] ?? '*');
+
   return {
-    'access-control-allow-origin': env.ERLAUBTE_HERKUNFT || '*',
+    'access-control-allow-origin': passend,
+    // Sonst liefert ein Zwischenspeicher die Antwort fuer die falsche Adresse aus
+    vary: 'Origin',
     'access-control-allow-methods': 'GET, POST, OPTIONS',
     'access-control-allow-headers': 'content-type',
     'access-control-max-age': '86400',
   };
 }
 
-function antwort(daten: unknown, status: number, env: Umgebung): Response {
+function antwort(
+  daten: unknown,
+  status: number,
+  env: Umgebung,
+  anfrage?: Request,
+): Response {
   return new Response(JSON.stringify(daten), {
     status,
-    headers: { 'content-type': 'application/json; charset=utf-8', ...kopfzeilen(env) },
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      ...kopfzeilen(env, anfrage),
+    },
   });
 }
 

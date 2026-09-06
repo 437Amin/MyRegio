@@ -112,6 +112,15 @@ const einstellungenSchema = z.object({
       .int()
       .positive('Der Takt muss eine Zahl größer als 0 sein.'),
   }),
+  vermittlung: z
+    .object({
+      aktiv: z.boolean({
+        invalid_type_error:
+          '"aktiv" muss true oder false sein. true schaltet die direkte Vermittlung an die Fahrer ein.',
+      }),
+      adresse: z.string().default(''),
+    })
+    .default({ aktiv: false, adresse: '' }),
   einzugsgebiet: z.array(z.string()).min(1, 'Mindestens einen Ort angeben.'),
   rechtliches: z.object({
     ustId: z.string().default(''),
@@ -219,6 +228,16 @@ export function whatsappLink(text?: string): string {
   const basis = `https://wa.me/${site.kontakt.whatsapp}`;
   return text ? `${basis}?text=${encodeURIComponent(text)}` : basis;
 }
+
+/**
+ * Die direkte Vermittlung greift nur, wenn sie eingeschaltet ist UND eine
+ * Adresse hinterlegt wurde. So kann der Schalter nicht versehentlich einen
+ * Knopf zeigen, der ins Leere fuehrt.
+ */
+export const vermittlungAktiv =
+  site.vermittlung.aktiv && site.vermittlung.adresse.trim().length > 0;
+
+export const vermittlungAdresse = site.vermittlung.adresse.replace(/\/$/, '');
 
 export const telefonLink = `tel:${site.kontakt.telefonWaehlen}`;
 

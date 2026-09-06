@@ -90,6 +90,76 @@ Redaktionsbereich – baut und veröffentlicht sich selbst.
 
 ---
 
+## 🚕 Auftragsvermittlung einrichten (machen wir gemeinsam)
+
+Der Dienst unter `dispatch/` ist fertig und geprüft. Zum Scharfschalten fehlen
+diese Schritte – jeder braucht ein Konto, deshalb gemeinsam:
+
+- [ ] **1. Telegram-Bot anlegen**
+      In Telegram **@BotFather** anschreiben → `/newbot` → Name und Benutzername
+      vergeben. Du bekommst ein Token. Den Benutzernamen in `dispatch/wrangler.toml`
+      bei `TELEGRAM_BOT_NAME` eintragen (ohne @).
+
+- [ ] **2. Eigene Chat-ID von Önder holen**
+      Önder schreibt in Telegram **@userinfobot** an, der antwortet mit seiner
+      ID. Die brauchen wir, damit er die Meldung bekommt, wenn kein Fahrer annimmt.
+
+- [ ] **3. Cloudflare einrichten**
+      ```
+      cd dispatch
+      npx wrangler login
+      npx wrangler d1 create vermittlung
+      ```
+      Die ausgegebene ID in `wrangler.toml` bei `database_id` eintragen, dann:
+      ```
+      npm run db:anlegen
+      ```
+
+- [ ] **4. Geheimnisse setzen** (liegen verschlüsselt bei Cloudflare, nie im Repo)
+      ```
+      npx wrangler secret put TELEGRAM_TOKEN
+      npx wrangler secret put TELEGRAM_WEBHOOK_GEHEIMNIS
+      npx wrangler secret put CHEF_CHAT_ID
+      npx wrangler secret put ADMIN_PASSWORT
+      ```
+      Beim Webhook-Geheimnis eine lange zufällige Zeichenfolge wählen.
+
+- [ ] **5. Veröffentlichen und Telegram anmelden**
+      ```
+      npm run deploy
+      ```
+      Danach den Webhook bei Telegram registrieren (einmalig, Adresse und
+      Geheimnis aus den Schritten davor):
+      ```
+      curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WORKER-ADRESSE>/telegram/webhook&secret_token=<GEHEIMNIS>"
+      ```
+
+- [ ] **6. Fahrer eintragen**
+      `<WORKER-ADRESSE>/fahrer` aufrufen, mit dem Admin-Passwort anmelden,
+      Fahrer anlegen (Name, Telefon, Tag/Nacht/beide, Reihenfolge). Jeder
+      bekommt einen Anmeldelink für Telegram – erst wenn er ihn geöffnet hat,
+      steht dort „angemeldet".
+
+- [ ] **7. Auf der Website einschalten**
+      Im Redaktionsbereich unter *Kontakt & Öffnungszeiten →
+      Direkte Vermittlung*: Adresse des Dienstes eintragen und den Haken
+      setzen. Erst dann erscheint „Jetzt Fahrer anfordern" auf der Seite.
+
+- [ ] **8. Einmal echt durchspielen**
+      Bestellung aufgeben, prüfen ob die Nachricht ankommt, annehmen,
+      Statusanzeige auf der Website beobachten.
+
+- [ ] **9. Datenschutzerklärung erneut prüfen lassen**
+      ⚠️ Sobald der Haken gesetzt ist, erscheint automatisch ein neuer
+      Abschnitt „Fahrtbestellung über die Website". Er beschreibt die
+      Verarbeitung, die Weitergabe an die Fahrer und die Übermittlung über
+      Telegram. **Dieser Text war nicht Teil der bisherigen Anwaltsprüfung.**
+
+- [ ] **10. In `dispatch/wrangler.toml` `http://localhost:4321` aus
+      `ERLAUBTE_HERKUNFT` entfernen**, wenn nicht mehr entwickelt wird.
+
+---
+
 ## 🔧 Redaktionsbereich für Önder freischalten
 
 Damit Önder unter `myregiocar.com/admin` selbst Inhalte pflegen kann –

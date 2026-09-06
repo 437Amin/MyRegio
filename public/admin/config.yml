@@ -137,6 +137,20 @@ collections:
               - { name: flughafenMinuten, label: 'Fahrzeit zum Flughafen (Minuten)', widget: number, value_type: int, min: 1 }
               - { name: taktMinuten, label: 'Takt der Bahn (Minuten)', widget: number, value_type: int, min: 1 }
 
+          - name: vermittlung
+            label: 'Direkte Vermittlung an die Fahrer'
+            widget: object
+            fields:
+              - name: aktiv
+                label: 'Direkte Vermittlung einschalten'
+                widget: boolean
+                hint: 'Angehakt erscheint auf der Seite zusätzlich "Jetzt Fahrer anfordern". Aufträge gehen dann sofort per Telegram an die eingeteilten Fahrer. Ohne Haken läuft alles wie bisher über WhatsApp.'
+              - name: adresse
+                label: 'Adresse des Vermittlungsdienstes'
+                widget: string
+                required: false
+                hint: 'Wird bei der Einrichtung eingetragen. Ohne Adresse bleibt die Vermittlung aus, auch wenn der Haken gesetzt ist.'
+
           - name: einzugsgebiet
             label: 'Orte, in denen Sie fahren'
             widget: list

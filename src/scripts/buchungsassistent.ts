@@ -71,6 +71,10 @@ function einrichten(wurzel: HTMLElement): void {
   const knopfWeiter = wurzel.querySelector<HTMLButtonElement>('[data-weiter]');
   const knopfZurueck = wurzel.querySelector<HTMLButtonElement>('[data-zurueck]');
   const knopfSenden = wurzel.querySelector<HTMLAnchorElement>('[data-senden]');
+  const knopfVermitteln = wurzel.querySelector<HTMLButtonElement>('[data-vermitteln]');
+  const statusFeld = wurzel.querySelector<HTMLElement>('[data-status]');
+  const fortschritt = wurzel.querySelector<HTMLElement>('ol');
+  const vermittlungBasis = (wurzel.dataset.vermittlung ?? '').replace(/\/$/, '');
   const linkMail = wurzel.querySelector<HTMLAnchorElement>('[data-mailto]');
   const alternativen = wurzel.querySelector<HTMLElement>('[data-alternativen]');
   const fehlerFeld = wurzel.querySelector<HTMLElement>('[data-fehler]');
@@ -78,6 +82,7 @@ function einrichten(wurzel: HTMLElement): void {
   const ansage = wurzel.querySelector<HTMLElement>('[data-ansage]');
 
   let schritt = 1;
+  let statusTimer: number | undefined;
 
   /* ---------------------------------------------------------------- Werte */
 
@@ -185,12 +190,37 @@ function einrichten(wurzel: HTMLElement): void {
       case 4:
         return null;
 
-      case 5:
-        return fehlt('name', 'Bitte nennen Sie uns noch Ihren Namen.');
+      case 5: {
+        const grund = fehlt('name', 'Bitte nennen Sie uns noch Ihren Namen.');
+        if (grund) return grund;
+
+        // Ohne Rufnummer kann der Fahrer den Fahrgast nicht erreichen.
+        // Beim WhatsApp-Weg ist sie entbehrlich - dort schreibt man ja schon.
+        if (direktMoeglich()) {
+          const nurZiffern = (werte.telefon ?? '').replace(/[^0-9]/g, '');
+          if (nurZiffern.length < 7) {
+            const feld = pflichtfeld('telefon');
+            feld?.setAttribute('aria-invalid', 'true');
+            feld?.focus();
+            return 'Bitte geben Sie eine Telefonnummer an, unter der der Fahrer Sie erreicht.';
+          }
+          pflichtfeld('telefon')?.removeAttribute('aria-invalid');
+        }
+        return null;
+      }
 
       default:
         return null;
     }
+  }
+
+  /**
+   * Direkt vermitteln geht nur, wenn der Dienst eingerichtet ist und es sich
+   * um eine Fahrt handelt. Einen Stellplatz kann man keinem Fahrer zuteilen.
+   */
+  function direktMoeglich(): boolean {
+    if (!vermittlungBasis) return false;
+    return werteLesen().art !== 'Park & Fly';
   }
 
   function fehlerZeigen(text: string | null): void {
@@ -245,6 +275,7 @@ function einrichten(wurzel: HTMLElement): void {
 
     zeilen.push('');
     zeilen.push(`Mein Name: ${w.name || '(bitte noch ergänzen)'}`);
+    if (w.telefon) zeilen.push(`Meine Telefonnummer: ${w.telefon}`);
 
     return zeilen.join('\n');
   }
@@ -257,6 +288,152 @@ function einrichten(wurzel: HTMLElement): void {
     if (linkMail) {
       const betreff = encodeURIComponent(`Fahrtanfrage über die Website`);
       linkMail.href = `${linkMail.href.split('?')[0]}?subject=${betreff}&body=${encodeURIComponent(text)}`;
+    }
+  }
+
+  /* ---------------------------------------------------- Direkte Vermittlung */
+
+  type StatusArt = 'suche' | 'gefunden' | 'keiner' | 'fehler';
+
+  /** Blendet das Formular aus und zeigt stattdessen den Stand der Suche. */
+  function zeigeStatus(art: StatusArt): void {
+    if (!statusFeld) return;
+
+    formular!.hidden = true;
+    if (fortschritt) fortschritt.hidden = true;
+    statusFeld.hidden = false;
+
+    (['suche', 'gefunden', 'keiner', 'fehler'] as StatusArt[]).forEach((name) => {
+      const teil = statusFeld.querySelector<HTMLElement>(`[data-status-${name}]`);
+      if (teil) teil.hidden = name !== art;
+    });
+
+    if (ansage) {
+      const texte: Record<StatusArt, string> = {
+        suche: 'Ein Fahrer wird gesucht.',
+        gefunden: 'Ein Fahrer übernimmt Ihre Fahrt.',
+        keiner: 'Zurzeit ist kein Fahrer frei.',
+        fehler: 'Die Anfrage konnte nicht übermittelt werden.',
+      };
+      ansage.textContent = texte[art];
+    }
+
+    statusFeld.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  function zurueckZumFormular(): void {
+    if (statusTimer) window.clearTimeout(statusTimer);
+    if (statusFeld) statusFeld.hidden = true;
+    formular!.hidden = false;
+    if (fortschritt) fortschritt.hidden = false;
+  }
+
+  /** Fragt in Abstaenden nach, ob schon jemand zugesagt hat. */
+  function beobachte(auftragId: string): void {
+    const schluss = Date.now() + 5 * 60 * 1000;
+
+    const nachfragen = async (): Promise<void> => {
+      if (Date.now() > schluss) {
+        zeigeStatus('keiner');
+        return;
+      }
+
+      try {
+        const antwort = await fetch(
+          `${vermittlungBasis}/api/status/${encodeURIComponent(auftragId)}`,
+        );
+        if (antwort.ok) {
+          const stand = (await antwort.json()) as {
+            status?: string;
+            fahrer?: string;
+          };
+
+          if (stand.status === 'angenommen') {
+            const name = wurzel.querySelector<HTMLElement>('[data-fahrername]');
+            if (name) name.textContent = stand.fahrer || 'Ein Fahrer';
+            zeigeStatus('gefunden');
+            return;
+          }
+          if (stand.status === 'niemand' || stand.status === 'storniert') {
+            zeigeStatus('keiner');
+            return;
+          }
+        }
+      } catch {
+        // Netz kurz weg - beim naechsten Versuch klappt es vielleicht
+      }
+
+      statusTimer = window.setTimeout(nachfragen, 3000);
+    };
+
+    statusTimer = window.setTimeout(nachfragen, 2500);
+  }
+
+  /** Schickt die Bestellung an den Vermittlungsdienst. */
+  async function vermitteln(): Promise<void> {
+    const problem = pruefen(LETZTER_SCHRITT);
+    if (problem) {
+      fehlerZeigen(problem);
+      return;
+    }
+
+    const w = werteLesen();
+    const beschriftung = knopfVermitteln?.innerHTML ?? '';
+    if (knopfVermitteln) {
+      knopfVermitteln.disabled = true;
+      knopfVermitteln.textContent = 'Wird gesendet …';
+    }
+
+    // Datum und Uhrzeit maschinenlesbar - danach richtet sich, ob Tag- oder
+    // Nachtfahrer gefragt werden.
+    const wunschIso =
+      w.datum && w.zeit ? new Date(`${w.datum}T${w.zeit}`).toISOString() : '';
+
+    try {
+      const antwort = await fetch(`${vermittlungBasis}/api/bestellung`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          art: w.art,
+          abholung: w.von,
+          ziel: w.nach ?? '',
+          wunschzeit: `${alsDatum(w.datum ?? '')}${w.zeit ? ` um ${w.zeit} Uhr` : ''}`,
+          wunschIso,
+          sofort: w.sofort === 'ja',
+          personen: Number(w.personen ?? 1),
+          gepaeck: Number(w.gepaeck ?? 0),
+          kindersitze: Number(w.kindersitze ?? 0),
+          anmerkung: [
+            w.rueckfahrt === 'ja' ? 'Rückfahrt gewünscht' : '',
+            w.anmerkung ?? '',
+          ]
+            .filter(Boolean)
+            .join(' · '),
+          name: w.name,
+          telefon: w.telefon,
+        }),
+      });
+
+      if (!antwort.ok) throw new Error(`Status ${antwort.status}`);
+
+      const ergebnis = (await antwort.json()) as { auftragId?: string };
+      if (!ergebnis.auftragId) throw new Error('Keine Auftragsnummer erhalten');
+
+      try {
+        sessionStorage.removeItem(SPEICHER_SCHLUESSEL);
+      } catch {
+        /* egal */
+      }
+
+      zeigeStatus('suche');
+      beobachte(ergebnis.auftragId);
+    } catch {
+      zeigeStatus('fehler');
+    } finally {
+      if (knopfVermitteln) {
+        knopfVermitteln.disabled = false;
+        knopfVermitteln.innerHTML = beschriftung;
+      }
     }
   }
 
@@ -289,6 +466,7 @@ function einrichten(wurzel: HTMLElement): void {
     if (knopfZurueck) knopfZurueck.hidden = schritt === 1;
     if (knopfWeiter) knopfWeiter.hidden = amEnde;
     if (knopfSenden) knopfSenden.hidden = !amEnde;
+    if (knopfVermitteln) knopfVermitteln.hidden = !amEnde || !direktMoeglich();
     if (alternativen) alternativen.classList.toggle('hidden', !amEnde);
 
     fehlerZeigen(null);
@@ -342,6 +520,9 @@ function einrichten(wurzel: HTMLElement): void {
       if (!datum || !zeit) return;
 
       const art = chip.dataset.schnellwahl;
+      const sofortFeld = pflichtfeld('sofort');
+      if (sofortFeld) sofortFeld.value = art === 'jetzt' ? 'ja' : '';
+
       if (art === 'jetzt') {
         const gleich = new Date(Date.now() + 45 * 60 * 1000);
         gleich.setMinutes(Math.ceil(gleich.getMinutes() / 5) * 5, 0, 0);
@@ -374,8 +555,22 @@ function einrichten(wurzel: HTMLElement): void {
     linksAktualisieren();
   }
 
-  formular.addEventListener('input', () => {
+  formular.addEventListener('input', (ereignis) => {
     fehlerZeigen(null);
+
+    // Wer Datum oder Uhrzeit von Hand anfasst, meint keine Sofortfahrt mehr
+    const ziel = ereignis.target;
+    if (
+      ziel instanceof HTMLInputElement &&
+      (ziel.name === 'datum' || ziel.name === 'zeit')
+    ) {
+      const sofortFeld = pflichtfeld('sofort');
+      if (sofortFeld) sofortFeld.value = '';
+      wurzel
+        .querySelectorAll<HTMLButtonElement>('[data-schnellwahl]')
+        .forEach((chip) => chip.setAttribute('aria-pressed', 'false'));
+    }
+
     speichern();
   });
 
@@ -406,6 +601,14 @@ function einrichten(wurzel: HTMLElement): void {
   });
 
   knopfZurueck?.addEventListener('click', () => schrittZeigen(schritt - 1));
+
+  knopfVermitteln?.addEventListener('click', () => {
+    void vermitteln();
+  });
+
+  wurzel
+    .querySelector<HTMLButtonElement>('[data-zurueck-formular]')
+    ?.addEventListener('click', zurueckZumFormular);
 
   knopfSenden?.addEventListener('click', (ereignis) => {
     const problem = pruefen(LETZTER_SCHRITT);

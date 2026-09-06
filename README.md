@@ -169,6 +169,76 @@ Eigenschaften:
 
 ---
 
+## Auftragsvermittlung (`dispatch/`)
+
+Ein eigener Dienst auf Cloudflare Workers, getrennt von der Website. Er nimmt
+Bestellungen entgegen und fragt die eingeteilten Fahrer nacheinander über
+Telegram, bis jemand zusagt.
+
+```
+Kunde bestellt auf der Website
+  → Auftrag wird angelegt und der Eingang protokolliert (§ 49 PBefG)
+  → Fahrer 1 bekommt Telegram-Nachricht mit [Annehmen] [Ablehnen]
+  → keine Antwort binnen 40 Sekunden oder Ablehnung → Fahrer 2, 3, …
+  → Annahme: Name und Rufnummer des Fahrgasts werden nachgereicht
+  → niemand nimmt an → Meldung an den Chef
+```
+
+**Warum Durable Objects.** Je Auftrag existiert genau ein Objekt, dessen
+Aufrufe Cloudflare nacheinander ausführt – dadurch können zwei Fahrer nicht
+gleichzeitig denselben Auftrag annehmen, ohne dass wir sperren müssen. Der
+40-Sekunden-Wecker läuft in der Cloudflare-Infrastruktur und nicht in einem
+Prozess, den nachts jemand neu starten müsste.
+
+**Zwei Feinheiten, die leicht zu übersehen sind:**
+
+- Die Schichtauswahl richtet sich nach der Zeit der **Fahrt**, nicht der
+  Bestellung. Wer nachts für den nächsten Morgen bestellt, erreicht die
+  Tagfahrer.
+- Gerechnet wird in **deutscher Ortszeit**. Cloudflare läuft in UTC; ohne
+  Umrechnung wäre 23 Uhr im Sommer intern 21 Uhr und damit fälschlich
+  Tagschicht. Dafür gibt es eigene Tests.
+
+**Fahrerdaten** liegen in der Cloudflare-Datenbank und bewusst **nicht** im
+Repository. Verwaltet werden sie unter `<worker>/fahrer` hinter einem Passwort.
+
+### Befehle
+
+```bash
+cd dispatch
+npm run dev          # lokal, mit eigener Datenbank
+npx vitest run       # Modultests der Schichtauswahl
+npm run deploy       # veröffentlichen
+```
+
+### End-zu-Ende-Probe
+
+Ohne echte Telegram-Nachrichten zu verschicken – eine Attrappe zeichnet auf,
+wer was bekommen hätte:
+
+```bash
+node test/telegram-attrappe.mjs      # Fenster 1
+npx wrangler dev --port 8788         # Fenster 2
+npx wrangler d1 execute vermittlung --local --file=test/testdaten.sql
+node test/ablauf.mjs                 # Fenster 3
+```
+
+Prüft Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef und die
+Absicherungen (fehlende Angaben, unsinnige Rufnummer, Telegram-Aufruf ohne
+Geheimnis).
+
+### Anschluss an die Website
+
+Der Buchungsassistent zeigt „Jetzt Fahrer anfordern" nur, wenn in
+`content/einstellungen.yaml` unter `vermittlung` sowohl `aktiv: true` steht
+**als auch** eine Adresse hinterlegt ist. Andernfalls läuft alles wie zuvor
+über WhatsApp. An denselben Schalter hängt auch der zusätzliche Abschnitt in
+der Datenschutzerklärung – der Text beschreibt also immer den tatsächlichen
+Stand.
+
+Für Park & Fly bleibt es bewusst bei WhatsApp: Einen Stellplatz kann man
+keinem Fahrer zuteilen.
+
 ## Veröffentlichen
 
 ### Hostinger (produktiv)

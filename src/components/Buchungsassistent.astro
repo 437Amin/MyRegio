@@ -6,6 +6,8 @@ import {
   bestellungenLink,
   whatsappLink,
   whatsappStandardtext,
+  vermittlungAktiv,
+  vermittlungAdresse,
 } from '~/config/site';
 
 interface Props {
@@ -77,6 +79,7 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
       data-whatsapp={site.kontakt.whatsapp}
       data-vorauswahl={vorauswahl}
       data-marke={site.unternehmen.marke}
+      data-vermittlung={vermittlungAktiv ? vermittlungAdresse : ''}
     >
       <!-- Fortschritt -->
       <ol class="mb-6 flex items-center gap-1.5" aria-hidden="true">
@@ -217,6 +220,9 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
             <span data-ohne-art="Park & Fly">Wann sollen wir da sein?</span>
           </legend>
 
+          <!-- Merkt sich, ob "so bald wie möglich" gewählt wurde -->
+          <input type="hidden" name="sofort" value="" />
+
           <div class="mt-5 flex flex-wrap gap-2" data-ohne-art="Park & Fly">
             <button type="button" class="chip" data-schnellwahl="jetzt">
               So bald wie möglich
@@ -344,9 +350,26 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
               name="name"
               type="text"
               autocomplete="name"
-              enterkeyhint="done"
+              enterkeyhint="next"
               placeholder="Vor- und Nachname"
             />
+          </div>
+
+          <div class="feld mt-4">
+            <label for="feld-telefon">
+              Ihre Telefonnummer
+              {!vermittlungAktiv && <span class="opt">optional</span>}
+            </label>
+            <input
+              id="feld-telefon"
+              name="telefon"
+              type="tel"
+              inputmode="tel"
+              autocomplete="tel"
+              enterkeyhint="done"
+              placeholder="z. B. 0171 2345678"
+            />
+            <p class="hilfe">Damit der Fahrer Sie erreichen kann.</p>
           </div>
 
           <div class="mt-6">
@@ -361,9 +384,11 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
           <p class="mt-4 flex items-start gap-2 text-xs leading-relaxed text-nebel-500">
             <Icon name="schild" size={15} class="mt-px shrink-0 text-cyan-600" />
             <span>
-              Ihre Angaben bleiben bis hierhin ausschließlich in Ihrem Browser.
-              Erst wenn Sie auf den Knopf tippen, öffnet sich WhatsApp mit dem
-              obigen Text – abgeschickt wird er von Ihnen.
+              {
+                vermittlungAktiv
+                  ? 'Ihre Angaben bleiben bis hierhin in Ihrem Browser. Mit „Jetzt Fahrer anfordern“ übermitteln Sie sie an uns, damit wir einen Fahrer suchen können. Wählen Sie stattdessen WhatsApp, entscheiden Sie selbst, wann Sie die Nachricht abschicken.'
+                  : 'Ihre Angaben bleiben bis hierhin ausschließlich in Ihrem Browser. Erst wenn Sie auf den Knopf tippen, öffnet sich WhatsApp mit dem obigen Text – abgeschickt wird er von Ihnen.'
+              }
             </span>
           </p>
         </fieldset>
@@ -388,8 +413,20 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
             <Icon name="pfeil-rechts" size={18} />
           </button>
 
+          {
+            vermittlungAktiv && (
+              <button type="button" class="knopf knopf-cyan flex-1" data-vermitteln hidden>
+                <Icon name="pfeil-rechts" size={18} />
+                Jetzt Fahrer anfordern
+              </button>
+            )
+          }
+
           <a
-            class="knopf knopf-whatsapp flex-1"
+            class:list={[
+              'knopf knopf-whatsapp',
+              vermittlungAktiv ? '!px-4' : 'flex-1',
+            ]}
             data-senden
             href={whatsappLink(whatsappStandardtext)}
             target="_blank"
@@ -397,7 +434,9 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
             hidden
           >
             <Icon name="whatsapp" size={20} />
-            Per WhatsApp senden
+            <span class:list={[vermittlungAktiv && 'hidden sm:inline']}>
+              {vermittlungAktiv ? 'WhatsApp' : 'Per WhatsApp senden'}
+            </span>
           </a>
         </div>
 
@@ -413,6 +452,98 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
           </a>
         </div>
       </form>
+
+      <!-- Erscheint anstelle des Formulars, sobald ein Fahrer gesucht wird -->
+      <div class="karte p-6 text-center md:p-9" data-status hidden>
+        <!-- Suche läuft -->
+        <div data-status-suche>
+          <span class="sucher mx-auto" aria-hidden="true"></span>
+          <h3 class="mt-6 text-xl font-bold text-white md:text-2xl">
+            Wir suchen einen Fahrer für Sie
+          </h3>
+          <p class="mx-auto mt-3 max-w-md text-nebel-400">
+            Das dauert meist weniger als eine Minute. Bitte lassen Sie diese
+            Seite so lange geöffnet.
+          </p>
+        </div>
+
+        <!-- Fahrer gefunden -->
+        <div data-status-gefunden hidden>
+          <span class="icon-rahmen mx-auto !h-14 !w-14 !border-green-500/50 !bg-green-500/10 !text-green-400">
+            <Icon name="check" size={26} />
+          </span>
+          <h3 class="mt-5 text-xl font-bold text-white md:text-2xl">
+            <span data-fahrername>Ein Fahrer</span> übernimmt Ihre Fahrt
+          </h3>
+          <p class="mx-auto mt-3 max-w-md text-nebel-400">
+            Sie werden bei Bedarf kurz angerufen. Bezahlt wird bar oder mit
+            Karte im Fahrzeug.
+          </p>
+        </div>
+
+        <!-- Niemand frei -->
+        <div data-status-keiner hidden>
+          <span class="icon-rahmen mx-auto !h-14 !w-14">
+            <Icon name="telefon" size={24} />
+          </span>
+          <h3 class="mt-5 text-xl font-bold text-white md:text-2xl">
+            Gerade ist kein Fahrer frei
+          </h3>
+          <p class="mx-auto mt-3 max-w-md text-nebel-400">
+            Ihre Anfrage liegt uns vor. Am schnellsten geht es jetzt telefonisch
+            – wir finden eine Lösung.
+          </p>
+          <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <a href={telefonLink} class="knopf knopf-cyan">
+              <Icon name="telefon" size={18} />
+              {site.kontakt.telefonAnzeige}
+            </a>
+            <a
+              data-status-whatsapp
+              href={whatsappLink(whatsappStandardtext)}
+              target="_blank"
+              rel="noopener"
+              class="knopf knopf-rand"
+            >
+              <Icon name="whatsapp" size={18} />
+              WhatsApp
+            </a>
+          </div>
+        </div>
+
+        <!-- Technischer Fehler -->
+        <div data-status-fehler hidden>
+          <span class="icon-rahmen mx-auto !h-14 !w-14">
+            <Icon name="schild" size={24} />
+          </span>
+          <h3 class="mt-5 text-xl font-bold text-white md:text-2xl">
+            Das hat leider nicht geklappt
+          </h3>
+          <p class="mx-auto mt-3 max-w-md text-nebel-400">
+            Ihre Anfrage konnte nicht übermittelt werden. Bitte rufen Sie uns an
+            oder schreiben Sie uns – Ihre Angaben sind noch ausgefüllt.
+          </p>
+          <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <a href={telefonLink} class="knopf knopf-cyan">
+              <Icon name="telefon" size={18} />
+              {site.kontakt.telefonAnzeige}
+            </a>
+            <a
+              data-status-whatsapp
+              href={whatsappLink(whatsappStandardtext)}
+              target="_blank"
+              rel="noopener"
+              class="knopf knopf-whatsapp"
+            >
+              <Icon name="whatsapp" size={18} />
+              Per WhatsApp senden
+            </a>
+          </div>
+          <button type="button" class="knopf knopf-rand mt-4" data-zurueck-formular>
+            Zurück zum Formular
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </section>
@@ -650,6 +781,29 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
     font-size: 1.0625rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Ringender Kreis, solange ein Fahrer gesucht wird */
+  .sucher {
+    display: block;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 999px;
+    border: 3px solid rgb(34 184 240 / 0.18);
+    border-top-color: var(--color-cyan-400);
+    animation: drehen 0.9s linear infinite;
+  }
+
+  @keyframes drehen {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sucher {
+      animation-duration: 2.5s;
+    }
   }
 
   /* Fortschrittsbalken */
