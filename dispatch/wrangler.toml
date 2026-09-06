@@ -18,13 +18,12 @@ compatibility_date = "2025-07-18"
 # Mehrere Adressen mit Komma trennen. Die zweite ist der Entwicklungsserver
 # und kann nach dem Livegang entfernt werden.
 ERLAUBTE_HERKUNFT = "https://www.myregiocar.com,http://localhost:4321"
-TELEGRAM_BOT_NAME = "MyRegioCarBot"
+TELEGRAM_BOT_NAME = "MyRegioBot"
 
 [[d1_databases]]
 binding = "DB"
 database_name = "vermittlung"
-# ↓↓↓ Nach "wrangler d1 create vermittlung" die ausgegebene ID hier eintragen
-database_id = "00000000-0000-0000-0000-000000000000"
+database_id = "5bac0f39-52ba-473c-9ea4-35d2b3701263"
 
 [[durable_objects.bindings]]
 name = "VERMITTLUNG"
