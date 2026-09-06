@@ -111,3 +111,14 @@ CREATE TABLE IF NOT EXISTS drosselung (
 );
 
 CREATE INDEX IF NOT EXISTS idx_drosselung ON drosselung (kennung, zeitpunkt);
+
+
+-- --- Zwischenspeicher fuer Strecken ------------------------------------------
+-- Dieselbe Strecke aendert sich nicht von Tag zu Tag. Der Speicher spart
+-- Abfragen beim Kartendienst und macht die Preisanzeige spuerbar schneller.
+CREATE TABLE IF NOT EXISTS strecken_speicher (
+  schluessel TEXT PRIMARY KEY,
+  km         REAL NOT NULL,
+  minuten    INTEGER NOT NULL,
+  angelegt   TEXT NOT NULL DEFAULT (datetime('now'))
+);

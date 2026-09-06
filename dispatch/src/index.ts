@@ -21,6 +21,12 @@ export { Vermittlung } from './vermittlung-do';
 
 const MAX_LAENGE = 500;
 const BESTELLUNGEN_PRO_STUNDE = 5;
+// Grosszuegig: Eine Preisabfrage kostet nur dann etwas beim Kartendienst,
+// wenn die Strecke noch nicht im Speicher liegt. Zu enge Grenzen fuehren
+// dazu, dass echte Kunden "Preis auf Anfrage" sehen - und dann ist die
+// ganze Funktion nutzlos.
+const PREISE_PRO_STUNDE = 200;
+const ADRESSEN_PRO_STUNDE = 400;
 
 export default {
   async fetch(anfrage: Request, env: Umgebung): Promise<Response> {
@@ -453,7 +459,7 @@ async function preisAnfragen(anfrage: Request, env: Umgebung): Promise<Response>
 
   // Auch diese Abfrage kostet Kontingent beim Kartendienst
   const kennung = 'preis-' + (await ipKennung(anfrage, env));
-  if (await zuVieleBestellungen(kennung, env, 40)) {
+  if (await zuVieleBestellungen(kennung, env, PREISE_PRO_STUNDE)) {
     return antwort({ aufAnfrage: true, grund: 'zu-viele' }, 200, env, anfrage);
   }
   await env.DB.prepare('INSERT INTO drosselung (kennung) VALUES (?)')
@@ -537,13 +543,7 @@ export async function festpreisErmitteln(
 
   if (!von || !nach) return null;
 
-  const strecke = await streckeZwischenPunkten(
-    von.breite,
-    von.laenge,
-    nach.breite,
-    nach.laenge,
-    env.ORS_SCHLUESSEL,
-  );
+  const strecke = await streckeMitSpeicher(von, nach, env);
   if (!strecke) return null;
 
   const einstellungen = await ladeEinstellungen(env);
@@ -554,6 +554,47 @@ export async function festpreisErmitteln(
     vonErkannt: von.bezeichnung,
     nachErkannt: nach.bezeichnung,
   };
+}
+
+/**
+ * Holt die Strecke - erst aus dem Zwischenspeicher, sonst vom Kartendienst.
+ * Der Schluessel rundet die Koordinaten auf etwa zehn Meter, damit auch
+ * leicht abweichende Punkte denselben Eintrag treffen.
+ */
+async function streckeMitSpeicher(
+  von: { breite: number; laenge: number },
+  nach: { breite: number; laenge: number },
+  env: Umgebung,
+): Promise<{ km: number; minuten: number } | null> {
+  const r = (zahl: number) => zahl.toFixed(4);
+  const schluessel = `${r(von.breite)},${r(von.laenge)}>${r(nach.breite)},${r(nach.laenge)}`;
+
+  const gespeichert = await env.DB.prepare(
+    "SELECT km, minuten FROM strecken_speicher WHERE schluessel = ? AND angelegt > datetime('now', '-30 days')",
+  )
+    .bind(schluessel)
+    .first<{ km: number; minuten: number }>();
+
+  if (gespeichert) return gespeichert;
+
+  const gemessen = await streckeZwischenPunkten(
+    von.breite,
+    von.laenge,
+    nach.breite,
+    nach.laenge,
+    env.ORS_SCHLUESSEL!,
+  );
+  if (!gemessen) return null;
+
+  await env.DB.prepare(
+    `INSERT INTO strecken_speicher (schluessel, km, minuten) VALUES (?, ?, ?)
+     ON CONFLICT(schluessel) DO UPDATE SET km = excluded.km,
+       minuten = excluded.minuten, angelegt = datetime('now')`,
+  )
+    .bind(schluessel, gemessen.km, gemessen.minuten)
+    .run();
+
+  return gemessen;
 }
 
 async function ladeEinstellungen(env: Umgebung): Promise<Record<string, string>> {
@@ -579,7 +620,7 @@ async function adressenAnfragen(
   }
 
   const kennung = 'adr-' + (await ipKennung(anfrage, env));
-  if (await zuVieleBestellungen(kennung, env, 120)) {
+  if (await zuVieleBestellungen(kennung, env, ADRESSEN_PRO_STUNDE)) {
     return antwort({ vorschlaege: [] }, 200, env, anfrage);
   }
   await env.DB.prepare('INSERT INTO drosselung (kennung) VALUES (?)')
