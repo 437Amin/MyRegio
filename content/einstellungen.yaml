@@ -90,9 +90,9 @@ vermittlung:
   #   false = Bestellungen laufen wie bisher ueber WhatsApp
   #   true  = auf der Seite erscheint zusaetzlich "Jetzt Fahrer anfordern"
   # Erst auf true stellen, wenn der Vermittlungsdienst eingerichtet ist.
-  aktiv: false
+  aktiv: true
   # Adresse des Vermittlungsdienstes (wird bei der Einrichtung eingetragen)
-  adresse: ""
+  adresse: "https://myregiocar-vermittlung.assad-amin.workers.dev"
 
 einzugsgebiet:
   # Orte, in denen gefahren wird. Erscheinen im Text und bei Google.

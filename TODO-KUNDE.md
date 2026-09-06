@@ -95,16 +95,22 @@ Redaktionsbereich – baut und veröffentlicht sich selbst.
 Der Dienst unter `dispatch/` ist fertig und geprüft. Zum Scharfschalten fehlen
 diese Schritte – jeder braucht ein Konto, deshalb gemeinsam:
 
-- [ ] **1. Telegram-Bot anlegen**
+- [x] **1. Telegram-Bot anlegen** – @MyRegioBot
       In Telegram **@BotFather** anschreiben → `/newbot` → Name und Benutzername
       vergeben. Du bekommst ein Token. Den Benutzernamen in `dispatch/wrangler.toml`
       bei `TELEGRAM_BOT_NAME` eintragen (ohne @).
 
-- [ ] **2. Eigene Chat-ID von Önder holen**
-      Önder schreibt in Telegram **@userinfobot** an, der antwortet mit seiner
-      ID. Die brauchen wir, damit er die Meldung bekommt, wenn kein Fahrer annimmt.
+- [ ] **2. Chat-ID von Önder eintragen** (er ist im Urlaub)
+      Aktuell steht dort die ID von Amin, damit die Eskalation getestet werden
+      konnte. Sobald Önder zurück ist:
+      ```
+      cd dispatch
+      npx wrangler secret put CHEF_CHAT_ID
+      ```
+      Seine ID bekommt er von @userinfobot in Telegram.
 
-- [ ] **3. Cloudflare einrichten**
+
+- [x] **3. Cloudflare einrichten** – Datenbank `vermittlung` in Region WEUR
       ```
       cd dispatch
       npx wrangler login
@@ -115,7 +121,7 @@ diese Schritte – jeder braucht ein Konto, deshalb gemeinsam:
       npm run db:anlegen
       ```
 
-- [ ] **4. Geheimnisse setzen** (liegen verschlüsselt bei Cloudflare, nie im Repo)
+- [x] **4. Geheimnisse setzen** (liegen verschlüsselt bei Cloudflare, nie im Repo)
       ```
       npx wrangler secret put TELEGRAM_TOKEN
       npx wrangler secret put TELEGRAM_WEBHOOK_GEHEIMNIS
@@ -124,7 +130,7 @@ diese Schritte – jeder braucht ein Konto, deshalb gemeinsam:
       ```
       Beim Webhook-Geheimnis eine lange zufällige Zeichenfolge wählen.
 
-- [ ] **5. Veröffentlichen und Telegram anmelden**
+- [x] **5. Veröffentlicht** – https://myregiocar-vermittlung.assad-amin.workers.dev
       ```
       npm run deploy
       ```
@@ -134,18 +140,20 @@ diese Schritte – jeder braucht ein Konto, deshalb gemeinsam:
       curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WORKER-ADRESSE>/telegram/webhook&secret_token=<GEHEIMNIS>"
       ```
 
-- [ ] **6. Fahrer eintragen**
+- [ ] **6. Echte Fahrer eintragen** (bisher nur der Testeintrag „Amin")
+      ⚠️ Den Testfahrer löschen, sobald echte Fahrer angelegt sind – sonst
+      gehen Aufträge an die falsche Telegram-Nummer.
       `<WORKER-ADRESSE>/fahrer` aufrufen, mit dem Admin-Passwort anmelden,
       Fahrer anlegen (Name, Telefon, Tag/Nacht/beide, Reihenfolge). Jeder
       bekommt einen Anmeldelink für Telegram – erst wenn er ihn geöffnet hat,
       steht dort „angemeldet".
 
-- [ ] **7. Auf der Website einschalten**
+- [x] **7. Auf der Website eingeschaltet**
       Im Redaktionsbereich unter *Kontakt & Öffnungszeiten →
       Direkte Vermittlung*: Adresse des Dienstes eintragen und den Haken
       setzen. Erst dann erscheint „Jetzt Fahrer anfordern" auf der Seite.
 
-- [ ] **8. Einmal echt durchspielen**
+- [x] **8. Echt durchgespielt** – 06.09.2026, Auftrag in 18 Sekunden angenommen
       Bestellung aufgeben, prüfen ob die Nachricht ankommt, annehmen,
       Statusanzeige auf der Website beobachten.
 
