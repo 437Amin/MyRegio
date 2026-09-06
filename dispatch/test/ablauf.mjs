@@ -95,11 +95,16 @@ await leeren();
 
   const angebot = an(liste, '101')[0]?.daten.text ?? '';
   pruefe(
-    !angebot.includes('Steiermärker'),
-    'Das Angebot enthält die Abholadresse NICHT',
-    angebot.slice(0, 120),
+    angebot.includes('Steiermärker'),
+    'Die Abholadresse steht schon im Angebot',
+    angebot.slice(0, 160),
   );
   pruefe(angebot.includes('Flughafen Stuttgart'), 'Das Ziel steht im Angebot');
+  pruefe(
+    !angebot.includes('Max Mustermann') && !angebot.includes('1234567'),
+    'Name und Rufnummer des Fahrgasts stehen NOCH NICHT im Angebot',
+    angebot.slice(0, 160),
+  );
   pruefe(
     JSON.stringify(an(liste, '101')[0]?.daten.reply_markup ?? {}).includes('Annehmen'),
     'Der Annehmen-Knopf ist dabei',
@@ -114,12 +119,16 @@ await leeren();
     (a) => a.methode === 'editMessageText' && String(a.daten.chat_id) === '101',
   );
   pruefe(
-    zusage?.daten.text.includes('Steiermärker'),
-    'Erst nach dem Annehmen kommt die Adresse',
+    zusage?.daten.text.includes('Max Mustermann'),
+    'Erst nach dem Annehmen kommt der Name des Fahrgasts',
   );
   pruefe(
     zusage?.daten.text.includes('+49 171 1234567'),
-    'Die Rufnummer des Fahrgasts wird mitgeschickt',
+    'Erst nach dem Annehmen kommt die Rufnummer',
+  );
+  pruefe(
+    zusage?.daten.text.includes('Steiermärker'),
+    'Die Adresse steht auch in der Zusage',
   );
 
   const s = await status(koerper.auftragId);

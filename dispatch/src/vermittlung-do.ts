@@ -309,6 +309,9 @@ export class Vermittlung implements DurableObject {
       '🚗 <b>Neue Fahrt</b>',
       '',
       `<b>Anlass:</b> ${sicher(auftrag.art)}`,
+      // Die Abholadresse steht bewusst schon im Angebot: Ohne sie kann
+      // niemand beurteilen, ob er es rechtzeitig schafft.
+      `<b>Abholung:</b> ${sicher(auftrag.abholung)}`,
     ];
 
     if (auftrag.ziel) zeilen.push(`<b>Ziel:</b> ${sicher(auftrag.ziel)}`);
@@ -324,7 +327,9 @@ export class Vermittlung implements DurableObject {
     if (auftrag.anmerkung) zeilen.push(`<b>Hinweis:</b> ${sicher(auftrag.anmerkung)}`);
 
     zeilen.push('');
-    zeilen.push('Die Abholadresse siehst du, sobald du annimmst.');
+    // Name und Rufnummer bleiben zurueck, bis jemand zusagt. Sonst haetten
+    // am Ende auch alle, die ablehnen, die Daten des Fahrgasts.
+    zeilen.push('Kontaktdaten des Fahrgasts siehst du nach dem Annehmen.');
     zeilen.push(`⏱ <b>${sekunden} Sekunden</b>`);
 
     return zeilen.join('\n');
