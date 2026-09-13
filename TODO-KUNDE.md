@@ -1,269 +1,240 @@
 # Offene Punkte bis zum Livegang
 
-Stand: 13.09.2026 · Hosting: **Cloudflare Pages** · Domain und E-Mail:
-**IONOS** · Repository: **github.com/437Amin/MyRegio** (öffentlich)
+Stand: 13.09.2026 · Website: **Cloudflare** (Worker `myregio`) · Domain und
+E-Mail: **IONOS**, DNS zieht zu Cloudflare um · Repository:
+**github.com/437Amin/MyRegio** (öffentlich)
+
+## Wo es gerade steht
+
+| | |
+|---|---|
+| Website | ✅ online unter https://myregio.assad-amin.workers.dev |
+| Festpreise, Adressvorschläge | ✅ live geprüft |
+| Auftragsvermittlung | ✅ läuft – aber nur mit dem Testeintrag „Amin" |
+| **Bis echte Kunden bestellen** | 🔴 Fahrerliste und Telegram-ID von Önder |
+| **Bis `www.myregiocar.com`** | 🔴 Nameserver bei IONOS – braucht Önders IONOS-Zugang |
+
+---
+
+## 🔴 Bevor echte Kunden bestellen
+
+- [ ] **Echte Fahrer eintragen** – Namen, Handynummern, Tag/Nacht von Önder.
+      Fahrerbereich → „Neuen Fahrer anlegen", dann jedem seinen Telegram-Link
+      schicken. Erst bei „✓ angemeldet" bekommt er Aufträge
+- [ ] **Testeintrag „Amin" entfernen** – sonst gehen Aufträge an Amins Telegram.
+      „Löschen" im Fahrerbereich trägt ihn aus: Er hat 5 Aufträge, sein Name
+      bleibt deshalb in der Auftragsliste, Telefon und Telegram werden entfernt
+- [ ] **Önders Chat-ID eintragen** – bisher bekommt Amin „Kein Fahrer gefunden".
+      Önder schreibt in Telegram @userinfobot an und schickt die Zahl, dann:
+      ```
+      cd dispatch
+      npx wrangler secret put CHEF_CHAT_ID
+      ```
+- [ ] **Einmal echt durchspielen** – auf der Live-Seite bestellen, ein echter
+      Fahrer nimmt an
+
+---
+
+## 🌐 Umzug auf www.myregiocar.com
+
+Die Domain ist seit **11.03.2012 bei IONOS** registriert, die Postfächer
+`bestellungen@` und `contact@` laufen dort und **bleiben dort**. Zu Cloudflare
+zieht nur das DNS – nötig, weil sich ein Cloudflare-Worker nur mit einer Domain
+verbinden lässt, deren DNS bei Cloudflare liegt.
+
+- [x] **Worker `myregio` mit GitHub verbunden** – baut bei jedem Push auf `main`
+      | Feld | Wert |
+      |---|---|
+      | Build-Befehl | `npm run build` |
+      | Bereitstellungsbefehl | `npx wrangler deploy` |
+      | Pfad | `/` |
+      | Build-Variablen | **keine** |
+
+- [x] **Domain `myregiocar.com` bei Cloudflare angelegt** (Tarif Free)
+
+- [x] **DNS-Einträge geprüft** – bei Cloudflares Nameservern abgefragt und
+      Zeichen für Zeichen mit IONOS verglichen: identisch.
+      ```
+      A      ftp              217.160.122.220   Nur DNS
+      A      myregiocar.com   217.160.0.34      Mit Proxy
+      AAAA   ftp              2001:8d8:1001:…   Nur DNS
+      AAAA   myregiocar.com   2001:8d8:100f:…   Mit Proxy
+      MX     myregiocar.com   mx00.ionos.de 10  Nur DNS
+      MX     myregiocar.com   mx01.ionos.de 10  Nur DNS
+      TXT    myregiocar.com   "v=spf1 include:_spf-eu.ionos.com include:spf.protection.outlook.com ~all"
+      TXT    myregiocar.com   "MS=ms25832862"
+      ```
+      Bewusst **kein** `www` – das legt Cloudflare beim Verbinden selbst an.
+
+- [ ] **Nameserver bei IONOS ändern** – braucht **Önders IONOS-Zugang**
+      (früher 1&1; Rechnung kommt jedes Jahr im März). Anmeldung:
+      https://login.ionos.de → *Domains & SSL* → `myregiocar.com` → Nameserver:
+      ```
+      craig.ns.cloudflare.com
+      mary.ns.cloudflare.com
+      ```
+      Die vier `ns1052.ui-dns.*` entfernen. **Sonst nichts ändern, nichts
+      kündigen.** DNSSEC ist aus, das ist keine Falle.
+      > Dauert das Wochen, kann Cloudflare den Entwurf entfernen. Dann die
+      > Domain neu anlegen – die Einträge stehen oben.
+
+- [ ] **Bei Cloudflare „Ich habe meine Nameserver aktualisiert"** – erst
+      **nach** dem Speichern bei IONOS
+
+- [ ] **Website verbinden** – *Workers und Pages* → `myregio` → *Domänen* →
+      `www.myregiocar.com`
+
+- [ ] **Weiterleitung `myregiocar.com` → `www`** – bei Cloudflare unter
+      *Regeln → Weiterleitungsregeln*: Hostname gleich `myregiocar.com` →
+      `https://www.myregiocar.com` + ursprünglicher Pfad, Status **301**,
+      Abfrage beibehalten
+
+- [ ] **Prüfen**
+      - `https://www.myregiocar.com` zeigt die Seite, Schloss im Browser
+      - `http://myregiocar.com/kontakt` landet auf `https://www.myregiocar.com/kontakt`
+      - Test-E-Mail an `contact@myregiocar.com` kommt an
+      - Buchungsassistent einmal ganz durch
+
+- [ ] **Aufräumen**
+      - In `dispatch/wrangler.toml` bei `ERLAUBTE_HERKUNFT` nur
+        `https://www.myregiocar.com` stehen lassen, dann
+        `cd dispatch && npm run deploy`
+      - Die `workers.dev`-Adresse der Website abschalten (*Worker `myregio` →
+        Einstellungen → Domains & Routes*), damit Google nur eine Adresse kennt
+      - Alte Vorschauseite `myregiocar.netlify.app` löschen
+
+> **Schlägt ein Build fehl**, wird nichts veröffentlicht – die bisherige
+> Fassung bleibt online. Cloudflare schickt eine E-Mail, der Grund steht unter
+> *Bereitstellungen*. Meist ein Tippfehler in einer Inhaltsdatei; die Meldung
+> nennt Datei und Feld auf Deutsch.
+
+---
+
+## 📋 Von Önder
+
+- [ ] Fahrerliste und Telegram-ID (siehe oben)
+- [ ] IONOS-Zugang (siehe oben)
+- [ ] **Konzessionsnummer** nach PBefG fürs Impressum
+- [ ] **Genehmigungsbehörde prüfen** – eingetragen ist „Landeshauptstadt
+      Stuttgart, Amt für öffentliche Ordnung". Mit der Konzessionsurkunde
+      abgleichen
+- [ ] **Anzahl der Park-&-Fly-Stellplätze**
+- [ ] **Flughafen-Ziel entscheiden** – Die Suche „Flughafen Stuttgart" bietet
+      einen Eintrag bei Neuhausen an, der 53,50 € statt 46,50 € kostet (Ostseite
+      des Geländes statt Terminal). Soll „Flughafen Stuttgart" immer zum
+      Terminal führen? Dann feste Zielpunkte in `dispatch/src/strecke.ts`,
+      etwa eine halbe Stunde
+
+---
+
+## ⚖️ Zur Information für den Anwalt
+
+Seit der Freigabe vom 31.08.2026 neu oder geändert:
+
+1. **Datenschutzerklärung → Hosting** – Cloudflare statt Hostinger
+2. **Datenschutzerklärung → Fahrtbestellung über die Website** – Übermittlung
+   der Bestellung über Telegram an die Fahrer
+3. **Park & Fly** – Hinweis, dass die Haftung beim Fahrzeughalter liegt
+   (Park-&-Fly-Seite und FAQ)
+
+Außerdem: **Auftragsverarbeitungsvertrag mit Cloudflare** im Cloudflare-Konto
+annehmen (*Konto verwalten → Konfigurationen → Rechtliches*, „Data Processing
+Addendum").
 
 ---
 
 ## ✅ Erledigt
 
-- [x] **Telefonnummer** +49 173 3480810 – eingetragen, erscheint auf allen
-      Seiten inkl. Google-Daten
-- [x] **WhatsApp-Nummer** – Buchungsassistent schickt jetzt an 491733480810
-- [x] **E-Mail-Adressen** – `bestellungen@` für Buchungen, `contact@` für
-      allgemeine Anfragen, `bewerbung@` für Stellen
-- [x] **Umsatzsteuer-ID** DE285112009 – im Impressum
-- [x] **Hosting-Angaben** in der Datenschutzerklärung – seit dem Wechsel auf
-      Cloudflare Pages neu gefasst (siehe unten, muss erneut geprüft werden)
+- [x] Telefon +49 173 3480810, WhatsApp 491733480810 – überall eingetragen
+- [x] E-Mail: `bestellungen@`, `contact@`, `bewerbung@`
+- [x] Umsatzsteuer-ID DE285112009 im Impressum
+- [x] Öffnungszeiten bestätigt
+- [x] Schreibweise **mit www** festgelegt (`astro.config.mjs`, `robots.txt`)
+- [x] Park & Fly: 7 € pro Tag, überdacht, videoüberwacht, Shuttle gegen Aufpreis
+      per WhatsApp, Haftung beim Fahrzeughalter
+- [x] Festpreise rund 13 % unter dem Stuttgarter Taxitarif, im Fahrerbereich
+      änderbar. Die Preistabelle aus `content/preise.yaml` zeigt nur Park & Fly –
+      ihre Streckenpreise stehen auf 0 und werden ausgeblendet
+- [x] Repository auf GitHub, Website auf Cloudflare (13.09.2026)
 
 ---
 
-## 🔴 Muss vor dem Livegang erledigt sein
+## 🚕 Auftragsvermittlung – wie sie eingerichtet wurde
 
-### Rechtliches
+Für den Fall, dass sie neu aufgesetzt werden muss.
 
-- [x] **Impressum und Datenschutzerklärung anwaltlich prüfen lassen**
-- [x] **Gelber Warnkasten entfernt** – Anwalt hat freigegeben (31.08.2026)
-- [ ] **Genehmigungsbehörde prüfen** – eingetragen ist „Landeshauptstadt
-      Stuttgart, Amt für öffentliche Ordnung". Bitte mit der
-      Konzessionsurkunde abgleichen
-- [ ] **Konzessionsnummer** nach PBefG eintragen, falls vorhanden
-- [ ] **Auftragsverarbeitungsvertrag mit Cloudflare abschließen**
-      → Cloudflare-Konto → *Manage Account → Configurations → Legal* → AVV
-      („Data Processing Addendum") online annehmen
-- [ ] **🔴 Datenschutzerklärung erneut anwaltlich prüfen lassen**
-      Zwei Abschnitte sind **nach** der Freigabe vom 31.08.2026 dazugekommen
-      oder geändert worden und waren deshalb **nicht** Teil der Prüfung:
-      1. **Hosting** – jetzt Cloudflare, Inc. (USA) statt Hostinger (Zypern).
-         Der Absatz zur möglichen Verarbeitung in den USA ist neu.
-      2. **Fahrtbestellung über die Website** – die Bestellung wird an
-         Telegram übermittelt, deren Server außerhalb der EU stehen.
-
-      Beides betrifft die Drittlandübermittlung. Bitte vor dem ersten echten
-      Kundenauftrag klären.
-
-### Inhaltlich
-
-- [x] **Öffnungszeiten prüfen** – aktuell wird „Täglich 24 Stunden erreichbar"
-      beworben. Stimmt das? Falls nein: im Redaktionsbereich den Haken bei
-      „Rund um die Uhr erreichbar" entfernen und die Zeiten eintragen
-- [x] **Entscheiden: mit oder ohne `www`?**
-      Beide Schreibweisen müssen auf dieselbe zeigen, sonst wertet Google die
-      Seite doppelt. Aktuell eingestellt ist **mit www**:
-      - `astro.config.mjs` → `SEITEN_URL`
-      - `public/robots.txt` → `Sitemap:`
-      - Die Weiterleitung von `myregiocar.com` auf `www.myregiocar.com` wird
-        bei IONOS eingerichtet (Schritt 4 unten)
-
----
-
-## 🚀 Livegang bei Cloudflare Pages
-
-Kein FTP, keine Zugangsdaten, keine Serverpflege. Cloudflare holt sich den Code
-selbst aus GitHub und baut die Seite. Nach dem Einrichten muss **nie wieder
-jemand Dateien hochladen** – jede Änderung, auch die von Önder im
-Redaktionsbereich, veröffentlicht sich selbst.
-
-- [x] **1. Repository auf GitHub anlegen und pushen**
-      → github.com/437Amin/MyRegio, erledigt am 13.09.2026
-
-- [ ] **2. Cloudflare Pages mit dem Repository verbinden**
-      dash.cloudflare.com → *Workers & Pages* → **Create** → Reiter **Pages**
-      → *Connect to Git* → GitHub verbinden → `437Amin/MyRegio` auswählen.
-
-      Bei den Einstellungen eintragen:
-      | Feld | Wert |
-      |---|---|
-      | Projektname | `myregio` |
-      | Build-Befehl | `npm run build` |
-      | Bereitstellungsbefehl | `npx wrangler deploy` |
-      | Pfad | `/` |
-
-      Was dabei veröffentlicht wird, steht in `wrangler.toml` im
-      Hauptverzeichnis. Ein Ausgabeverzeichnis wird deshalb nicht abgefragt.
-
-      → *Save and Deploy*. Nach ein bis zwei Minuten ist die Seite unter einer
-      Adresse wie `myregio.pages.dev` erreichbar. **Erst hier alles
-      durchklicken**, bevor die Domain umgestellt wird.
-
-- [ ] **3. Eigene Domain bei Cloudflare anmelden**
-      Im Pages-Projekt → *Custom domains* → **Set up a domain** →
-      `www.myregiocar.com` eintragen. Cloudflare nennt daraufhin ein
-      CNAME-Ziel – notieren, das wird im nächsten Schritt gebraucht.
-
-- [ ] **4. Bei IONOS zwei Einträge ändern**
-      ⚠️ **Die MX-Einträge (`mx00.ionos.de`, `mx01.ionos.de`) auf keinen Fall
-      anfassen** – daran hängen `bestellungen@` und `contact@`.
-
-      IONOS → *Domains & SSL* → `myregiocar.com` → **DNS**:
-
-      | Eintrag | bisher | neu |
-      |---|---|---|
-      | `www` | A auf `217.160.0.34` | CNAME auf das Ziel aus Schritt 3 |
-
-      Dann IONOS → *Domains & SSL* → `myregiocar.com` → **Weiterleitung**:
-      die nackte Domain `myregiocar.com` auf `https://www.myregiocar.com`
-      weiterleiten, Typ **301** (dauerhaft).
-
-      Die Umstellung braucht je nach Zwischenspeicher bis zu einer Stunde.
-
-- [ ] **5. Prüfen**
-      - `https://www.myregiocar.com` zeigt die Seite, Schloss-Symbol im Browser
-      - `http://myregiocar.com` landet auf `https://www.myregiocar.com`
-      - Eine Test-E-Mail an `contact@myregiocar.com` kommt weiterhin an
-      - Alle Unterseiten durchklicken, Buchungsassistent einmal ganz durch
-
-- [ ] **6. Aufräumen**
-      - Alte Vorschauseite `myregiocar.netlify.app` löschen
-      - In `dispatch/wrangler.toml` bei `ERLAUBTE_HERKUNFT` die beiden
-        Testadressen entfernen, sodass nur `https://www.myregiocar.com`
-        stehen bleibt – dann `cd dispatch && npm run deploy`:
-        - `https://myregio.assad-amin.workers.dev` (Test vor der Domainumstellung)
-        - `http://localhost:4321` (lokaler Entwicklungsserver)
-
-> **Schlägt der Build fehl**, wird nichts veröffentlicht – die bisher
-> erreichbare Fassung bleibt online. Cloudflare schickt dann eine E-Mail. Der
-> Grund steht im Protokoll unter *Deployments*, meist ein Tippfehler in einer
-> Inhaltsdatei; die Meldung nennt Datei und Feld auf Deutsch.
-
-> **Warum die Website bei Cloudflare liegt und nicht bei IONOS:** IONOS führt
-> keinen Build aus, die Seite müsste also von Hand hochgeladen werden. Domain
-> und E-Mail bleiben bei IONOS, nur die Dateien liegen bei Cloudflare – dort,
-> wo auch der Vermittlungsdienst läuft.
-
----
-
-## 🚕 Auftragsvermittlung einrichten (machen wir gemeinsam)
-
-Der Dienst unter `dispatch/` ist fertig und geprüft. Zum Scharfschalten fehlen
-diese Schritte – jeder braucht ein Konto, deshalb gemeinsam:
-
-- [x] **1. Telegram-Bot anlegen** – @MyRegioBot
-      In Telegram **@BotFather** anschreiben → `/newbot` → Name und Benutzername
-      vergeben. Du bekommst ein Token. Den Benutzernamen in `dispatch/wrangler.toml`
-      bei `TELEGRAM_BOT_NAME` eintragen (ohne @).
-
-- [ ] **2. Chat-ID von Önder eintragen** (er ist im Urlaub)
-      Aktuell steht dort die ID von Amin, damit die Eskalation getestet werden
-      konnte. Sobald Önder zurück ist:
+- [x] **Telegram-Bot** @MyRegioBot über @BotFather, Name in
+      `dispatch/wrangler.toml` bei `TELEGRAM_BOT_NAME` (ohne @)
+- [x] **Datenbank** `vermittlung` in Region WEUR
       ```
       cd dispatch
-      npx wrangler secret put CHEF_CHAT_ID
-      ```
-      Seine ID bekommt er von @userinfobot in Telegram.
-
-
-- [x] **3. Cloudflare einrichten** – Datenbank `vermittlung` in Region WEUR
-      ```
-      cd dispatch
-      npx wrangler login
-      npx wrangler d1 create vermittlung
-      ```
-      Die ausgegebene ID in `wrangler.toml` bei `database_id` eintragen, dann:
-      ```
+      npx wrangler d1 create vermittlung     # ID in wrangler.toml eintragen
       npm run db:anlegen
       ```
-
-- [x] **4. Geheimnisse setzen** (liegen verschlüsselt bei Cloudflare, nie im Repo)
+      Bestehende Datenbank von vor dem 13.09.2026? Nachtrag im Kopf von
+      `dispatch/schema.sql` beachten – ist bei der jetzigen erledigt.
+- [x] **Geheimnisse** (verschlüsselt bei Cloudflare, nie im Repository)
       ```
       npx wrangler secret put TELEGRAM_TOKEN
       npx wrangler secret put TELEGRAM_WEBHOOK_GEHEIMNIS
       npx wrangler secret put CHEF_CHAT_ID
       npx wrangler secret put ADMIN_PASSWORT
+      npx wrangler secret put ORS_SCHLUESSEL
       ```
-      Beim Webhook-Geheimnis eine lange zufällige Zeichenfolge wählen.
-
-- [x] **5. Veröffentlicht** – https://myregiocar-vermittlung.assad-amin.workers.dev
-      ```
-      npm run deploy
-      ```
-      Danach den Webhook bei Telegram registrieren (einmalig, Adresse und
-      Geheimnis aus den Schritten davor):
+- [x] **Veröffentlicht** – https://myregiocar-vermittlung.assad-amin.workers.dev,
+      Webhook bei Telegram registriert
       ```
       curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WORKER-ADRESSE>/telegram/webhook&secret_token=<GEHEIMNIS>"
       ```
-
-- [ ] **6. Echte Fahrer eintragen** (bisher nur der Testeintrag „Amin")
-      ⚠️ Den Testfahrer löschen, sobald echte Fahrer angelegt sind – sonst
-      gehen Aufträge an die falsche Telegram-Nummer.
-      `<WORKER-ADRESSE>/fahrer` aufrufen, mit dem Admin-Passwort anmelden,
-      Fahrer anlegen (Name, Telefon, Tag/Nacht/beide, Reihenfolge). Jeder
-      bekommt einen Anmeldelink für Telegram – erst wenn er ihn geöffnet hat,
-      steht dort „angemeldet".
-
-- [x] **7. Auf der Website eingeschaltet**
-      Im Redaktionsbereich unter *Kontakt & Öffnungszeiten →
-      Direkte Vermittlung*: Adresse des Dienstes eintragen und den Haken
-      setzen. Erst dann erscheint „Jetzt Fahrer anfordern" auf der Seite.
-
-- [x] **8. Echt durchgespielt** – 06.09.2026, Auftrag in 18 Sekunden angenommen
-      Bestellung aufgeben, prüfen ob die Nachricht ankommt, annehmen,
-      Statusanzeige auf der Website beobachten.
-
-- [ ] **9. Datenschutzerklärung erneut prüfen lassen**
-      ⚠️ Sobald der Haken gesetzt ist, erscheint automatisch ein neuer
-      Abschnitt „Fahrtbestellung über die Website". Er beschreibt die
-      Verarbeitung, die Weitergabe an die Fahrer und die Übermittlung über
-      Telegram. **Dieser Text war nicht Teil der bisherigen Anwaltsprüfung.**
-
-- [ ] **10. In `dispatch/wrangler.toml` `http://localhost:4321` aus
-      `ERLAUBTE_HERKUNFT` entfernen**, wenn nicht mehr entwickelt wird.
+- [x] **Auf der Website eingeschaltet** – `content/einstellungen.yaml` →
+      `vermittlung`
+- [x] **Echt durchgespielt** – 06.09.2026, Auftrag in 18 Sekunden angenommen
 
 ---
 
-## 🔧 Redaktionsbereich für Önder freischalten
+## 🔧 Redaktionsbereich – bewusst zurückgestellt
 
-Damit Önder unter `myregiocar.com/admin` selbst Inhalte pflegen kann –
-**ohne GitHub-Konto**:
+Entscheidung vom 13.09.2026: Website-Änderungen laufen über Amin. Alles ist
+vorbereitet und liegt in `redaktionsbereich/`, außerhalb von `public/`.
 
-- [ ] **1. Bei decapbridge.com registrieren** (kostenlos für bis zu 3 Websites),
-      eine „Site" anlegen und das GitHub-Repository verbinden
-- [ ] **2. Die zwei angezeigten Werte eintragen** in `public/admin/config.yml`
-      – die Stellen sind mit `↓↓↓` markiert:
-      - `repo:` → `DEINNAME/myregiocar`
-      - `identity_url:` → `https://auth.decapbridge.com/sites/<site-id>`
-- [ ] **3. Önder per E-Mail einladen.** Er vergibt ein Passwort und meldet sich
-      danach direkt unter `/admin` an
-- [ ] **4. Gemeinsam einmal durchgehen** – die bebilderte Anleitung dafür ist
-      [`ANLEITUNG.md`](ANLEITUNG.md)
+Einschalten, etwa 20 Minuten:
 
-> **Für Entwickler:** Wer in `content/*.yaml` ein Feld ergänzt, muss es auch in
-> `public/admin/config.yml` eintragen – sonst löscht der Editor es beim
-> nächsten Speichern. `node scripts/cms-pruefen.mjs` findet solche Lücken und
-> läuft bei jedem Deploy automatisch mit.
+- [ ] `git mv redaktionsbereich public/admin`
+- [ ] In `scripts/cms-pruefen.mjs` den Pfad zurück auf `public/admin/config.yml`
+- [ ] In `public/robots.txt` wieder `Disallow: /admin` aufnehmen
+- [ ] **GitHub-Schlüssel** unter https://github.com/settings/personal-access-tokens/new:
+      nur Repository `437Amin/MyRegio`, nur *Contents: Read and write*,
+      längste Laufzeit – **Ablaufdatum notieren**, danach kann niemand mehr
+      speichern
+- [ ] **DecapBridge** (decapbridge.com, kostenlos): Site anlegen mit GitHub,
+      `437Amin/MyRegio`, dem Schlüssel, Login-URL
+      `https://www.myregiocar.com/admin` (**ohne** `/index.html` – das leitet
+      um), Auth type **Classic**
+- [ ] `identity_url` in `public/admin/config.yml` eintragen (`repo` steht schon)
+- [ ] Önder über DecapBridge einladen, `ANLEITUNG.md` um den Editor ergänzen
+
+> Die Seite `/admin` lädt den Editor von unpkg – die einzige Ausnahme von der
+> Regel „nichts von fremden Servern". Sie betrifft nur diese Seite.
 
 ---
 
 ## 🟡 Sollte bald ergänzt werden
 
-### Park & Fly → im Redaktionsbereich unter „Preise"
-
-Ohne diese Angaben kann die Website nicht sagen, was Park & Fly kostet:
-
-- [x] Preis pro Tag und pro Woche
-- [ ] Anzahl der Stellplätze
-- [x] Überdacht? Umzäunt oder videoüberwacht? Schlüsselabgabe nötig?
-- [x] Aufpreis für den Shuttle (oder inklusive?)
-- [x] **Versicherungsfrage geklärt:** Haftung liegt beim Fahrzeughalter.
-      Steht als Hinweis sichtbar auf der Park-&-Fly-Seite und im FAQ.
-      ⚠️ Diese Formulierung war nicht Teil der Anwaltsprüfung – bei Gelegenheit
-      mitprüfen lassen und in Beförderungsbedingungen aufnehmen
-
 ### Bilder
 
 - [ ] **Original-Logo** als SVG oder PNG mit transparentem Hintergrund
       (aktuell nach dem Flyer nachgebaut)
-- [ ] **Fotos vom Fahrzeug und vom Gelände** (liegen derzeit nicht vor –
-      die Seite kommt ohne aus, gewinnt mit ihnen aber deutlich) – besonders die Einfahrt, der
-      Stellplatzbereich und der Fußweg zur Haltestelle. Das schafft Vertrauen
-      ⚠️ **Ohne Fremdlogos.** Der vorhandene Flyer zeigt das Uber-Logo an der
-      Fahrzeugtür – das gehört nicht auf diese Website
-- [ ] Danach `node scripts/bilder-erzeugen.mjs` ausführen, damit auch das
+- [ ] **Fotos vom Fahrzeug und vom Gelände** – besonders Einfahrt,
+      Stellplatzbereich und Fußweg zur Haltestelle. Die Seite kommt ohne aus,
+      gewinnt mit ihnen aber deutlich
+      ⚠️ **Ohne Fremdlogos.** Der Flyer zeigt das Uber-Logo an der Fahrzeugtür –
+      das gehört nicht auf diese Website
+- [ ] Danach `node scripts/bilder-erzeugen.mjs`, damit auch das
       WhatsApp-Vorschaubild das echte Logo zeigt
 
-### Kundenstimmen → im Redaktionsbereich
+### Kundenstimmen
 
-- [ ] Echte Rückmeldungen sammeln und eintragen
+- [ ] Echte Rückmeldungen sammeln, in `content/kundenstimmen/` eintragen
       ⚠️ Erfundene Bewertungen sind wettbewerbswidrig. Vorher um Erlaubnis
       fragen – Vorname und Stadtteil genügen
 
@@ -271,11 +242,9 @@ Ohne diese Angaben kann die Website nicht sagen, was Park & Fly kostet:
 
 ## 🟢 Danach
 
-- [ ] **Google Unternehmensprofil** anlegen bzw. beanspruchen
-      Bringt einem lokalen Fahrdienst erfahrungsgemäß mehr Anfragen als die
-      Website allein. Adresse, Öffnungszeiten und Telefonnummer müssen dort
-      **exakt** so stehen wie auf der Website
-- [ ] **Sitemap in der Google Search Console einreichen**
-      (`https://www.myregiocar.com/sitemap-index.xml`)
-- [x] **Preise veröffentlicht** – Park & Fly mit 7 € pro Tag. Fahrpreise
-      bleiben Verhandlungssache und erscheinen nicht (stehen auf 0)
+- [ ] **Google Unternehmensprofil** anlegen bzw. beanspruchen. Bringt einem
+      lokalen Fahrdienst erfahrungsgemäß mehr Anfragen als die Website allein.
+      Adresse, Öffnungszeiten und Telefonnummer müssen dort **exakt** so
+      stehen wie auf der Website
+- [ ] **Sitemap in der Google Search Console einreichen** – erst nach dem
+      Umzug auf `www`: `https://www.myregiocar.com/sitemap-index.xml`

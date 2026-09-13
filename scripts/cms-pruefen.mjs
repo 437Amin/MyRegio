@@ -16,7 +16,7 @@ import path from 'node:path';
 import yaml from 'js-yaml';
 
 const config = yaml.load(
-  fs.readFileSync(path.resolve('public/admin/config.yml'), 'utf8'),
+  fs.readFileSync(path.resolve('redaktionsbereich/config.yml'), 'utf8'),
 );
 
 /** Sammelt alle Feldpfade aus einer Decap-Feldliste. */
@@ -136,7 +136,7 @@ for (const sammlung of config.collections) {
 
 console.log('');
 if (fehler > 0) {
-  console.error(`FEHLGESCHLAGEN: ${fehler} Feld(er) fehlen in public/admin/config.yml.`);
+  console.error(`FEHLGESCHLAGEN: ${fehler} Feld(er) fehlen in redaktionsbereich/config.yml.`);
   console.error('Bitte dort ergaenzen, sonst gehen beim Speichern Daten verloren.');
   process.exit(1);
 }

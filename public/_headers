@@ -22,8 +22,8 @@
 
 # --- Gilt fuer jede Seite ----------------------------------------------------
 # Bewusst OHNE Cache-Control: Fuer HTML liefert Cloudflare von sich aus
-# "public, max-age=0, must-revalidate". Aenderungen aus dem Redaktionsbereich
-# sind damit sofort sichtbar.
+# "public, max-age=0, must-revalidate". Inhaltliche Aenderungen sind damit
+# sofort sichtbar.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN

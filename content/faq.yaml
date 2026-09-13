@@ -5,8 +5,7 @@
 #  Diese Fragen erscheinen auf der Startseite und werden auch von Google
 #  ausgelesen - gute Antworten bringen zusaetzliche Sichtbarkeit.
 #
-#  Am bequemsten bearbeiten Sie sie im Redaktionsbereich unter /admin.
-#  Dort koennen Sie Fragen auch per Ziehen neu anordnen.
+#  Reihenfolge hier = Reihenfolge auf der Website.
 # =============================================================================
 
 fragen:

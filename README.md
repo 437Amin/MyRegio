@@ -25,7 +25,7 @@ Die Seite läuft dann auf <http://localhost:4321>.
 | `npm run dev` | Entwicklungsserver mit sofortiger Aktualisierung |
 | `npm run build` | Baut die fertige Website nach `dist/` |
 | `npm run preview` | Zeigt das Ergebnis von `build` lokal an |
-| `node scripts/cms-pruefen.mjs` | Prüft, ob der Redaktionsbereich alle Inhaltsfelder kennt |
+| `node scripts/cms-pruefen.mjs` | Prüft, ob der (vorbereitete) Redaktionsbereich alle Inhaltsfelder kennt – läuft bei jedem Build mit |
 | `node scripts/bilder-erzeugen.mjs` | Erzeugt Favicons und das Social-Vorschaubild neu |
 | `node scripts/vorschau-bauen.mjs` | Baut ein Vorschau-Paket zum Verschicken (mit `noindex`) |
 
@@ -88,15 +88,20 @@ src/
 scripts/bilder-erzeugen.mjs   Erzeugt Favicons und og-bild.jpg aus dem Logo
 ```
 
-### Redaktionsbereich unter `/admin`
+### Redaktionsbereich – vorbereitet, aber bewusst nicht aktiv
 
-Decap CMS mit **DecapBridge** als Anmeldedienst: Önder meldet sich mit E-Mail
-und Passwort an und braucht **kein GitHub-Konto**. Seine Änderungen landen als
-Commit im Repository, Netlify baut daraufhin neu.
+**Stand 13.09.2026:** Änderungen an der Website laufen über Amin. Önder pflegt
+selbst nur, was im Fahrerbereich des Vermittlungsdienstes liegt – Fahrer,
+Schichten, Festpreise.
 
-Einrichtung siehe [`TODO-KUNDE.md`](TODO-KUNDE.md), Abschnitt „Redaktionsbereich
-einrichten". In `public/admin/config.yml` sind `repo` und `identity_url` als
-Platzhalter markiert.
+Der Redaktionsbereich (Decap CMS mit **DecapBridge** als Anmeldedienst, Login
+per E-Mail und Passwort ohne GitHub-Konto) ist fertig vorbereitet und liegt in
+`redaktionsbereich/` – **außerhalb von `public/`**, damit er nicht
+veröffentlicht wird. `repo` ist bereits eingetragen, es fehlt nur
+`identity_url` von DecapBridge.
+
+Einschalten in etwa 20 Minuten, Schritte im Kopf von
+`redaktionsbereich/config.yml` und in [`TODO-KUNDE.md`](TODO-KUNDE.md).
 
 Zwei Dinge, die man dabei wissen muss:
 
@@ -109,17 +114,21 @@ node scripts/cms-pruefen.mjs
 ```
 
 Das Skript vergleicht `config.yml` mit allen Dateien in `content/` und meldet
-Lücken. Nach jeder Änderung an der Inhaltsstruktur ausführen.
+Lücken. Es läuft bei jedem Build mit – **auch solange der Redaktionsbereich
+aus ist**. Das ist Absicht: So bleibt die vorbereitete Konfiguration aktuell,
+und das Einschalten wird keine Fehlersuche. Wer ein neues Inhaltsfeld anlegt,
+trägt es dort mit ein.
 
 **Kommentare überleben das Speichern nicht.** Die erklärenden Kommentarköpfe in
 den YAML-Dateien sind weg, sobald Önder eine Datei über den Editor speichert.
 Die Erklärungen stehen deshalb zusätzlich als `hint:` an den Feldern in
 `config.yml` – dort sieht er sie direkt beim Bearbeiten.
 
-Ausnahme von der Drittanbieter-Regel: Die Seite `/admin` lädt den Editor von
-unpkg. Das betrifft ausschließlich diese Redaktionsseite – die öffentliche
-Website lädt weiterhin nichts von fremden Servern. `/admin` ist in
-`robots.txt` gesperrt und trägt `noindex`.
+Beim Einschalten zu beachten: Die Seite `/admin` lädt den Editor von unpkg.
+Das wäre die einzige Ausnahme von der Drittanbieter-Regel und beträfe nur
+diese Redaktionsseite. Solange der Redaktionsbereich aus ist, lädt die
+gesamte veröffentlichte Website nichts von fremden Servern. Beim Einschalten
+`Disallow: /admin` wieder in `public/robots.txt` aufnehmen.
 
 ### Inhalte sind gegen Tippfehler abgesichert
 
@@ -241,19 +250,26 @@ keinem Fahrer zuteilen.
 
 ## Veröffentlichen
 
-### Cloudflare Pages (produktiv)
+### Cloudflare (produktiv)
 
-Cloudflare Pages baut die Seite selbst. Es gibt deshalb **keinen
-Deploy-Workflow und keine FTP-Zugangsdaten** – Cloudflare holt sich den Code
-bei jedem Push direkt aus dem Repository.
-
-Damit funktioniert auch der Redaktionsbereich – die Kette ist:
+Die Website läuft als Cloudflare-Worker mit statischen Dateien, Projekt
+`myregio`, derzeit unter `https://myregio.assad-amin.workers.dev`. Cloudflare
+baut die Seite selbst. Es gibt deshalb **keinen Deploy-Workflow und keine
+FTP-Zugangsdaten** – Cloudflare holt sich den Code bei jedem Push direkt aus
+dem Repository.
 
 ```
-Önder speichert unter /admin
-   → DecapBridge schreibt einen Commit ins Repository
-   → Cloudflare Pages baut die Seite neu und veröffentlicht sie
+Push auf main
+   → Cloudflare baut die Seite neu und veröffentlicht sie
 ```
+
+Wird der Redaktionsbereich eingeschaltet, geht Önders Speichern denselben Weg:
+DecapBridge schreibt einen Commit, der Rest passiert von selbst.
+
+> **Nicht Cloudflare Pages.** Neue Projekte legt Cloudflare als Worker an. Das
+> hat Folgen, die uns erwischt haben: `_redirects` erlaubt keine vollständigen
+> Adressen, und eine eigene Domain lässt sich nur verbinden, wenn ihr DNS bei
+> Cloudflare liegt.
 
 Einstellungen bei Cloudflare: Build-Befehl `npm run build`,
 Bereitstellungsbefehl `npx wrangler deploy`. Was dabei veröffentlicht wird,
@@ -312,9 +328,5 @@ dafür `npm run build`.
 
 ## Bewusst nicht enthalten
 
-Sichtbare Preistabelle (gebaut, aber ausgeschaltet), `/admin`-Editor,
-englische Sprachversion, Buchungssystem mit Datenbank, Online-Zahlung.
-
-Die Inhalte liegen bereits in Astro-Collections. Ein `/admin`-Editor
-(z. B. Sveltia CMS) ließe sich daher später mit einer einzigen
-Konfigurationsdatei nachrüsten, ohne etwas umzubauen.
+Englische Sprachversion, Online-Zahlung. Der Redaktionsbereich ist vorbereitet, aber nicht aktiv –
+siehe Abschnitt „Redaktionsbereich" oben.

@@ -2,6 +2,21 @@
 #  Redaktionsbereich (Decap CMS)
 # =============================================================================
 #
+#  DERZEIT NICHT AKTIV - bewusst zurueckgestellt am 13.09.2026.
+#  Aenderungen an der Website laufen ueber Amin. Dieser Ordner liegt deshalb
+#  ausserhalb von public/ und wird nicht veroeffentlicht.
+#
+#  Einschalten (ca. 20 Minuten):
+#    1. Ordner zurueck verschieben:  git mv redaktionsbereich public/admin
+#    2. In scripts/cms-pruefen.mjs den Pfad wieder auf public/admin/config.yml
+#    3. DecapBridge einrichten und unten repo + identity_url eintragen
+#       (Schritte in TODO-KUNDE.md, Abschnitt "Redaktionsbereich")
+#
+#  Die Pruefung scripts/cms-pruefen.mjs laeuft trotzdem bei jedem Build mit.
+#  So bleibt diese Datei aktuell, und das Einschalten ist wirklich eine
+#  Sache von Minuten statt einer Fehlersuche.
+# =============================================================================
+#
 #  Diese Datei beschreibt, welche Felder Oender unter /admin bearbeiten kann.
 #
 #  WICHTIG FUER ENTWICKLER:
@@ -16,7 +31,7 @@
 backend:
   name: git-gateway
   # ↓↓↓ Diese beiden Zeilen nach der Einrichtung bei DecapBridge ersetzen ↓↓↓
-  repo: BENUTZERNAME/myregiocar
+  repo: 437Amin/MyRegio
   identity_url: https://auth.decapbridge.com/sites/SITE-ID-VON-DECAPBRIDGE
   # ↑↑↑ siehe TODO-KUNDE.md, Abschnitt "Redaktionsbereich einrichten" ↑↑↑
   gateway_url: https://gateway.decapbridge.com
