@@ -30,3 +30,12 @@ directory = "./dist"
 # Ruft jemand eine Adresse auf, die es nicht gibt, wird unsere eigene
 # 404-Seite ausgeliefert statt einer nackten Fehlermeldung.
 not_found_handling = "404-page"
+
+# Adressen OHNE Schraegstrich am Ende: /kontakt, nicht /kontakt/
+#
+# Das ist die Schreibweise der internen Links, der Canonical-Angaben
+# (src/components/Seo.astro) und der Sitemap (trailingSlash in
+# astro.config.mjs). Ohne diese Zeile leitet Cloudflare /kontakt auf
+# /kontakt/ um - dann zeigt jede Canonical-Angabe auf eine Weiterleitung,
+# und jeder Klick kostet auf dem Handy einen zusaetzlichen Umweg.
+html_handling = "drop-trailing-slash"

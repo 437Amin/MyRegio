@@ -33,7 +33,10 @@ function inhalteBeobachten() {
 export default defineConfig({
   site: SEITEN_URL,
   output: 'static',
-  trailingSlash: 'ignore',
+  // Einheitlich ohne Schraegstrich am Ende - passend zu den Canonical-Angaben
+  // und zu html_handling in wrangler.toml. Mit 'ignore' stand in der Sitemap
+  // /kontakt/, ueberall sonst /kontakt.
+  trailingSlash: 'never',
   integrations: [
     sitemap({
       // Diese Seiten sollen nicht bei Google auftauchen

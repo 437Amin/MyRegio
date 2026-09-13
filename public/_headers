@@ -1,5 +1,5 @@
 # =============================================================================
-#  Kopfzeilen fuer Cloudflare Pages
+#  Kopfzeilen fuer Cloudflare
 #
 #  Diese Datei ersetzt, was frueher in public/.htaccess stand. Einen
 #  Apache-Server gibt es hier nicht mehr - Cloudflare liest stattdessen
@@ -10,26 +10,29 @@
 #  Nicht mehr noetig, weil Cloudflare es von sich aus erledigt:
 #    - HTTPS erzwingen
 #    - Komprimierung
-#    - eigene 404-Seite (dist/404.html wird automatisch ausgeliefert)
+#    - eigene 404-Seite (siehe not_found_handling in wrangler.toml)
 #    - Verzeichnisinhalte nicht auflisten
+#
+#  ACHTUNG, Stolperfalle: Passen mehrere Regeln auf eine Adresse, haengt
+#  Cloudflare die Werte ANEINANDER, statt den spaeteren zu nehmen. Eine
+#  Kopfzeile darf deshalb nie in zwei Regeln stehen, die sich ueberlappen -
+#  sonst steht dort zum Beispiel "max-age=0, ..., max-age=31536000" und der
+#  Browser weiss nicht, was gilt.
 # =============================================================================
 
 # --- Gilt fuer jede Seite ----------------------------------------------------
+# Bewusst OHNE Cache-Control: Fuer HTML liefert Cloudflare von sich aus
+# "public, max-age=0, must-revalidate". Aenderungen aus dem Redaktionsbereich
+# sind damit sofort sichtbar.
 /*
   X-Content-Type-Options: nosniff
   X-Frame-Options: SAMEORIGIN
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=()
-  # HTML immer frisch holen, sonst sieht ein Kunde nach einer Aenderung im
-  # Redaktionsbereich noch tagelang die alte Fassung.
-  Cache-Control: public, max-age=0, must-revalidate
 
 # --- Gebaute Dateien ---------------------------------------------------------
-#  Alles unter /_astro/ traegt einen Namensstempel im Dateinamen (Schriften,
-#  Stylesheets, Skripte). Aendert sich der Inhalt, aendert sich der Name.
-#  Deshalb darf das ein Jahr lang zwischengespeichert werden.
-#
-#  Diese Regel steht bewusst NACH der allgemeinen: Bei Cloudflare gewinnt
-#  die spaetere Regel, wenn beide dieselbe Kopfzeile setzen.
+# Alles unter /_astro/ traegt einen Namensstempel im Dateinamen (Schriften,
+# Stylesheets, Skripte). Aendert sich der Inhalt, aendert sich der Name.
+# Deshalb darf das ein Jahr lang zwischengespeichert werden.
 /_astro/*
   Cache-Control: public, max-age=31536000, immutable

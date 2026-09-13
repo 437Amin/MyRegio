@@ -6,6 +6,13 @@
     <meta name="robots" content="noindex, nofollow" />
     <title>Redaktion &ndash; MyRegioCar</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!--
+      Fester Pfad zur Konfiguration. Ohne diese Zeile sucht der Editor
+      "config.yml" relativ zur Seitenadresse - unter /admin (ohne
+      Schraegstrich, so liefert Cloudflare die Seite aus) also im
+      Hauptverzeichnis, wo sie nicht liegt. Der Redaktionsbereich bliebe leer.
+    -->
+    <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
     <style>
       /* Kurzer Hinweis, solange der Editor noch laedt */
       #laedt {

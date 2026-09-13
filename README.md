@@ -266,9 +266,14 @@ Website bleibt unverändert online. Deshalb ruft das `build`-Skript in
 Redaktionsbereichs muss dort stehen, wo tatsächlich gebaut wird, sonst fällt
 sie bei einem Hosterwechsel lautlos weg.
 
-`public/_headers` und `public/_redirects` liefern die Servereinstellungen mit:
-Sicherheits-Kopfzeilen, Cache-Regeln und die Festlegung auf `www`.
-HTTPS, Komprimierung und die eigene 404-Seite erledigt Cloudflare von sich aus.
+`public/_headers` liefert die Servereinstellungen mit: Sicherheits-Kopfzeilen
+und Cache-Regeln. HTTPS, Komprimierung und die eigene 404-Seite erledigt
+Cloudflare von sich aus.
+
+**Die Weiterleitung von `myregiocar.com` auf `www` liegt bei IONOS**, nicht
+im Projekt. Ein `public/_redirects` mit vollständiger Adresse
+(`https://myregiocar.com/* …`) lehnt Cloudflare bei Workern ab – dort sind nur
+relative Pfade erlaubt, der Deploy scheitert dann mit `code: 100324`.
 
 ### Netlify (Vorschau)
 
@@ -287,8 +292,7 @@ dafür `npm run build`.
 1. In `astro.config.mjs` die echte Domain bei `SEITEN_URL` eintragen
 2. Dieselbe Domain in `public/robots.txt` bei `Sitemap:` eintragen
 3. Auf **eine** Schreibweise festlegen (mit oder ohne `www`) – die Weiche
-   dafür steht in `public/_redirects`, die Weiterleitung der nackten Domain
-   zusätzlich beim Domainanbieter (IONOS)
+   dafür ist die Weiterleitung der nackten Domain beim Domainanbieter (IONOS)
 4. `sitemap-index.xml` in der Google Search Console einreichen
 
 ---

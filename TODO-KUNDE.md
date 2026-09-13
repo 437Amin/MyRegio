@@ -52,8 +52,8 @@ Stand: 13.09.2026 · Hosting: **Cloudflare Pages** · Domain und E-Mail:
       Seite doppelt. Aktuell eingestellt ist **mit www**:
       - `astro.config.mjs` → `SEITEN_URL`
       - `public/robots.txt` → `Sitemap:`
-      - Die Weiterleitung von `myregiocar.com` auf `www.myregiocar.com` steht
-        in `public/_redirects` und zusätzlich als Weiterleitung bei IONOS
+      - Die Weiterleitung von `myregiocar.com` auf `www.myregiocar.com` wird
+        bei IONOS eingerichtet (Schritt 4 unten)
 
 ---
 

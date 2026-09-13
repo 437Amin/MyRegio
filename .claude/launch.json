@@ -6,6 +6,12 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["run", "dev"],
       "port": 4321
+    },
+    {
+      "name": "website-als-worker",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["wrangler@4", "dev", "--port", "8790"],
+      "port": 8790
     }
   ]
 }
