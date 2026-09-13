@@ -57,7 +57,8 @@ export async function rechnungAlsPdf(
   if (markeTeil !== absender.marke) {
     s.text('Car', LINKS + s.breite(markeTeil, 20, true), 780, { groesse: 20, fett: true, farbe: MARKE });
   }
-  s.text('Mietwagen mit Fahrer', LINKS, 764, { groesse: 9, farbe: GRAU });
+  // Kein Werbezusatz unter dem Logo: "Mietwagen mit Fahrer" steht in der
+  // Leistungszeile, wo es hingehoert - doppelt wirkte es wie ein Fehler
 
   let y = 780;
   s.rechts(absender.firma, RECHTS, y, { groesse: 9.5, fett: true });
