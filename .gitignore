@@ -1,6 +1,10 @@
 node_modules/
 dist/
 .astro/
+# Zwischenspeicher von "wrangler dev" - entsteht beim lokalen Testen der
+# Website als Worker. Seit es im Hauptverzeichnis eine wrangler.toml gibt,
+# landet er hier und nicht mehr nur unter dispatch/.
+.wrangler/
 .netlify/
 .env
 .env.production
