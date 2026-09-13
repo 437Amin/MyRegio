@@ -10,3 +10,14 @@ npm-debug.log*
 
 # Vorschau-Paket wird bei Bedarf neu erzeugt
 myregiocar-vorschau.zip
+
+# Internes Uebergabedokument.
+#
+# Dieses Repository ist oeffentlich. HANDOFF.md enthaelt interne Notizen und
+# Begruendungen zu betrieblichen Entscheidungen, die nicht fuer die
+# Allgemeinheit bestimmt sind. Die Datei bleibt deshalb bewusst lokal.
+#
+# ACHTUNG: Wird das Repository spaeter auf privat umgestellt, kann diese Zeile
+# entfallen - dann ist das Dokument auch fuer Oender und spaetere Entwickler
+# verfuegbar, wo es eigentlich hingehoert.
+/HANDOFF.md
