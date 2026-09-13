@@ -1,6 +1,7 @@
 # Offene Punkte bis zum Livegang
 
-Stand: 31.08.2026 · Hosting: **Hostinger** · Domain: **myregiocar.com**
+Stand: 13.09.2026 · Hosting: **Cloudflare Pages** · Domain und E-Mail:
+**IONOS** · Repository: **github.com/437Amin/MyRegio** (öffentlich)
 
 ---
 
@@ -12,7 +13,8 @@ Stand: 31.08.2026 · Hosting: **Hostinger** · Domain: **myregiocar.com**
 - [x] **E-Mail-Adressen** – `bestellungen@` für Buchungen, `contact@` für
       allgemeine Anfragen, `bewerbung@` für Stellen
 - [x] **Umsatzsteuer-ID** DE285112009 – im Impressum
-- [x] **Hosting-Angaben** in der Datenschutzerklärung (Hostinger)
+- [x] **Hosting-Angaben** in der Datenschutzerklärung – seit dem Wechsel auf
+      Cloudflare Pages neu gefasst (siehe unten, muss erneut geprüft werden)
 
 ---
 
@@ -26,11 +28,19 @@ Stand: 31.08.2026 · Hosting: **Hostinger** · Domain: **myregiocar.com**
       Stuttgart, Amt für öffentliche Ordnung". Bitte mit der
       Konzessionsurkunde abgleichen
 - [ ] **Konzessionsnummer** nach PBefG eintragen, falls vorhanden
-- [ ] **Auftragsverarbeitungsvertrag mit Hostinger abschließen**
-      → Hostinger-Konto → *Legal* → AVV online unterzeichnen
-- [ ] **Serverstandort auf Deutschland bzw. EU stellen**
-      → sonst muss die Datenschutzerklärung um die Drittlandübermittlung
-      ergänzt werden
+- [ ] **Auftragsverarbeitungsvertrag mit Cloudflare abschließen**
+      → Cloudflare-Konto → *Manage Account → Configurations → Legal* → AVV
+      („Data Processing Addendum") online annehmen
+- [ ] **🔴 Datenschutzerklärung erneut anwaltlich prüfen lassen**
+      Zwei Abschnitte sind **nach** der Freigabe vom 31.08.2026 dazugekommen
+      oder geändert worden und waren deshalb **nicht** Teil der Prüfung:
+      1. **Hosting** – jetzt Cloudflare, Inc. (USA) statt Hostinger (Zypern).
+         Der Absatz zur möglichen Verarbeitung in den USA ist neu.
+      2. **Fahrtbestellung über die Website** – die Bestellung wird an
+         Telegram übermittelt, deren Server außerhalb der EU stehen.
+
+      Beides betrifft die Drittlandübermittlung. Bitte vor dem ersten echten
+      Kundenauftrag klären.
 
 ### Inhaltlich
 
@@ -42,51 +52,79 @@ Stand: 31.08.2026 · Hosting: **Hostinger** · Domain: **myregiocar.com**
       Seite doppelt. Aktuell eingestellt ist **mit www**:
       - `astro.config.mjs` → `SEITEN_URL`
       - `public/robots.txt` → `Sitemap:`
-      - Für *ohne* www zusätzlich in `public/.htaccess` die zwei markierten
-        Zeilen entkommentieren
+      - Die Weiterleitung von `myregiocar.com` auf `www.myregiocar.com` steht
+        in `public/_redirects` und zusätzlich als Weiterleitung bei IONOS
 
 ---
 
-## 🚀 Livegang bei Hostinger
+## 🚀 Livegang bei Cloudflare Pages
 
-Der Ablauf ist so eingerichtet, dass Sie nach dem Einrichten **nie wieder
-Dateien hochladen müssen**. Jede Änderung – auch die von Önder im
-Redaktionsbereich – baut und veröffentlicht sich selbst.
+Kein FTP, keine Zugangsdaten, keine Serverpflege. Cloudflare holt sich den Code
+selbst aus GitHub und baut die Seite. Nach dem Einrichten muss **nie wieder
+jemand Dateien hochladen** – jede Änderung, auch die von Önder im
+Redaktionsbereich, veröffentlicht sich selbst.
 
-- [ ] **1. Repository auf GitHub anlegen** (privat, z. B. `myregiocar`)
-      Lokal ist alles eingecheckt, es fehlt nur:
-      ```
-      git remote add origin https://github.com/DEINNAME/myregiocar.git
-      git push -u origin main
-      ```
+- [x] **1. Repository auf GitHub anlegen und pushen**
+      → github.com/437Amin/MyRegio, erledigt am 13.09.2026
 
-- [ ] **2. FTP-Zugang bei Hostinger holen**
-      hPanel → *Dateien → FTP-Konten*. Notieren: Server, Benutzername, Passwort
+- [ ] **2. Cloudflare Pages mit dem Repository verbinden**
+      dash.cloudflare.com → *Workers & Pages* → **Create** → Reiter **Pages**
+      → *Connect to Git* → GitHub verbinden → `437Amin/MyRegio` auswählen.
 
-- [ ] **3. Zugangsdaten bei GitHub hinterlegen**
-      Repository → *Settings → Secrets and variables → Actions → New secret*:
-      | Name | Wert |
+      Bei den Build-Einstellungen eintragen:
+      | Feld | Wert |
       |---|---|
-      | `FTP_SERVER` | z. B. `ftp.myregiocar.com` |
-      | `FTP_BENUTZER` | FTP-Benutzername |
-      | `FTP_PASSWORT` | FTP-Passwort |
+      | Framework preset | Astro |
+      | Build command | `npm run build` |
+      | Build output directory | `dist` |
 
-      Danach läuft `.github/workflows/deploy.yml` bei jedem Push automatisch:
-      bauen → prüfen → per FTP nach `public_html` hochladen.
-      Schlägt der Build fehl, wird **nichts** hochgeladen – die alte Seite
-      bleibt online.
+      → *Save and Deploy*. Nach ein bis zwei Minuten ist die Seite unter einer
+      Adresse wie `myregio.pages.dev` erreichbar. **Erst hier alles
+      durchklicken**, bevor die Domain umgestellt wird.
 
-- [ ] **4. Domain und SSL bei Hostinger einrichten**
-      Domain auf das Hosting zeigen lassen, kostenloses SSL-Zertifikat
-      aktivieren
+- [ ] **3. Eigene Domain bei Cloudflare anmelden**
+      Im Pages-Projekt → *Custom domains* → **Set up a domain** →
+      `www.myregiocar.com` eintragen. Cloudflare nennt daraufhin ein
+      CNAME-Ziel – notieren, das wird im nächsten Schritt gebraucht.
 
-- [ ] **5. Ersten Durchlauf prüfen**
-      GitHub → Reiter *Actions* → läuft der Ablauf grün durch?
-      Danach die Seite im Browser aufrufen und die Unterseiten durchklicken
+- [ ] **4. Bei IONOS zwei Einträge ändern**
+      ⚠️ **Die MX-Einträge (`mx00.ionos.de`, `mx01.ionos.de`) auf keinen Fall
+      anfassen** – daran hängen `bestellungen@` und `contact@`.
 
-> **Falls der Upload mit einem Verbindungsfehler abbricht:** In
-> `.github/workflows/deploy.yml` `protocol: ftps` auf `protocol: ftp` ändern.
-> Manche Hostinger-Pakete erlauben kein FTPS.
+      IONOS → *Domains & SSL* → `myregiocar.com` → **DNS**:
+
+      | Eintrag | bisher | neu |
+      |---|---|---|
+      | `www` | A auf `217.160.0.34` | CNAME auf das Ziel aus Schritt 3 |
+
+      Dann IONOS → *Domains & SSL* → `myregiocar.com` → **Weiterleitung**:
+      die nackte Domain `myregiocar.com` auf `https://www.myregiocar.com`
+      weiterleiten, Typ **301** (dauerhaft).
+
+      Die Umstellung braucht je nach Zwischenspeicher bis zu einer Stunde.
+
+- [ ] **5. Prüfen**
+      - `https://www.myregiocar.com` zeigt die Seite, Schloss-Symbol im Browser
+      - `http://myregiocar.com` landet auf `https://www.myregiocar.com`
+      - Eine Test-E-Mail an `contact@myregiocar.com` kommt weiterhin an
+      - Alle Unterseiten durchklicken, Buchungsassistent einmal ganz durch
+
+- [ ] **6. Aufräumen**
+      - Alte Vorschauseite `myregiocar.netlify.app` löschen
+      - `http://localhost:4321` aus `ERLAUBTE_HERKUNFT` in
+        `dispatch/wrangler.toml` entfernen
+      - In `dispatch/wrangler.toml` die Adresse der Website ergänzen, damit
+        der Vermittlungsdienst Anfragen von dort annimmt
+
+> **Schlägt der Build fehl**, wird nichts veröffentlicht – die bisher
+> erreichbare Fassung bleibt online. Cloudflare schickt dann eine E-Mail. Der
+> Grund steht im Protokoll unter *Deployments*, meist ein Tippfehler in einer
+> Inhaltsdatei; die Meldung nennt Datei und Feld auf Deutsch.
+
+> **Warum die Website bei Cloudflare liegt und nicht bei IONOS:** IONOS führt
+> keinen Build aus, die Seite müsste also von Hand hochgeladen werden. Domain
+> und E-Mail bleiben bei IONOS, nur die Dateien liegen bei Cloudflare – dort,
+> wo auch der Vermittlungsdienst läuft.
 
 ---
 

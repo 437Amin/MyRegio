@@ -241,29 +241,32 @@ keinem Fahrer zuteilen.
 
 ## Veröffentlichen
 
-### Hostinger (produktiv)
+### Cloudflare Pages (produktiv)
 
-Hostinger ist klassisches Webhosting und führt selbst keinen Build aus. Diese
-Lücke schließt `.github/workflows/deploy.yml`: Bei jedem Push auf `main` baut
-GitHub Actions die Seite und lädt `dist/` per FTP nach `public_html`.
+Cloudflare Pages baut die Seite selbst. Es gibt deshalb **keinen
+Deploy-Workflow und keine FTP-Zugangsdaten** – Cloudflare holt sich den Code
+bei jedem Push direkt aus dem Repository.
 
 Damit funktioniert auch der Redaktionsbereich – die Kette ist:
 
 ```
 Önder speichert unter /admin
    → DecapBridge schreibt einen Commit ins Repository
-   → GitHub Actions baut die Seite neu
-   → Upload per FTP zu Hostinger
+   → Cloudflare Pages baut die Seite neu und veröffentlicht sie
 ```
 
-Einzurichten sind nur drei GitHub-Secrets: `FTP_SERVER`, `FTP_BENUTZER`,
-`FTP_PASSWORT` (Schritt für Schritt in [`TODO-KUNDE.md`](TODO-KUNDE.md)).
+Einstellungen bei Cloudflare: Build-Befehl `npm run build`, Ausgabeverzeichnis
+`dist`. Mehr braucht es nicht.
 
-Schlägt `npm run build` oder die Inhaltsprüfung fehl, wird **nichts**
-hochgeladen – die bisherige Website bleibt unverändert online.
+Schlägt `npm run build` fehl, wird **nichts** veröffentlicht – die bisherige
+Website bleibt unverändert online. Deshalb ruft das `build`-Skript in
+`package.json` zuerst `scripts/cms-pruefen.mjs` auf: Die Prüfung des
+Redaktionsbereichs muss dort stehen, wo tatsächlich gebaut wird, sonst fällt
+sie bei einem Hosterwechsel lautlos weg.
 
-`public/.htaccess` liefert die Servereinstellungen mit: eigene 404-Seite,
-HTTPS-Erzwingung, Sicherheits-Kopfzeilen und Cache-Regeln.
+`public/_headers` und `public/_redirects` liefern die Servereinstellungen mit:
+Sicherheits-Kopfzeilen, Cache-Regeln und die Festlegung auf `www`.
+HTTPS, Komprimierung und die eigene 404-Seite erledigt Cloudflare von sich aus.
 
 ### Netlify (Vorschau)
 
@@ -282,7 +285,8 @@ dafür `npm run build`.
 1. In `astro.config.mjs` die echte Domain bei `SEITEN_URL` eintragen
 2. Dieselbe Domain in `public/robots.txt` bei `Sitemap:` eintragen
 3. Auf **eine** Schreibweise festlegen (mit oder ohne `www`) – die Weiche
-   dafür steht in `public/.htaccess`
+   dafür steht in `public/_redirects`, die Weiterleitung der nackten Domain
+   zusätzlich beim Domainanbieter (IONOS)
 4. `sitemap-index.xml` in der Google Search Console einreichen
 
 ---

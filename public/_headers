@@ -1,0 +1,35 @@
+# =============================================================================
+#  Kopfzeilen fuer Cloudflare Pages
+#
+#  Diese Datei ersetzt, was frueher in public/.htaccess stand. Einen
+#  Apache-Server gibt es hier nicht mehr - Cloudflare liest stattdessen
+#  diese Datei.
+#
+#  Sie muss normalerweise nie angefasst werden.
+#
+#  Nicht mehr noetig, weil Cloudflare es von sich aus erledigt:
+#    - HTTPS erzwingen
+#    - Komprimierung
+#    - eigene 404-Seite (dist/404.html wird automatisch ausgeliefert)
+#    - Verzeichnisinhalte nicht auflisten
+# =============================================================================
+
+# --- Gilt fuer jede Seite ----------------------------------------------------
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=()
+  # HTML immer frisch holen, sonst sieht ein Kunde nach einer Aenderung im
+  # Redaktionsbereich noch tagelang die alte Fassung.
+  Cache-Control: public, max-age=0, must-revalidate
+
+# --- Gebaute Dateien ---------------------------------------------------------
+#  Alles unter /_astro/ traegt einen Namensstempel im Dateinamen (Schriften,
+#  Stylesheets, Skripte). Aendert sich der Inhalt, aendert sich der Name.
+#  Deshalb darf das ein Jahr lang zwischengespeichert werden.
+#
+#  Diese Regel steht bewusst NACH der allgemeinen: Bei Cloudflare gewinnt
+#  die spaetere Regel, wenn beide dieselbe Kopfzeile setzen.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
