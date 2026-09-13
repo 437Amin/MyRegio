@@ -4,7 +4,8 @@ Diese Anleitung ist für Sie geschrieben – ohne Fachbegriffe. Sie brauchen kei
 Programm zu installieren und können alles auch vom Handy aus erledigen.
 
 **Das erledigen Sie selbst im Fahrerbereich:**
-Fahrer anlegen und entfernen, Tag- und Nachtschicht, Festpreise, Aufträge ansehen.
+Fahrer anlegen und entfernen, Tag- und Nachtschicht, Festpreise, Aufträge ansehen,
+Rechnungen für Fahrgäste schreiben.
 
 **Das läuft über Amin:**
 Alles, was auf der Website steht – Texte, Öffnungszeiten, Telefonnummer,
@@ -152,6 +153,65 @@ Anlass, Abholung, Fahrgast und Fahrer.
 | **angenommen** | Ein Fahrer hat die Fahrt übernommen |
 | **kein Fahrer** | Niemand hat angenommen – Sie haben eine Nachricht bekommen |
 | **storniert** | Die Fahrt wurde abgesagt |
+
+---
+
+## Rechnungen schreiben
+
+Oben im Fahrerbereich auf **„Rechnungen"** tippen, oder direkt aufrufen:
+
+**https://myregiocar-vermittlung.assad-amin.workers.dev/fahrer/rechnungen**
+
+> **Tipp – als App aufs Handy:** Seite öffnen, dann auf dem iPhone
+> **Teilen → „Zum Home-Bildschirm"**, auf Android **⋮ → „Zum Startbildschirm
+> hinzufügen"**. Danach haben Sie ein Symbol „Rechnungen", das ohne
+> Browserleiste öffnet.
+
+### Eine neue Rechnung
+
+1. **Start-Adresse** und **Ziel-Adresse** eintippen. Beim Tippen erscheinen
+   Vorschläge – Sie können aber auch einfach frei schreiben.
+2. **Preis** eintragen, zum Beispiel `46,50`. Das ist der Betrag, den der
+   Fahrgast bezahlt hat. Die 19 % Umsatzsteuer rechnet die Rechnung selbst heraus.
+3. **Datum der Fahrt** prüfen – voreingestellt ist heute.
+4. **Zahlung** wählen: bar, Karte oder Überweisung.
+5. **„Rechnung erstellen"** tippen.
+
+Die Rechnung bekommt automatisch die nächste Nummer, zum Beispiel `2026-0007`.
+
+Danach:
+
+- **„PDF teilen"** – öffnet direkt WhatsApp, E-Mail und Co. auf dem Handy
+- **„PDF herunterladen"** – zum Ausdrucken oder Speichern
+
+### Name und Anschrift des Fahrgasts
+
+Unter **„Fahrgast eintragen"**. Bis **250 €** dürfen Sie das weglassen. Kostet
+die Fahrt mehr, müssen Name und Anschrift auf der Rechnung stehen – sonst lässt
+sich die Rechnung nicht erstellen. Firmenkunden brauchen die Angaben meistens
+auch bei kleineren Beträgen für ihre Buchhaltung.
+
+### Ein Fehler in der Rechnung
+
+Eine ausgestellte Rechnung **lässt sich nicht ändern oder löschen** – das
+verlangt das Finanzamt. Stattdessen:
+
+1. Die falsche Rechnung öffnen und **„Rechnung stornieren"** tippen.
+2. Es entsteht eine **Stornorechnung** mit eigener Nummer und Minus-Betrag.
+   Hatte der Fahrgast die falsche Rechnung schon, schicken Sie ihm auch diese.
+3. Eine **neue Rechnung** mit den richtigen Angaben erstellen.
+
+Beide bleiben in der Liste stehen. Das ist so gewollt: Die Nummern müssen
+lückenlos sein.
+
+### Bankverbindung und Firmendaten
+
+Ganz unten unter **„Firmendaten"** steht, was auf jeder Rechnung oben und unten
+steht. **Tragen Sie hier einmal Ihre IBAN ein** – ohne sie lässt sich
+„Per Überweisung" nicht auswählen. Eine falsch abgetippte IBAN wird erkannt.
+
+Änderungen gelten nur für neue Rechnungen. Bereits verschickte bleiben so, wie
+der Fahrgast sie bekommen hat.
 
 ---
 

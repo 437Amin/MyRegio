@@ -1,6 +1,8 @@
 import type { Fahrer, Umgebung } from './typen';
 import { preisBerechnen, taxiVergleich, tarifAusEinstellungen } from './preis';
 import { fahrerEntfernen } from './fahrer-entfernen';
+import { appDatei, rechnungenRoute } from './rechnungen';
+import { html, seite, sicher } from './seite';
 
 /**
  * Fahrerbereich fuer den Chef.
@@ -34,8 +36,17 @@ export async function adminRoute(
     });
   }
 
+  // App-Symbol und Manifest holt das Handy ohne Anmeldekeks ab. Beides
+  // enthaelt nichts Vertrauliches.
+  const datei = appDatei(pfad);
+  if (datei) return datei;
+
   if (!(await angemeldet(anfrage, env))) {
-    return html(anmeldeSeite(), 200);
+    return html(anmeldeSeite('', anfrage.method === 'GET' ? pfad : '/fahrer'), 200);
+  }
+
+  if (pfad === '/fahrer/rechnungen' || pfad.startsWith('/fahrer/rechnungen/')) {
+    return rechnungenRoute(anfrage, env);
   }
 
   if (pfad === '/fahrer/neu' && anfrage.method === 'POST') {
@@ -60,8 +71,10 @@ async function anmelden(anfrage: Request, env: Umgebung): Promise<Response> {
   const formular = await anfrage.formData();
   const eingabe = String(formular.get('passwort') ?? '');
 
+  const weiter = weiterNach(formular.get('weiter'));
+
   if (!gleichLang(eingabe, env.ADMIN_PASSWORT)) {
-    return html(anmeldeSeite('Passwort stimmt nicht.'), 401);
+    return html(anmeldeSeite('Passwort stimmt nicht.', weiter), 401);
   }
 
   const ablauf = Date.now() + SITZUNG_STUNDEN * 3600_000;
@@ -70,7 +83,7 @@ async function anmelden(anfrage: Request, env: Umgebung): Promise<Response> {
   return new Response(null, {
     status: 302,
     headers: {
-      location: '/fahrer',
+      location: weiter,
       'set-cookie': `${KEKS}=${wert}; Path=/; Max-Age=${SITZUNG_STUNDEN * 3600}; HttpOnly; Secure; SameSite=Strict`,
     },
   });
@@ -307,7 +320,7 @@ async function uebersicht(env: Umgebung): Promise<string> {
   return seite(`
     <div class="kopf">
       <h1>Fahrer &amp; Aufträge</h1>
-      <a class="klein" href="/fahrer/abmelden">Abmelden</a>
+      <span><a href="/fahrer/rechnungen">Rechnungen</a> · <a class="klein" href="/fahrer/abmelden">Abmelden</a></span>
     </div>
 
     <h2>Fahrerinnen und Fahrer</h2>
@@ -394,67 +407,28 @@ function statusPunkt(status: string): string {
   return `<span class="${farben[status] ?? ''}">${texte[status] ?? status}</span>`;
 }
 
-function anmeldeSeite(fehler = ''): string {
+/**
+ * Wohin es nach der Anmeldung geht. Die Rechnungs-App auf dem Startbildschirm
+ * soll nach dem Anmelden bei den Rechnungen landen, nicht bei den Fahrern.
+ * Nur Pfade im Fahrerbereich - sonst liesse sich die Anmeldung als
+ * Weiterleitung auf fremde Seiten missbrauchen.
+ */
+function weiterNach(wert: unknown): string {
+  const pfad = String(wert ?? '');
+  return /^\/fahrer(\/[\w\-/.]*)?$/.test(pfad) && !pfad.startsWith('/fahrer/anmelden')
+    ? pfad
+    : '/fahrer';
+}
+
+function anmeldeSeite(fehler = '', weiter = '/fahrer'): string {
   return seite(`
     <h1>Fahrerbereich</h1>
     ${fehler ? `<p class="fehler">${fehler}</p>` : ''}
     <form method="post" action="/fahrer/anmelden" class="zeile">
+      <input type="hidden" name="weiter" value="${sicher(weiterNach(weiter))}">
       <input type="password" name="passwort" placeholder="Passwort" autofocus required>
       <button class="cyan">Anmelden</button>
     </form>
   `);
 }
 
-function sicher(text: unknown): string {
-  return String(text ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
-}
-
-function html(inhalt: string, status: number): Response {
-  return new Response(inhalt, {
-    status,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'x-robots-tag': 'noindex, nofollow',
-      'referrer-policy': 'no-referrer',
-    },
-  });
-}
-
-function seite(inhalt: string): string {
-  return `<!doctype html>
-<html lang="de"><head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex, nofollow">
-<title>Fahrerbereich – MyRegioCar</title>
-<style>
-  :root { color-scheme: dark }
-  body { margin:0; padding:1.5rem; background:#05070a; color:#e8edf3;
-         font:15px/1.5 system-ui,-apple-system,'Segoe UI',sans-serif }
-  .kopf { display:flex; justify-content:space-between; align-items:center; gap:1rem }
-  h1 { font-size:1.6rem; margin:0 0 1rem }
-  h2 { font-size:1.1rem; margin:2.5rem 0 .5rem; color:#fff }
-  a { color:#45c6f5 }
-  table { width:100%; border-collapse:collapse; margin-top:.75rem }
-  th { text-align:left; font-size:.8rem; text-transform:uppercase;
-       letter-spacing:.08em; color:#6b7887; padding:.4rem .5rem }
-  td { padding:.5rem; border-top:1px solid rgba(255,255,255,.08); vertical-align:middle }
-  .zeile { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center }
-  input,select { min-height:2.75rem; padding:.5rem .7rem; border-radius:.6rem;
-       border:1px solid rgba(255,255,255,.14); background:#0a0e14; color:#fff; font-size:16px }
-  button { min-height:2.75rem; padding:0 1rem; border-radius:.6rem; border:1px solid rgba(255,255,255,.18);
-       background:rgba(255,255,255,.05); color:#fff; font-weight:600; cursor:pointer; font-size:15px }
-  button.cyan { background:#22b8f0; color:#05070a; border-color:#22b8f0 }
-  button.rot { border-color:rgba(248,113,113,.4); color:#fca5a5 }
-  .haken { display:flex; align-items:center; gap:.35rem; white-space:nowrap }
-  .haken input { min-height:auto; width:1.1rem; height:1.1rem; accent-color:#22b8f0 }
-  .ja { color:#4ade80 } .nein { color:#fca5a5 } .warte { color:#fbbf24 }
-  .klein { font-size:.82rem; color:#8d9aab; word-break:break-all }
-  .hinweis { color:#8d9aab; font-size:.9rem; max-width:60ch }
-  .fehler { color:#fca5a5 }
-</style></head>
-<body>${inhalt}</body></html>`;
-}

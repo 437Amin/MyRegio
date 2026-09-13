@@ -92,7 +92,7 @@ scripts/bilder-erzeugen.mjs   Erzeugt Favicons und og-bild.jpg aus dem Logo
 
 **Stand 13.09.2026:** Änderungen an der Website laufen über Amin. Önder pflegt
 selbst nur, was im Fahrerbereich des Vermittlungsdienstes liegt – Fahrer,
-Schichten, Festpreise.
+Schichten, Festpreise, Rechnungen.
 
 Der Redaktionsbereich (Decap CMS mit **DecapBridge** als Anmeldedienst, Login
 per E-Mail und Passwort ohne GitHub-Konto) ist fertig vorbereitet und liegt in
@@ -211,12 +211,44 @@ Prozess, den nachts jemand neu starten müsste.
 **Fahrerdaten** liegen in der Cloudflare-Datenbank und bewusst **nicht** im
 Repository. Verwaltet werden sie unter `<worker>/fahrer` hinter einem Passwort.
 
+### Rechnungen (`<worker>/fahrer/rechnungen`)
+
+Start, Ziel und Endpreis eintragen, heraus kommt ein PDF für den Fahrgast.
+Hinter demselben Passwort, weil Namen und Anschriften der Fahrgäste darin
+stehen. Lässt sich über `app.webmanifest` zum Startbildschirm hinzufügen.
+
+| Datei | Aufgabe |
+|---|---|
+| `src/rechnung.ts` | Betrag lesen, Steuer herausrechnen, Pflichtangaben, IBAN (rein, getestet) |
+| `src/rechnung-ablage.ts` | Fortlaufende Nummer, Storno (gegen echtes SQLite getestet) |
+| `src/rechnung-pdf.ts` | PDF mit `pdf-lib` und eingebauter Helvetica |
+| `src/rechnungen.ts` | Seiten, Manifest, App-Symbole |
+
+Regeln, die man nicht aufweichen sollte:
+
+- **Rechnungen werden nie geändert oder gelöscht.** Fehler hebt eine
+  Stornorechnung mit eigener Nummer auf (`storno_von`). Ein eindeutiger Index
+  verhindert doppelte Nummern und doppelte Stornos.
+- **Gerechnet wird in Cent**, die Steuer aus dem Endpreis herausgerechnet.
+  Netto + Steuer ergibt immer genau den Endpreis.
+- **Nummer und Datum in deutscher Ortszeit** – sonst bekäme eine Rechnung in
+  der Silvesternacht die Nummer des Vorjahres.
+- **19 % Umsatzsteuer** (`STEUERSATZ`): Der ermäßigte Satz gilt nach dem
+  Gesetzestext für Taxen, nicht für Mietwagen.
+- **Über 250 € sind Name und Anschrift Pflicht**, darunter genügt eine
+  Kleinbetragsrechnung.
+- **Firmendaten werden je Rechnung als JSON festgehalten.** Ändert Önder seine
+  Anschrift, bleiben alte Rechnungen, wie sie verschickt wurden.
+- **Die eingebaute PDF-Schrift kennt nicht jeden Buchstaben.** „Ş“ und „ı“
+  werden zu „S“ und „i“, statt das PDF abbrechen zu lassen. Eine eigene Schrift
+  würde den Dienst um mehrere hundert Kilobyte vergrößern.
+
 ### Befehle
 
 ```bash
 cd dispatch
 npm run dev          # lokal, mit eigener Datenbank
-npx vitest run       # Modultests der Schichtauswahl
+npx vitest run       # Modultests: Schichten, Preise, Fahrer, Rechnungen
 npm run deploy       # veröffentlichen
 ```
 

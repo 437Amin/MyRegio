@@ -8,6 +8,12 @@
       "port": 4321
     },
     {
+      "name": "vermittlung-lokal",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "dispatch", "run", "dev", "--", "--port", "8788", "--var", "ADMIN_PASSWORT:lokal-test"],
+      "port": 8788
+    },
+    {
       "name": "website-als-worker",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["wrangler@4", "dev", "--port", "8790"],

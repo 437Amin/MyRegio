@@ -120,3 +120,22 @@ erzeugt.push('og-bild.jpg (1200x630)');
 
 console.log('Erzeugt in public/:');
 erzeugt.forEach((datei) => console.log('  - ' + datei));
+
+// Symbole fuer die Rechnungs-App im Fahrerbereich. Der Vermittlungsdienst
+// kann keine Dateien aus public/ ausliefern - deshalb landen sie als Text im
+// Quelltext. Android verlangt 192 und 512, das iPhone 180.
+const symbole = {};
+for (const kante of [180, 192, 512]) {
+  const png = await sharp(Buffer.from(zeichen(kante))).png().toBuffer();
+  symbole[kante] = png.toString('base64');
+}
+fs.writeFileSync(
+  path.resolve('dispatch/src/app-symbole.ts'),
+  `// Erzeugt von scripts/bilder-erzeugen.mjs - nicht von Hand bearbeiten.\n` +
+    `export const APP_SYMBOLE: Record<string, string> = {\n` +
+    Object.entries(symbole)
+      .map(([kante, daten]) => `  '${kante}': '${daten}',`)
+      .join('\n') +
+    `\n};\n`,
+);
+console.log('Erzeugt: dispatch/src/app-symbole.ts (180, 192, 512)');

@@ -9,6 +9,10 @@
 --
 --    npx wrangler d1 execute vermittlung --remote --command
 --      "ALTER TABLE fahrer ADD COLUMN ausgeschieden INTEGER NOT NULL DEFAULT 0"
+--
+--  NACHTRAG Rechnungen (13.09.2026): Die Tabelle "rechnungen" ist neu.
+--  Vor dem Veroeffentlichen einmal "npm run db:anlegen" ausfuehren - die Datei
+--  laesst sich gefahrlos erneut ausfuehren, Bestehendes bleibt unberuehrt.
 -- =============================================================================
 
 -- --- Fahrerinnen und Fahrer --------------------------------------------------
@@ -134,3 +138,43 @@ CREATE TABLE IF NOT EXISTS strecken_speicher (
   minuten    INTEGER NOT NULL,
   angelegt   TEXT NOT NULL DEFAULT (datetime('now'))
 );
+
+
+-- --- Rechnungen --------------------------------------------------------------
+-- Eine ausgestellte Rechnung wird NIE geaendert oder geloescht (UStG, GoBD,
+-- 8 Jahre Aufbewahrung). Fehler hebt eine Stornorechnung mit eigener Nummer
+-- auf. Siehe src/rechnung-ablage.ts
+--
+-- Enthaelt Namen und Anschriften von Fahrgaesten - deshalb hier und nicht im
+-- oeffentlichen Repository.
+CREATE TABLE IF NOT EXISTS rechnungen (
+  id              INTEGER PRIMARY KEY AUTOINCREMENT,
+  -- Nummer "2026-0007": jahr und laufnummer. Jedes Jahr beginnt bei 1.
+  jahr            INTEGER NOT NULL,
+  laufnummer      INTEGER NOT NULL,
+  -- JJJJ-MM-TT in deutscher Ortszeit
+  rechnungsdatum  TEXT    NOT NULL,
+  fahrtdatum      TEXT    NOT NULL,
+  von             TEXT    NOT NULL,
+  nach            TEXT    NOT NULL,
+  -- Unter 250 EUR darf beides leer bleiben (Kleinbetragsrechnung)
+  kunde_name      TEXT    NOT NULL DEFAULT '',
+  kunde_anschrift TEXT    NOT NULL DEFAULT '',
+  -- 'bar' | 'karte' | 'ueberweisung'
+  zahlungsart     TEXT    NOT NULL DEFAULT 'bar',
+  -- In Cent, damit keine Rundungsfehler entstehen. Negativ bei Stornorechnungen.
+  brutto_cent     INTEGER NOT NULL,
+  netto_cent      INTEGER NOT NULL,
+  steuer_cent     INTEGER NOT NULL,
+  steuersatz      INTEGER NOT NULL,
+  -- Firmendaten beim Ausstellen als JSON. Zieht die Firma um, bleiben alte
+  -- Rechnungen trotzdem so, wie sie der Fahrgast bekommen hat.
+  absender        TEXT    NOT NULL,
+  -- Gesetzt bei einer Stornorechnung: die Rechnung, die sie aufhebt
+  storno_von      INTEGER REFERENCES rechnungen (id),
+  angelegt        TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rechnungen_nummer ON rechnungen (jahr, laufnummer);
+-- Jede Rechnung kann nur einmal storniert werden
+CREATE UNIQUE INDEX IF NOT EXISTS idx_rechnungen_storno ON rechnungen (storno_von);
