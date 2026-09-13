@@ -1,0 +1,32 @@
+# =============================================================================
+#  Website MyRegioCar
+# =============================================================================
+#
+#  Diese Datei sagt Cloudflare, was veroeffentlicht werden soll. Sie gehoert
+#  zur WEBSITE. Der Vermittlungsdienst hat eine eigene Datei unter
+#  dispatch/wrangler.toml - die beiden haben nichts miteinander zu tun und
+#  duerfen nicht verwechselt werden.
+#
+#  Ablauf bei jedem Push auf main:
+#    1. Cloudflare fuehrt "npm run build" aus
+#       (darin steckt die Pruefung des Redaktionsbereichs)
+#    2. Cloudflare fuehrt "npx wrangler deploy" aus und liest diese Datei
+#    3. Der Inhalt von dist/ wird ausgeliefert
+#
+#  Schlaegt Schritt 1 fehl, passiert Schritt 2 nicht - die bisherige Fassung
+#  bleibt unveraendert online.
+#
+#  Diese Datei muss normalerweise nie angefasst werden.
+# =============================================================================
+
+name = "myregio"
+compatibility_date = "2025-07-18"
+
+[assets]
+# Hier liegt die gebaute Website. Kein Programmcode, nur fertige Dateien -
+# deshalb gibt es keinen "main"-Eintrag wie beim Vermittlungsdienst.
+directory = "./dist"
+
+# Ruft jemand eine Adresse auf, die es nicht gibt, wird unsere eigene
+# 404-Seite ausgeliefert statt einer nackten Fehlermeldung.
+not_found_handling = "404-page"

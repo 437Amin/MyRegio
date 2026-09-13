@@ -71,12 +71,16 @@ Redaktionsbereich, veröffentlicht sich selbst.
       dash.cloudflare.com → *Workers & Pages* → **Create** → Reiter **Pages**
       → *Connect to Git* → GitHub verbinden → `437Amin/MyRegio` auswählen.
 
-      Bei den Build-Einstellungen eintragen:
+      Bei den Einstellungen eintragen:
       | Feld | Wert |
       |---|---|
-      | Framework preset | Astro |
-      | Build command | `npm run build` |
-      | Build output directory | `dist` |
+      | Projektname | `myregio` |
+      | Build-Befehl | `npm run build` |
+      | Bereitstellungsbefehl | `npx wrangler deploy` |
+      | Pfad | `/` |
+
+      Was dabei veröffentlicht wird, steht in `wrangler.toml` im
+      Hauptverzeichnis. Ein Ausgabeverzeichnis wird deshalb nicht abgefragt.
 
       → *Save and Deploy*. Nach ein bis zwei Minuten ist die Seite unter einer
       Adresse wie `myregio.pages.dev` erreichbar. **Erst hier alles

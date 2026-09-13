@@ -255,8 +255,10 @@ Damit funktioniert auch der Redaktionsbereich – die Kette ist:
    → Cloudflare Pages baut die Seite neu und veröffentlicht sie
 ```
 
-Einstellungen bei Cloudflare: Build-Befehl `npm run build`, Ausgabeverzeichnis
-`dist`. Mehr braucht es nicht.
+Einstellungen bei Cloudflare: Build-Befehl `npm run build`,
+Bereitstellungsbefehl `npx wrangler deploy`. Was dabei veröffentlicht wird,
+steht in `wrangler.toml` im Hauptverzeichnis – nicht zu verwechseln mit
+`dispatch/wrangler.toml`, die zum Vermittlungsdienst gehört.
 
 Schlägt `npm run build` fehl, wird **nichts** veröffentlicht – die bisherige
 Website bleibt unverändert online. Deshalb ruft das `build`-Skript in
