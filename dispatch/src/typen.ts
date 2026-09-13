@@ -40,6 +40,8 @@ export interface Fahrer {
   schicht: Schicht;
   reihenfolge: number;
   aktiv: number;
+  /** 1 = ausgetragen: hatte Auftraege, wurde deshalb nicht geloescht */
+  ausgeschieden: number;
 }
 
 export interface Auftrag {

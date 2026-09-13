@@ -232,7 +232,7 @@ async function telegramEmpfangen(
     }
 
     const fahrer = await env.DB.prepare(
-      'SELECT id, name FROM fahrer WHERE anmeldecode = ?',
+      'SELECT id, name FROM fahrer WHERE anmeldecode = ? AND ausgeschieden = 0',
     )
       .bind(code)
       .first<{ id: number; name: string }>();

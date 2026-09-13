@@ -1,5 +1,6 @@
 import type { Fahrer, Umgebung } from './typen';
 import { preisBerechnen, taxiVergleich, tarifAusEinstellungen } from './preis';
+import { fahrerEntfernen } from './fahrer-entfernen';
 
 /**
  * Fahrerbereich fuer den Chef.
@@ -158,9 +159,9 @@ async function fahrerAendern(anfrage: Request, env: Umgebung): Promise<Response>
 
 async function fahrerLoeschen(anfrage: Request, env: Umgebung): Promise<Response> {
   const f = await anfrage.formData();
-  await env.DB.prepare('DELETE FROM fahrer WHERE id = ?')
-    .bind(Number(f.get('id')))
-    .run();
+  // Nicht einfach DELETE: Fahrer mit frueheren Auftraegen liessen sich so nie
+  // entfernen. Begruendung in fahrer-entfernen.ts
+  await fahrerEntfernen(env.DB, Number(f.get('id')), code());
   return zurueck();
 }
 
@@ -208,7 +209,7 @@ function zurueck(): Response {
 
 async function uebersicht(env: Umgebung): Promise<string> {
   const fahrer = await env.DB.prepare(
-    'SELECT * FROM fahrer ORDER BY reihenfolge, id',
+    'SELECT * FROM fahrer WHERE ausgeschieden = 0 ORDER BY reihenfolge, id',
   ).all<Fahrer>();
 
   const einstellungen = await env.DB.prepare(
@@ -269,7 +270,7 @@ async function uebersicht(env: Umgebung): Promise<string> {
         </td>
         <td>${angemeldet}</td>
         <td>
-          <form method="post" action="/fahrer/loeschen" onsubmit="return confirm('${sicher(fa.name)} wirklich löschen?')">
+          <form method="post" action="/fahrer/loeschen" onsubmit="return confirm('${sicher(fa.name)} entfernen?\\n\\nFalls er schon Aufträge hatte, bleibt sein Name in der Auftragsliste stehen. Telefonnummer und Telegram-Verbindung werden gelöscht.')">
             <input type="hidden" name="id" value="${fa.id}">
             <button class="rot">Löschen</button>
           </form>

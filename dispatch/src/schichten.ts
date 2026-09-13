@@ -74,6 +74,9 @@ export function fahrerFuerZeitpunkt(
   const passendeSchicht = nacht ? 'nacht' : 'tag';
 
   return alle
+    // Ausgetragene sind zusaetzlich inaktiv und ohne Telegram - dieser Filter
+    // ist die zweite Sicherung, falls das je auseinanderlaeuft.
+    .filter((fahrer) => !fahrer.ausgeschieden)
     .filter((fahrer) => fahrer.aktiv === 1)
     .filter((fahrer) => Boolean(fahrer.telegram_chat_id))
     .filter(

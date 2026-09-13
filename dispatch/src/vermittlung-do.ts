@@ -88,7 +88,7 @@ export class Vermittlung implements DurableObject {
     const einstellungen = await this.ladeEinstellungen();
 
     const alleFahrer = await this.env.DB.prepare(
-      'SELECT * FROM fahrer ORDER BY reihenfolge, id',
+      'SELECT * FROM fahrer WHERE ausgeschieden = 0 ORDER BY reihenfolge, id',
     ).all<Fahrer>();
 
     // Massgeblich ist die Zeit der FAHRT, nicht die der Bestellung. Wer nachts

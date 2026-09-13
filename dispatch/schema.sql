@@ -2,6 +2,13 @@
 --  Datenbank der Auftragsvermittlung
 -- =============================================================================
 --  Anlegen mit:  npm run db:anlegen   (bzw. db:lokal zum Ausprobieren)
+--
+--  NACHTRAG fuer Datenbanken, die vor dem 13.09.2026 angelegt wurden:
+--  "CREATE TABLE IF NOT EXISTS" ergaenzt bei einer bestehenden Tabelle keine
+--  Spalten. Einmalig ausfuehren, BEVOR neuer Code veroeffentlicht wird:
+--
+--    npx wrangler d1 execute vermittlung --remote --command
+--      "ALTER TABLE fahrer ADD COLUMN ausgeschieden INTEGER NOT NULL DEFAULT 0"
 -- =============================================================================
 
 -- --- Fahrerinnen und Fahrer --------------------------------------------------
@@ -21,6 +28,11 @@ CREATE TABLE IF NOT EXISTS fahrer (
   -- Kleinere Zahl = wird zuerst gefragt
   reihenfolge      INTEGER NOT NULL DEFAULT 10,
   aktiv            INTEGER NOT NULL DEFAULT 1,
+  -- 1 = ausgetragen. Wer schon Auftraege hatte, laesst sich nicht loeschen,
+  -- weil die Auftragsliste auf ihn verweist. Er wird stattdessen ausgetragen:
+  -- keine Auftraege mehr, Telefon und Telegram entfernt, Name bleibt.
+  -- Siehe src/fahrer-entfernen.ts
+  ausgeschieden    INTEGER NOT NULL DEFAULT 0,
   angelegt         TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 

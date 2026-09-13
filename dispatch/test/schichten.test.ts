@@ -13,6 +13,7 @@ function fahrer(werte: Partial<Fahrer>): Fahrer {
     schicht: 'beide',
     reihenfolge: 10,
     aktiv: 1,
+    ausgeschieden: 0,
     ...werte,
   };
 }
@@ -110,6 +111,18 @@ describe('Fahrerauswahl', () => {
     ];
     expect(fahrerFuerZeitpunkt(alle, tagsUeber).map((f) => f.name)).toEqual([
       'Mit',
+    ]);
+  });
+
+  it('fragt ausgetragene Fahrer nie – selbst wenn sie noch aktiv wären', () => {
+    // Doppelte Sicherung: Beim Austragen werden aktiv und Telegram ohnehin
+    // zurueckgesetzt. Hier wird geprueft, dass der Filter auch allein greift.
+    const alle = [
+      fahrer({ id: 1, name: 'Ausgetragen', ausgeschieden: 1 }),
+      fahrer({ id: 2, name: 'Dabei' }),
+    ];
+    expect(fahrerFuerZeitpunkt(alle, tagsUeber).map((f) => f.name)).toEqual([
+      'Dabei',
     ]);
   });
 
