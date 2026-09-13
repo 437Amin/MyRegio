@@ -15,9 +15,14 @@ compatibility_date = "2025-07-18"
 
 # Diese Werte sind nicht geheim und duerfen im Repository stehen.
 [vars]
-# Mehrere Adressen mit Komma trennen. Die zweite ist der Entwicklungsserver
-# und kann nach dem Livegang entfernt werden.
-ERLAUBTE_HERKUNFT = "https://www.myregiocar.com,http://localhost:4321"
+# Mehrere Adressen mit Komma trennen.
+#   1. www.myregiocar.com         - die Website, bleibt dauerhaft
+#   2. myregio.….workers.dev      - dieselbe Website unter ihrer
+#                                   Cloudflare-Adresse, zum Testen vor der
+#                                   Domainumstellung
+#   3. localhost:4321             - der lokale Entwicklungsserver
+# 2. und 3. koennen nach dem Livegang entfernt werden.
+ERLAUBTE_HERKUNFT = "https://www.myregiocar.com,https://myregio.assad-amin.workers.dev,http://localhost:4321"
 TELEGRAM_BOT_NAME = "MyRegioBot"
 
 [[d1_databases]]

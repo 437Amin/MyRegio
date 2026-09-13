@@ -115,10 +115,11 @@ Redaktionsbereich, veröffentlicht sich selbst.
 
 - [ ] **6. Aufräumen**
       - Alte Vorschauseite `myregiocar.netlify.app` löschen
-      - `http://localhost:4321` aus `ERLAUBTE_HERKUNFT` in
-        `dispatch/wrangler.toml` entfernen
-      - In `dispatch/wrangler.toml` die Adresse der Website ergänzen, damit
-        der Vermittlungsdienst Anfragen von dort annimmt
+      - In `dispatch/wrangler.toml` bei `ERLAUBTE_HERKUNFT` die beiden
+        Testadressen entfernen, sodass nur `https://www.myregiocar.com`
+        stehen bleibt – dann `cd dispatch && npm run deploy`:
+        - `https://myregio.assad-amin.workers.dev` (Test vor der Domainumstellung)
+        - `http://localhost:4321` (lokaler Entwicklungsserver)
 
 > **Schlägt der Build fehl**, wird nichts veröffentlicht – die bisher
 > erreichbare Fassung bleibt online. Cloudflare schickt dann eine E-Mail. Der
