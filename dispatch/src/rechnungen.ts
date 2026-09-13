@@ -219,15 +219,9 @@ async function uebersicht(
     ${fehler.length ? `<div class="fehlerkasten" role="alert">${fehler.map((t) => `<p>${sicher(t)}</p>`).join('')}</div>` : ''}
 
     <form method="post" action="/fahrer/rechnungen/neu" class="formular">
-      <label>Start-Adresse
-        <input name="von" value="${sicher(e.von)}" list="liste-von" data-vorschlaege autocomplete="off" required>
-      </label>
-      <datalist id="liste-von"></datalist>
-
-      <label>Ziel-Adresse
-        <input name="nach" value="${sicher(e.nach)}" list="liste-nach" data-vorschlaege autocomplete="off" required>
-      </label>
-      <datalist id="liste-nach"></datalist>
+      ${adressfeld('von', 'Start-Adresse', e.von, 'Straße, Hausnummer, Ort')}
+      ${adressfeld('nach', 'Ziel-Adresse', e.nach, 'z. B. Flughafen Stuttgart')}
+      <p class="hinweis">Beim Tippen erscheinen Vorschläge. Passt keiner, die Adresse einfach vollständig eintragen.</p>
 
       <div class="zwei">
         <label>Preis in €
@@ -357,6 +351,17 @@ async function einzelSeite(r: RechnungMitStorno, env: Umgebung, neu: boolean): P
 
 /* ================================================================ Hilfen */
 
+/** Textfeld mit eigener Vorschlagsliste - aufgebaut wie im Buchungsassistenten. */
+function adressfeld(name: 'von' | 'nach', beschriftung: string, wert: string, platzhalter: string): string {
+  return `<div class="vorschlagfeld" data-vorschlagfeld>
+        <label for="feld-${name}">${beschriftung}</label>
+        <input id="feld-${name}" name="${name}" value="${sicher(wert)}" placeholder="${platzhalter}"
+               autocomplete="off" enterkeyhint="next" required
+               role="combobox" aria-expanded="false" aria-autocomplete="list" aria-controls="vorschlaege-${name}">
+        <ul class="vorschlaege" id="vorschlaege-${name}" role="listbox" hidden></ul>
+      </div>`;
+}
+
 async function ladeAbsender(env: Umgebung): Promise<Absender> {
   const zeilen = await env.DB.prepare(
     "SELECT schluessel, wert FROM einstellungen WHERE schluessel LIKE 'rechnung_%'",
@@ -415,30 +420,97 @@ export function appDatei(pfad: string): Response | null {
 /* ============================================================ Im Browser */
 
 /**
- * Adressvorschlaege beim Tippen - dieselben wie im Buchungsassistenten.
+ * Adressvorschlaege beim Tippen - dieselbe Liste wie im Buchungsassistenten
+ * (src/scripts/buchungsassistent.ts).
+ *
+ * Vorher stand hier ein <datalist>. Das zeigte Vorschlaege oft gar nicht:
+ * Chrome blendet alles aus, was nicht woertlich zum Getippten passt - aus
+ * "Steiermärker Str 3" wird beim Kartendienst "Steiermärker Straße 3-5" -,
+ * und auf dem iPhone erscheint die Liste nur klein ueber der Tastatur.
+ *
  * Freier Text bleibt erlaubt: Der Preis wird hier nicht aus der Strecke
- * berechnet, eine Auswahl ist also nur eine Hilfe gegen Tippfehler.
+ * berechnet, eine Auswahl ist nur eine Hilfe gegen Tippfehler.
  */
 const VORSCHLAEGE_SKRIPT = `
-for (const feld of document.querySelectorAll('[data-vorschlaege]')) {
-  const liste = document.getElementById(feld.getAttribute('list'));
+for (const huelle of document.querySelectorAll('[data-vorschlagfeld]')) {
+  const feld = huelle.querySelector('input');
+  const liste = huelle.querySelector('.vorschlaege');
   let warte;
+  let markiert = -1;
+  let abfrage = 0;
+
+  const schliessen = () => {
+    liste.hidden = true;
+    liste.replaceChildren();
+    feld.setAttribute('aria-expanded', 'false');
+    markiert = -1;
+  };
+
+  const markieren = (richtung) => {
+    const eintraege = [...liste.children];
+    if (!eintraege.length) return;
+    markiert = (markiert + richtung + eintraege.length) % eintraege.length;
+    eintraege.forEach((e, i) => e.setAttribute('aria-selected', String(i === markiert)));
+    eintraege[markiert].scrollIntoView({ block: 'nearest' });
+  };
+
   feld.addEventListener('input', () => {
     clearTimeout(warte);
     const gesuch = feld.value.trim();
-    // Gerade aus der Liste gewaehlt - nicht noch einmal suchen
-    if (gesuch.length < 3 || [...liste.options].some((o) => o.value === feld.value)) return;
+    if (gesuch.length < 3) return schliessen();
+
     warte = setTimeout(async () => {
+      // Nur die Antwort auf die letzte Eingabe zaehlt - eine langsame fruehere
+      // Antwort darf die Liste nicht nachtraeglich ueberschreiben
+      const nummer = ++abfrage;
       try {
         const antwort = await fetch('/api/adressen?q=' + encodeURIComponent(gesuch));
-        const { vorschlaege } = await antwort.json();
+        const { vorschlaege = [] } = await antwort.json();
+        if (nummer !== abfrage || feld.value.trim() !== gesuch) return;
+
         // Der Kartendienst liefert "Steiermärker Straße 3-5, Stuttgart, BW, Germany" -
         // Bundesland und "Germany" gehoeren nicht auf eine deutsche Rechnung
-        const texte = vorschlaege.map((v) => v.text.replace(/, [A-Z]{2}, Germany$/, ''));
-        liste.replaceChildren(...[...new Set(texte)].map((text) => new Option(text, text)));
-      } catch {}
-    }, 250);
+        const texte = [...new Set(vorschlaege.map((v) => v.text.replace(/, [A-Z]{2}, Germany$/, '')))];
+        if (!texte.length) return schliessen();
+
+        liste.replaceChildren(...texte.map((text) => {
+          const zeile = document.createElement('li');
+          zeile.textContent = text;
+          zeile.setAttribute('role', 'option');
+          zeile.setAttribute('aria-selected', 'false');
+          // mousedown statt click: Sonst schliesst der Fokusverlust die Liste,
+          // bevor der Klick ankommt. Auf dem Handy folgt mousedown dem Antippen.
+          zeile.addEventListener('mousedown', (ereignis) => {
+            ereignis.preventDefault();
+            feld.value = text;
+            schliessen();
+          });
+          return zeile;
+        }));
+        liste.hidden = false;
+        feld.setAttribute('aria-expanded', 'true');
+        markiert = -1;
+      } catch {
+        schliessen();
+      }
+    }, 300);
   });
+
+  feld.addEventListener('keydown', (ereignis) => {
+    if (liste.hidden) return;
+    if (ereignis.key === 'ArrowDown') { ereignis.preventDefault(); markieren(1); }
+    else if (ereignis.key === 'ArrowUp') { ereignis.preventDefault(); markieren(-1); }
+    else if (ereignis.key === 'Escape') { schliessen(); }
+    else if (ereignis.key === 'Enter') {
+      // Bei offener Liste nie das Formular abschicken - erst auswaehlen
+      ereignis.preventDefault();
+      const eintrag = liste.children[markiert];
+      if (eintrag) eintrag.dispatchEvent(new MouseEvent('mousedown', { cancelable: true }));
+      else schliessen();
+    }
+  });
+
+  feld.addEventListener('blur', () => setTimeout(schliessen, 150));
 }`;
 
 /**
@@ -470,6 +542,14 @@ const STIL = `
   .formular label { display:grid; gap:.3rem; font-size:.9rem; color:#b3bfcd }
   .formular input, .formular select, .formular textarea { width:100% }
   .formular p { margin:0 }
+  .vorschlagfeld { position:relative; display:grid; gap:.3rem }
+  .vorschlagfeld label { font-size:.9rem; color:#b3bfcd }
+  .vorschlaege { position:absolute; z-index:20; top:100%; left:0; right:0; margin:.25rem 0 0; padding:.25rem;
+       list-style:none; max-height:16rem; overflow-y:auto; border:1px solid rgba(34,184,240,.4);
+       border-radius:.75rem; background:#0a0e14; box-shadow:0 16px 40px -12px rgba(0,0,0,.8) }
+  .vorschlaege li { display:flex; align-items:center; box-sizing:border-box; min-height:2.75rem; padding:.55rem .75rem;
+       border-radius:.5rem; color:#e8edf3; cursor:pointer }
+  .vorschlaege li:hover, .vorschlaege li[aria-selected="true"] { background:rgba(34,184,240,.16); color:#fff }
   .zwei { display:grid; grid-template-columns:1fr 1fr; gap:.9rem }
   @media (max-width:30rem) { .zwei { grid-template-columns:1fr } }
   .gross { min-height:3.25rem; font-size:1.05rem; width:100% }
