@@ -242,7 +242,8 @@ export async function adressenVorschlagen(
 
   try {
     const antwort = await fetch(url.toString());
-    if (!antwort.ok) return [];
+    // Auch ohne Kartendienst soll "Flughafen" zum Terminal fuehren
+    if (!antwort.ok) return festeZieleEinsetzen(text, []);
 
     const daten = (await antwort.json()) as {
       features?: {
@@ -257,7 +258,7 @@ export async function adressenVorschlagen(
       bezeichnung: '',
     };
 
-    return (daten.features ?? [])
+    const vorschlaege = (daten.features ?? [])
       .filter(
         (eintrag) =>
           eintrag.geometry?.coordinates &&
@@ -282,11 +283,99 @@ export async function adressenVorschlagen(
         nah: luftlinieKm(ort, heimat) <= REGION_KM ? 0 : 1,
       }))
       .sort((a, b) => a.nah - b.nah || a.reihenfolge - b.reihenfolge)
-      .map((eintrag) => eintrag.ort)
-      .slice(0, 5);
+      .map((eintrag) => eintrag.ort);
+
+    return festeZieleEinsetzen(text, vorschlaege).slice(0, 5);
   } catch {
-    return [];
+    return festeZieleEinsetzen(text, []);
   }
+}
+
+/* ============================================================ Feste Ziele */
+
+export interface FestesZiel {
+  /** So erscheint das Ziel in der Vorschlagsliste und beim Fahrer */
+  bezeichnung: string;
+  breite: number;
+  laenge: number;
+  /** Passt die EINGABE hierauf, steht das feste Ziel ganz oben */
+  eingabe: RegExp;
+  /** Vorschlaege der Kartensuche in diesem Umkreis ... */
+  umkreisKm: number;
+  /** ... deren NAME hierauf passt, werden durch das feste Ziel ersetzt */
+  ersetzt: RegExp;
+}
+
+/**
+ * Orte, bei denen die Kartensuche mehrere, sehr unterschiedlich teure Punkte
+ * anbietet - und der Fahrgast nicht erkennen kann, welcher gemeint ist.
+ *
+ * Anlass: Zu "Flughafen Stuttgart" kam neben dem Terminal ein Punkt am
+ * Ostende der Startbahn bei Neuhausen, gut 4 km entfernt. Ab Feuerbach
+ * 53,50 statt 46,50 Euro, aus Esslingen und Bernhausen gar kein Preis. Und
+ * genau dieser Eintrag hiess woertlich "Flughafen Stuttgart".
+ *
+ * Der Terminalpunkt ist gemessen, nicht geschaetzt: Aus Feuerbach, Esslingen,
+ * Boeblingen und Bernhausen ergibt er dieselben Strecken wie die uebrigen
+ * Terminal-Eintraege der Kartensuche (13.09.2026).
+ *
+ * Messe und Hauptbahnhof brauchen das nicht: Deren Vorschlaege liegen nur
+ * 1-3 Euro auseinander, weil es echte, verschiedene Eingaenge sind.
+ */
+export const FESTE_ZIELE: FestesZiel[] = [
+  {
+    bezeichnung: 'Flughafen Stuttgart – Terminal',
+    breite: 48.690542,
+    laenge: 9.193195,
+    // "Flughafen", "Flughaf…" beim Tippen, "Airport" - aber NICHT
+    // "Flughafenstraße": Das ist eine echte Adresse, keine Flughafensuche
+    eingabe: /\bflughaf(?!en[\s-]*str)|\bairport\b/i,
+    // Das Ostende der Startbahn liegt gut 4 km vom Terminal entfernt
+    umkreisKm: 5,
+    // Wieder ohne "Flughafenstraße": Dort stehen Hotels und Bueros, 200-500 m
+    // vom Terminal entfernt. Die duerfen nie zum Terminal umgebogen werden.
+    ersetzt: /flughafen(?![\s-]*str)|airport/i,
+  },
+];
+
+/**
+ * Setzt feste Ziele in die Vorschlagsliste ein.
+ *
+ *  - Sucht der Fahrgast nach dem Ort ("Flughafen Stuttgart"), steht das feste
+ *    Ziel ganz oben, und alle Doppelgaenger der Kartensuche verschwinden.
+ *  - Sucht er nach etwas anderem ("Messe Stuttgart") und die Kartensuche
+ *    liefert trotzdem einen Doppelgaenger (die S-Bahn-Station
+ *    "Flughafen/Messe"), wird dieser an Ort und Stelle ersetzt - das feste
+ *    Ziel draengt sich dann nicht nach vorn.
+ */
+export function festeZieleEinsetzen(gesuch: string, vorschlaege: Ort[]): Ort[] {
+  let ergebnis = [...vorschlaege];
+  const oben: Ort[] = [];
+
+  for (const ziel of FESTE_ZIELE) {
+    const punkt: Ort = {
+      breite: ziel.breite,
+      laenge: ziel.laenge,
+      bezeichnung: ziel.bezeichnung,
+    };
+    const istDoppelgaenger = (ort: Ort) =>
+      ziel.ersetzt.test(ort.bezeichnung) && luftlinieKm(ort, punkt) <= ziel.umkreisKm;
+
+    if (ziel.eingabe.test(gesuch)) {
+      ergebnis = ergebnis.filter((ort) => !istDoppelgaenger(ort));
+      oben.push(punkt);
+      continue;
+    }
+
+    const erster = ergebnis.findIndex(istDoppelgaenger);
+    if (erster === -1) continue;
+
+    ergebnis = ergebnis
+      .map((ort, i) => (i === erster ? punkt : ort))
+      .filter((ort, i) => i === erster || !istDoppelgaenger(ort));
+  }
+
+  return [...oben, ...ergebnis];
 }
 
 /** Misst die Strecke zwischen zwei bereits bekannten Punkten. */

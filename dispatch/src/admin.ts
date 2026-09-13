@@ -230,14 +230,25 @@ async function uebersicht(env: Umgebung): Promise<string> {
   const euro = (betrag: number) =>
     new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' }).format(betrag);
 
-  // Zeigt sofort, wie sich eine Tarifaenderung auswirkt
-  const beispiele = [3, 5, 10, 22, 40]
+  // Zeigt sofort, wie sich eine Tarifaenderung auswirkt.
+  //
+  // 18,8 km ist die gemessene Strecke Feuerbach - Terminal. Vorher stand hier
+  // 22 km: Das war der Doppelgaenger-Punkt am Ostende der Startbahn, der
+  // Chef sah also einen Flughafenpreis, den kein Kunde zahlt.
+  //
+  // 2 km steht drin, damit sichtbar bleibt, dass der Mindestpreis sehr kurze
+  // Fahrten teurer macht als das Taxi.
+  const beispiele = [2, 3, 5, 10, 18.8, 40]
     .map((km) => {
       const unser = preisBerechnen(km, tarif);
       const taxi = taxiVergleich(km);
       const ersparnis = Math.round((1 - unser / taxi) * 100);
+      // Haengt vom eingestellten Tarif ab, nicht von der Kilometerzahl
+      const text =
+        km === 18.8 ? 'Feuerbach – Flughafen' : unser === tarif.mindestpreis ? 'Mindestpreis' : '';
+      const hinweis = text ? ` <span class="klein">(${text})</span>` : '';
       return `<tr>
-        <td>${km} km${km === 22 ? ' <span class="klein">(Flughafen)</span>' : ''}</td>
+        <td>${String(km).replace('.', ',')} km${hinweis}</td>
         <td><strong>${euro(unser)}</strong></td>
         <td class="klein">${euro(taxi)}</td>
         <td class="${ersparnis > 0 ? 'ja' : 'nein'}">${ersparnis > 0 ? '−' : '+'}${Math.abs(ersparnis)} %</td>

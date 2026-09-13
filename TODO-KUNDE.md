@@ -119,11 +119,6 @@ verbinden lässt, deren DNS bei Cloudflare liegt.
       Stuttgart, Amt für öffentliche Ordnung". Mit der Konzessionsurkunde
       abgleichen
 - [ ] **Anzahl der Park-&-Fly-Stellplätze**
-- [ ] **Flughafen-Ziel entscheiden** – Die Suche „Flughafen Stuttgart" bietet
-      einen Eintrag bei Neuhausen an, der 53,50 € statt 46,50 € kostet (Ostseite
-      des Geländes statt Terminal). Soll „Flughafen Stuttgart" immer zum
-      Terminal führen? Dann feste Zielpunkte in `dispatch/src/strecke.ts`,
-      etwa eine halbe Stunde
 
 ---
 
@@ -156,6 +151,10 @@ Addendum").
       änderbar. Die Preistabelle aus `content/preise.yaml` zeigt nur Park & Fly –
       ihre Streckenpreise stehen auf 0 und werden ausgeblendet
 - [x] Repository auf GitHub, Website auf Cloudflare (13.09.2026)
+- [x] **„Flughafen Stuttgart" führt immer zum Terminal** – vorher bot die Suche
+      zusätzlich einen Punkt am Ostende der Startbahn an (53,50 statt 46,50 €
+      ab Feuerbach, aus Esslingen gar kein Preis). Feste Ziele in
+      `dispatch/src/strecke.ts`; die Flughafenstraße bleibt eine normale Adresse
 
 ---
 
