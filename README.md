@@ -211,6 +211,51 @@ Prozess, den nachts jemand neu starten müsste.
 **Fahrerdaten** liegen in der Cloudflare-Datenbank und bewusst **nicht** im
 Repository. Verwaltet werden sie unter `<worker>/fahrer` hinter einem Passwort.
 
+### Telefonische Aufträge (`<worker>/fahrer/auftrag`)
+
+Der größte Teil der Aufträge kommt per Anruf. Ohne diese Seite stünden sie nur
+auf Papier: kein Datensatz, kein Nachweis des Auftragseingangs, kein
+serverseitig gerechneter Preis – und ein telefonisch vergebener Fahrer könnte
+parallel einen Auftrag aus Telegram annehmen.
+
+Ein hier aufgenommener Auftrag läuft deshalb durch **denselben Datensatz und
+dasselbe Durable Object** wie eine Bestellung von der Website. Zwei Wege:
+
+| | |
+|---|---|
+| **Ausschreiben** | wie eine Website-Bestellung: Schichtlogik, Reihenfolge, 40 Sekunden |
+| **Fest zuweisen** | Önder weiß schon, wer fährt. Der Fahrer bekommt die Fahrt sofort in Telegram und kann sie mit „Kann ich nicht“ zurückgeben – dann wird sie normal ausgeschrieben |
+
+| Datei | Aufgabe |
+|---|---|
+| `src/auftrag-erfassen.ts` | Prüft die Eingaben (rein, getestet) |
+| `src/zeit.ts` | Formularzeit ↔ Zeitpunkt in Europe/Berlin (rein, getestet) |
+| `src/belegung.ts` | Wer ist gerade unterwegs (rein, getestet) |
+| `src/auftrag-ablage.ts` | Schreiben und Lesen (gegen echtes SQLite getestet) |
+| `src/auftraege.ts` | Die Seite selbst |
+| `src/vorschlagfeld.ts` | Adressfeld mit Vorschlagsliste – auch von den Rechnungen genutzt |
+
+Regeln, die man nicht aufweichen sollte:
+
+- **Der Preis kommt immer vom Server.** Bei ausgewählten Adressen aus der
+  gemessenen Strecke, sonst der von Hand vereinbarte Betrag (`preis_quelle`).
+  Die Anzeige im Formular ist nur eine Vorschau und wird nie übernommen.
+- **Ohne Auswahl aus der Vorschlagsliste kein berechneter Preis.** Freitext ist
+  erlaubt, dann ist das Preisfeld Pflicht – geraten wird nicht.
+- **Der Eingangskanal ist Pflicht** und die Eingangszeit nachtragbar: § 49 PBefG
+  meint den Zeitpunkt des Anrufs, nicht den des Eintippens.
+- **Ein Fahrer ist belegt, solange eine Fahrt läuft.** Geprüft wird die
+  Überschneidung mit der Zeit der neuen Fahrt – eine Vorbestellung für morgen
+  sperrt also nicht. Frei wird er über „Fahrt erledigt“ (Telegram oder
+  Fahrerbereich), spätestens nach der geschätzten Fahrtzeit
+  (60 Min + 2 Min/km, höchstens 4 Stunden). **Diese Obergrenze ist wichtig:**
+  ohne sie würde ein vergessener Auftrag den Fahrer dauerhaft sperren.
+- **Nichts wird gelöscht.** Eine Absage setzt den Status auf `storniert`.
+
+Die Preisvorschau läuft über `/fahrer/preis` hinter dem Passwort und nicht über
+das öffentliche `/api/preis`: Das ist auf 200 Abfragen je Stunde und IP
+gedrosselt, und ein Büro mit vielen Anrufen hängt an einer einzigen IP.
+
 ### Rechnungen (`<worker>/fahrer/rechnungen`)
 
 Start, Ziel und Endpreis eintragen, heraus kommt ein PDF für den Fahrgast.

@@ -4,8 +4,8 @@ Diese Anleitung ist für Sie geschrieben – ohne Fachbegriffe. Sie brauchen kei
 Programm zu installieren und können alles auch vom Handy aus erledigen.
 
 **Das erledigen Sie selbst im Fahrerbereich:**
-Fahrer anlegen und entfernen, Tag- und Nachtschicht, Festpreise, Aufträge ansehen,
-Rechnungen für Fahrgäste schreiben.
+Anrufe als Auftrag aufnehmen, Fahrer anlegen und entfernen, Tag- und
+Nachtschicht, Festpreise, Aufträge ansehen, Rechnungen für Fahrgäste schreiben.
 
 **Das läuft über Amin:**
 Alles, was auf der Website steht – Texte, Öffnungszeiten, Telefonnummer,
@@ -35,7 +35,9 @@ abgemeldet.
    Abholadresse und zwei Knöpfen: **Annehmen** und **Ablehnen**.
 3. Lehnt er ab oder reagiert nicht innerhalb von **40 Sekunden**, ist der
    nächste Fahrer dran.
-4. Nimmt jemand an, bekommt er Name und Telefonnummer des Fahrgasts.
+4. Nimmt jemand an, bekommt er Name und Telefonnummer des Fahrgasts – und eine
+   Schaltfläche **„Fahrt erledigt"**. Darauf tippt er nach der Fahrt. Bis dahin
+   bekommt er keine weiteren Angebote.
 5. Nimmt **niemand** an, bekommen **Sie** eine Telegram-Nachricht mit allen
    Angaben und der Telefonnummer des Fahrgasts. Dann rufen Sie ihn am besten
    kurz an.
@@ -44,6 +46,65 @@ abgemeldet.
 und dessen Schicht zur Uhrzeit der **Fahrt** passt – nicht zur Uhrzeit der
 Bestellung. Wer abends eine Fahrt für den nächsten Morgen bestellt, erreicht
 also die Tagfahrer.
+
+---
+
+## Einen Anruf als Auftrag aufnehmen
+
+Oben auf **„Auftrag aufnehmen"** tippen. Bitte jeden telefonischen Auftrag hier
+eintragen, auch wenn Sie schon wissen, wer fährt. Zwei Gründe:
+
+1. Der Eingang jedes Auftrags muss festgehalten werden – das verlangt
+   § 49 PBefG für Mietwagenunternehmen.
+2. Nur so weiß das System, dass der Fahrer besetzt ist. Sonst bekommt er
+   mitten in der Fahrt ein zweites Angebot aufs Handy.
+
+**So geht es:**
+
+1. **Eingang über** wählen: Telefon, WhatsApp oder persönlich.
+2. **Abholadresse** und **Zieladresse** eintippen. Beim Tippen erscheinen
+   Vorschläge – wählen Sie einen aus, rechnet das System den **Festpreis**
+   selbst aus und zeigt ihn an.
+3. Passt kein Vorschlag? Dann die Adresse einfach frei schreiben und den
+   **vereinbarten Preis** eintragen.
+4. **Name** und **Telefonnummer** des Fahrgasts eintragen.
+5. **Wann?** „so bald wie möglich“ oder „später“ mit Datum und Uhrzeit.
+6. Unten eine der beiden Schaltflächen:
+
+| Schaltfläche | Wann |
+|---|---|
+| **An die Fahrer ausschreiben** | Sie wissen noch nicht, wer fährt. Die Fahrer werden der Reihe nach gefragt, wie bei einer Bestellung über die Website |
+| **Fest zuweisen** | Sie wissen es schon. Fahrer auswählen, dann zuweisen – er bekommt die Fahrt sofort |
+
+> **Preis abweichend vereinbart:** Haben Sie am Telefon einen anderen Preis
+> abgemacht als den berechneten, setzen Sie den Haken und tragen Ihren Preis
+> ein. Der gilt dann.
+
+> **Der Anruf war früher?** Unter „Anruf war früher“ können Sie Datum und
+> Uhrzeit des Anrufs nachtragen. Ohne Angabe gilt der Moment des Eintippens.
+
+### Laufende Fahrten
+
+Darunter stehen die Fahrten, die gerade laufen. Zwei Schaltflächen:
+
+- **Fahrt erledigt** – der Fahrer ist wieder frei und bekommt neue Aufträge.
+  Normalerweise tippt der Fahrer das selbst in Telegram; hier können Sie
+  nachhelfen.
+- **Absagen** – der Fahrgast hat abgesagt. Der Fahrer bekommt eine Nachricht.
+
+---
+
+## Wann ist ein Fahrer „besetzt"?
+
+Sobald ein Fahrer eine Fahrt angenommen hat oder Sie ihn eingeteilt haben,
+bekommt er **keine weiteren Angebote**, bis die Fahrt erledigt ist.
+
+Frei wird er, sobald er in Telegram auf **„Fahrt erledigt"** tippt. Vergisst er
+das, wird er automatisch wieder freigegeben – nach etwa einer Stunde bei
+kurzen Fahrten, bei längeren entsprechend später.
+
+**Eine Vorbestellung für morgen blockiert nicht.** Wer jetzt unterwegs ist,
+bekommt eine Fahrt für morgen früh trotzdem angeboten.
 
 ---
 
@@ -221,8 +282,10 @@ der Fahrgast sie bekommen hat.
 Prüfen Sie in dieser Reihenfolge:
 1. Steht bei ihm **„✓ angemeldet"**? Falls nicht: Link noch einmal schicken.
 2. Ist der Haken bei **„aktiv"** gesetzt?
-3. Passt seine **Schicht** zur Uhrzeit der Fahrt?
-4. Sind **andere Fahrer vor ihm** dran und nehmen die Aufträge an?
+3. Steht er unter **„Auftrag aufnehmen"** in den laufenden Fahrten? Dann gilt
+   er als besetzt. Auf **„Fahrt erledigt"** tippen.
+4. Passt seine **Schicht** zur Uhrzeit der Fahrt?
+5. Sind **andere Fahrer vor ihm** dran und nehmen die Aufträge an?
 
 **Telegram sagt dem Fahrer „Diesen Code kenne ich nicht".**
 Der Link ist veraltet – zum Beispiel, weil der Fahrer entfernt und neu angelegt
