@@ -44,10 +44,18 @@ export interface Fahrer {
   ausgeschieden: number;
 }
 
+/** Wie der Auftrag hereinkam - Nachweis des Eingangs nach § 49 PBefG. */
+export type Kanal = 'website' | 'telefon' | 'whatsapp' | 'persoenlich';
+
 export interface Auftrag {
   id: string;
   eingang: string;
   status: AuftragStatus;
+  kanal: Kanal;
+  /** 'selbst' = in Telegram angenommen, 'fest' = vom Chef eingeteilt */
+  zuweisungsart: 'selbst' | 'fest';
+  /** 'berechnet' = aus der Strecke, 'manuell' = von Hand vereinbart */
+  preis_quelle: 'berechnet' | 'manuell';
   art: string;
   abholung: string;
   ziel: string;

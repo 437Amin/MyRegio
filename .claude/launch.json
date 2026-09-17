@@ -14,6 +14,12 @@
       "port": 8788
     },
     {
+      "name": "telegram-attrappe",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["dispatch/test/telegram-attrappe.mjs"],
+      "port": 8799
+    },
+    {
       "name": "website-als-worker",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["wrangler@4", "dev", "--port", "8790"],

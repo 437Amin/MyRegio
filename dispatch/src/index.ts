@@ -1,13 +1,9 @@
 import type { Bestellung, StatusAntwort, Umgebung } from './typen';
 import { quittiereKnopf, sendeNachricht, setzeTelegramBasis } from './telegram';
 import { adminRoute } from './admin';
-import { preisBerechnen, tarifAusEinstellungen } from './preis';
-import {
-  adresseFinden,
-  adressenVorschlagen,
-  streckeMessen,
-  streckeZwischenPunkten,
-} from './strecke';
+import { adressenVorschlagen } from './strecke';
+import { HEIMAT, festpreisErmitteln, pruefePunkt, type Punkt } from './festpreis';
+import { plausibleTelefonnummer } from './auftrag-erfassen';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -283,9 +279,14 @@ async function telegramEmpfangen(
       return new Response('ok');
     }
 
+    // "fertig" und "weg" stehen an zugewiesenen Fahrten: Der Fahrer meldet
+    // sich nach der Fahrt frei oder gibt sie zurueck.
+    const pfad =
+      aktion === 'fertig' ? '/erledigt' : aktion === 'weg' ? '/abgeben' : '/antwort';
+
     const objekt = env.VERMITTLUNG.get(env.VERMITTLUNG.idFromName(auftragId));
     const ergebnis = (await (
-      await objekt.fetch('https://vermittlung/antwort', {
+      await objekt.fetch(`https://vermittlung${pfad}`, {
         method: 'POST',
         body: JSON.stringify({ fahrerId, annahme: aktion === 'ja' }),
       })
@@ -295,6 +296,8 @@ async function telegramEmpfangen(
       angenommen: 'Die Fahrt gehört dir.',
       vergeben: 'Schon vergeben.',
       abgelehnt: 'Abgelehnt.',
+      erledigt: 'Danke, du bekommst wieder Aufträge.',
+      abgegeben: 'Die Fahrt wird neu ausgeschrieben.',
       unbekannt: 'Auftrag nicht gefunden.',
     };
     await quittiereKnopf(
@@ -370,32 +373,6 @@ function gueltigesDatum(wert: unknown): string {
   if (!text) return '';
   const datum = new Date(text);
   return Number.isNaN(datum.getTime()) ? '' : datum.toISOString();
-}
-
-/**
- * Nimmt vom Browser uebergebene Koordinaten nur an, wenn sie plausibel sind.
- * Der Preis wird daraus gerechnet - erfundene Werte wuerden ihn verfaelschen.
- */
-function pruefePunkt(roh: unknown): Punkt | undefined {
-  if (!roh || typeof roh !== 'object') return undefined;
-  const p = roh as Record<string, unknown>;
-  const breite = Number(p.breite);
-  const laenge = Number(p.laenge);
-
-  // Grob Deutschland - alles andere kann keine Fahrt von hier aus sein
-  if (!Number.isFinite(breite) || breite < 47 || breite > 55.2) return undefined;
-  if (!Number.isFinite(laenge) || laenge < 5.5 || laenge > 15.1) return undefined;
-
-  return {
-    breite,
-    laenge,
-    bezeichnung: String(p.bezeichnung ?? '').slice(0, 200),
-  };
-}
-
-function plausibleTelefonnummer(wert: string): boolean {
-  const ziffern = String(wert).replace(/[^0-9]/g, '');
-  return ziffern.length >= 7 && ziffern.length <= 15;
 }
 
 /** Gesalzener Hash der IP - die Adresse selbst wird nicht gespeichert. */
@@ -498,115 +475,6 @@ async function preisAnfragen(anfrage: Request, env: Umgebung): Promise<Response>
   );
 }
 
-/**
- * Ermittelt Strecke und Festpreis. Wird sowohl fuer die Voranzeige als auch
- * beim Bestellen benutzt - so steht am Ende immer der Betrag im Auftrag, den
- * der Server gerechnet hat, nicht der aus dem Browser.
- */
-export interface Punkt {
-  breite: number;
-  laenge: number;
-  bezeichnung: string;
-}
-
-export async function festpreisErmitteln(
-  vonText: string,
-  nachText: string,
-  env: Umgebung,
-  vonPunkt?: Punkt,
-  nachPunkt?: Punkt,
-): Promise<{
-  preis: number;
-  km: number;
-  minuten: number;
-  vonErkannt: string;
-  nachErkannt: string;
-} | null> {
-  if (!env.ORS_SCHLUESSEL) return null;
-
-  const fokusBreite = 48.8143644;
-  const fokusLaenge = 9.165389;
-
-  // Hat der Fahrgast aus der Vorschlagsliste gewaehlt, nehmen wir genau
-  // diesen Punkt. Nur sonst wird der Freitext gedeutet - mit dem bekannten
-  // Risiko, dass eine aehnlich klingende Adresse in der Naehe gefunden wird.
-  const von =
-    vonPunkt ??
-    (vonText
-      ? await adresseFinden(vonText, env.ORS_SCHLUESSEL, fokusBreite, fokusLaenge)
-      : null);
-  const nach =
-    nachPunkt ??
-    (nachText
-      ? await adresseFinden(nachText, env.ORS_SCHLUESSEL, fokusBreite, fokusLaenge)
-      : null);
-
-  if (!von || !nach) return null;
-
-  const strecke = await streckeMitSpeicher(von, nach, env);
-  if (!strecke) return null;
-
-  const einstellungen = await ladeEinstellungen(env);
-  return {
-    preis: preisBerechnen(strecke.km, tarifAusEinstellungen(einstellungen)),
-    km: strecke.km,
-    minuten: strecke.minuten,
-    vonErkannt: von.bezeichnung,
-    nachErkannt: nach.bezeichnung,
-  };
-}
-
-/**
- * Holt die Strecke - erst aus dem Zwischenspeicher, sonst vom Kartendienst.
- * Der Schluessel rundet die Koordinaten auf etwa zehn Meter, damit auch
- * leicht abweichende Punkte denselben Eintrag treffen.
- */
-async function streckeMitSpeicher(
-  von: { breite: number; laenge: number },
-  nach: { breite: number; laenge: number },
-  env: Umgebung,
-): Promise<{ km: number; minuten: number } | null> {
-  const r = (zahl: number) => zahl.toFixed(4);
-  const schluessel = `${r(von.breite)},${r(von.laenge)}>${r(nach.breite)},${r(nach.laenge)}`;
-
-  const gespeichert = await env.DB.prepare(
-    "SELECT km, minuten FROM strecken_speicher WHERE schluessel = ? AND angelegt > datetime('now', '-30 days')",
-  )
-    .bind(schluessel)
-    .first<{ km: number; minuten: number }>();
-
-  if (gespeichert) return gespeichert;
-
-  const gemessen = await streckeZwischenPunkten(
-    von.breite,
-    von.laenge,
-    nach.breite,
-    nach.laenge,
-    env.ORS_SCHLUESSEL!,
-  );
-  if (!gemessen) return null;
-
-  await env.DB.prepare(
-    `INSERT INTO strecken_speicher (schluessel, km, minuten) VALUES (?, ?, ?)
-     ON CONFLICT(schluessel) DO UPDATE SET km = excluded.km,
-       minuten = excluded.minuten, angelegt = datetime('now')`,
-  )
-    .bind(schluessel, gemessen.km, gemessen.minuten)
-    .run();
-
-  return gemessen;
-}
-
-async function ladeEinstellungen(env: Umgebung): Promise<Record<string, string>> {
-  const zeilen = await env.DB.prepare(
-    'SELECT schluessel, wert FROM einstellungen',
-  ).all<{ schluessel: string; wert: string }>();
-
-  const werte: Record<string, string> = {};
-  for (const zeile of zeilen.results ?? []) werte[zeile.schluessel] = zeile.wert;
-  return werte;
-}
-
 
 /** Adressvorschlaege fuer die Eingabefelder im Buchungsassistenten. */
 async function adressenAnfragen(
@@ -630,8 +498,8 @@ async function adressenAnfragen(
   const treffer = await adressenVorschlagen(
     gesuch,
     env.ORS_SCHLUESSEL,
-    48.8143644,
-    9.165389,
+    HEIMAT.breite,
+    HEIMAT.laenge,
   );
 
   return antwort(

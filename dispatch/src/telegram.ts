@@ -109,12 +109,23 @@ export async function ersetzeNachricht(
   chatId: string,
   nachrichtId: number,
   text: string,
+  knoepfe: Knopf[] = [],
 ): Promise<void> {
   await rufeAuf(token, 'editMessageText', {
     chat_id: chatId,
     message_id: nachrichtId,
     text,
     parse_mode: 'HTML',
+    // Ohne Knoepfe bleibt reply_markup leer - dann verschwinden sie, was beim
+    // Vergeben eines Auftrags genau richtig ist.
+    reply_markup:
+      knoepfe.length > 0
+        ? {
+            inline_keyboard: [
+              knoepfe.map((knopf) => ({ text: knopf.text, callback_data: knopf.daten })),
+            ],
+          }
+        : undefined,
   });
 }
 

@@ -2,6 +2,8 @@ import type { Fahrer, Umgebung } from './typen';
 import { preisBerechnen, taxiVergleich, tarifAusEinstellungen } from './preis';
 import { fahrerEntfernen } from './fahrer-entfernen';
 import { appDatei, rechnungenRoute } from './rechnungen';
+import { auftraegeRoute } from './auftraege';
+import { KANAELE } from './auftrag-erfassen';
 import { html, seite, sicher } from './seite';
 
 /**
@@ -47,6 +49,14 @@ export async function adminRoute(
 
   if (pfad === '/fahrer/rechnungen' || pfad.startsWith('/fahrer/rechnungen/')) {
     return rechnungenRoute(anfrage, env);
+  }
+
+  if (
+    pfad === '/fahrer/auftrag' ||
+    pfad.startsWith('/fahrer/auftrag/') ||
+    pfad === '/fahrer/preis'
+  ) {
+    return auftraegeRoute(anfrage, env);
   }
 
   if (pfad === '/fahrer/neu' && anfrage.method === 'POST') {
@@ -232,7 +242,8 @@ async function uebersicht(env: Umgebung): Promise<string> {
   for (const z of einstellungen.results ?? []) e[z.schluessel] = z.wert;
 
   const auftraege = await env.DB.prepare(
-    `SELECT a.id, a.eingang, a.status, a.art, a.abholung, a.kunde_name, f.name AS fahrername
+    `SELECT a.id, a.eingang, a.status, a.kanal, a.zuweisungsart, a.art, a.abholung,
+            a.kunde_name, f.name AS fahrername
        FROM auftraege a LEFT JOIN fahrer f ON f.id = a.fahrer_id
       ORDER BY a.eingang DESC LIMIT 25`,
   ).all<any>();
@@ -308,11 +319,12 @@ async function uebersicht(env: Umgebung): Promise<string> {
       (a: any) => `
       <tr>
         <td class="klein">${sicher(a.eingang)}</td>
+        <td class="klein">${KANAELE[a.kanal] ?? 'Website'}</td>
         <td>${statusPunkt(a.status)}</td>
         <td>${sicher(a.art)}</td>
         <td class="klein">${sicher(a.abholung)}</td>
         <td>${sicher(a.kunde_name)}</td>
-        <td>${sicher(a.fahrername ?? '–')}</td>
+        <td>${sicher(a.fahrername ?? '–')}${a.zuweisungsart === 'fest' ? ' <span class="klein">(eingeteilt)</span>' : ''}</td>
       </tr>`,
     )
     .join('');
@@ -320,7 +332,8 @@ async function uebersicht(env: Umgebung): Promise<string> {
   return seite(`
     <div class="kopf">
       <h1>Fahrer &amp; Aufträge</h1>
-      <span><a href="/fahrer/rechnungen">Rechnungen</a> · <a class="klein" href="/fahrer/abmelden">Abmelden</a></span>
+      <span><a href="/fahrer/auftrag">Auftrag aufnehmen</a> · <a href="/fahrer/rechnungen">Rechnungen</a>
+        · <a class="klein" href="/fahrer/abmelden">Abmelden</a></span>
     </div>
 
     <h2>Fahrerinnen und Fahrer</h2>
@@ -382,11 +395,12 @@ async function uebersicht(env: Umgebung): Promise<string> {
     <h2>Letzte Aufträge</h2>
     <p class="hinweis">
       Der Eingang jedes Auftrags wird festgehalten – das verlangt § 49 PBefG
-      für Mietwagenunternehmen.
+      für Mietwagenunternehmen. Telefonische Aufträge gehören deshalb ebenfalls
+      hier herein: <a href="/fahrer/auftrag">Auftrag aufnehmen</a>.
     </p>
     <table>
-      <thead><tr><th>Eingang</th><th>Status</th><th>Anlass</th><th>Abholung</th><th>Fahrgast</th><th>Fahrer</th></tr></thead>
-      <tbody>${auftragsZeilen || '<tr><td colspan="6" class="hinweis">Noch keine Aufträge.</td></tr>'}</tbody>
+      <thead><tr><th>Eingang</th><th>Über</th><th>Status</th><th>Anlass</th><th>Abholung</th><th>Fahrgast</th><th>Fahrer</th></tr></thead>
+      <tbody>${auftragsZeilen || '<tr><td colspan="7" class="hinweis">Noch keine Aufträge.</td></tr>'}</tbody>
     </table>
   `);
 }

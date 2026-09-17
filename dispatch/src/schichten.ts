@@ -63,12 +63,17 @@ export function istNacht(
  * Beruecksichtigt werden nur Fahrer, die aktiv sind UND den Telegram-Bot
  * bereits gestartet haben. Wer sich noch nicht angemeldet hat, koennte die
  * Nachricht gar nicht empfangen.
+ *
+ * "belegt" sind Fahrer, die zur Zeit dieser Fahrt schon unterwegs sind - wer
+ * per Telefon eingeteilt wurde, soll nicht parallel ein Angebot bekommen.
+ * Welche das sind, rechnet belegung.ts aus.
  */
 export function fahrerFuerZeitpunkt(
   alle: Fahrer[],
   zeitpunkt: Date,
   nachtVon = '22:00',
   nachtBis = '06:00',
+  belegt: ReadonlySet<number> = new Set(),
 ): Fahrer[] {
   const nacht = istNacht(zeitpunkt, nachtVon, nachtBis);
   const passendeSchicht = nacht ? 'nacht' : 'tag';
@@ -79,6 +84,7 @@ export function fahrerFuerZeitpunkt(
     .filter((fahrer) => !fahrer.ausgeschieden)
     .filter((fahrer) => fahrer.aktiv === 1)
     .filter((fahrer) => Boolean(fahrer.telegram_chat_id))
+    .filter((fahrer) => !belegt.has(fahrer.id))
     .filter(
       (fahrer) =>
         fahrer.schicht === 'beide' || fahrer.schicht === passendeSchicht,

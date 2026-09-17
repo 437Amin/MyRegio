@@ -126,6 +126,18 @@ describe('Fahrerauswahl', () => {
     ]);
   });
 
+  it('überspringt Fahrer, die zu dieser Zeit schon unterwegs sind', () => {
+    // Genau der Fall aus der Praxis: Önder hat jemanden telefonisch
+    // eingeteilt - der soll nicht parallel ein Telegram-Angebot bekommen.
+    const alle = [
+      fahrer({ id: 1, name: 'Unterwegs', reihenfolge: 10 }),
+      fahrer({ id: 2, name: 'Frei', reihenfolge: 20 }),
+    ];
+    expect(
+      fahrerFuerZeitpunkt(alle, tagsUeber, '22:00', '06:00', new Set([1])).map((f) => f.name),
+    ).toEqual(['Frei']);
+  });
+
   it('hält die eingestellte Reihenfolge ein', () => {
     const alle = [
       fahrer({ id: 1, name: 'Dritter', reihenfolge: 30 }),

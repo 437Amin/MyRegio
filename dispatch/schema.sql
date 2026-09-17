@@ -13,6 +13,14 @@
 --  NACHTRAG Rechnungen (13.09.2026): Die Tabelle "rechnungen" ist neu.
 --  Vor dem Veroeffentlichen einmal "npm run db:anlegen" ausfuehren - die Datei
 --  laesst sich gefahrlos erneut ausfuehren, Bestehendes bleibt unberuehrt.
+--
+--  NACHTRAG telefonische Auftraege (17.09.2026): vier neue Spalten. Einmalig
+--  ausfuehren, BEVOR neuer Code veroeffentlicht wird:
+--
+--    ALTER TABLE auftraege  ADD COLUMN kanal         TEXT NOT NULL DEFAULT 'website';
+--    ALTER TABLE auftraege  ADD COLUMN zuweisungsart TEXT NOT NULL DEFAULT 'selbst';
+--    ALTER TABLE auftraege  ADD COLUMN preis_quelle  TEXT NOT NULL DEFAULT 'berechnet';
+--    ALTER TABLE rechnungen ADD COLUMN auftrag_id    TEXT REFERENCES auftraege (id);
 -- =============================================================================
 
 -- --- Fahrerinnen und Fahrer --------------------------------------------------
@@ -53,6 +61,17 @@ CREATE TABLE IF NOT EXISTS auftraege (
   -- 'vermittlung' | 'angenommen' | 'niemand' | 'storniert'
   status         TEXT    NOT NULL DEFAULT 'vermittlung',
 
+  -- Wie der Auftrag hereinkam: 'website' | 'telefon' | 'whatsapp' |
+  -- 'persoenlich'. Bei telefonischer Aufnahme Pflichtangabe - zusammen mit
+  -- "eingang" ist das der Nachweis nach § 49 PBefG.
+  kanal          TEXT    NOT NULL DEFAULT 'website',
+  -- 'selbst': Der Fahrer hat in Telegram angenommen.
+  -- 'fest':   Der Chef hat ihn eingeteilt, meist am Telefon.
+  zuweisungsart  TEXT    NOT NULL DEFAULT 'selbst',
+  -- 'berechnet': aus der gemessenen Strecke. 'manuell': von Hand vereinbart,
+  -- etwa weil die Adresse nur als Freitext vorlag.
+  preis_quelle   TEXT    NOT NULL DEFAULT 'berechnet',
+
   art            TEXT    NOT NULL,
   abholung       TEXT    NOT NULL,
   ziel           TEXT    NOT NULL DEFAULT '',
@@ -81,6 +100,8 @@ CREATE TABLE IF NOT EXISTS auftraege (
 
 CREATE INDEX IF NOT EXISTS idx_auftraege_eingang ON auftraege (eingang DESC);
 CREATE INDEX IF NOT EXISTS idx_auftraege_status ON auftraege (status);
+-- Fuer die Frage "wer ist gerade unterwegs?" vor jeder Vermittlung
+CREATE INDEX IF NOT EXISTS idx_auftraege_fahrer ON auftraege (fahrer_id, status);
 
 -- --- Verlauf der Vermittlung -------------------------------------------------
 -- Haelt fest, wer wann gefragt wurde und wie reagiert hat. Hilft bei
@@ -172,9 +193,14 @@ CREATE TABLE IF NOT EXISTS rechnungen (
   absender        TEXT    NOT NULL,
   -- Gesetzt bei einer Stornorechnung: die Rechnung, die sie aufhebt
   storno_von      INTEGER REFERENCES rechnungen (id),
+  -- Gefahrener Auftrag, falls die Rechnung aus einem stammt. Ein Auftrag kann
+  -- zwei Rechnungen haben (Original und Storno), deshalb steht der Verweis
+  -- hier und nicht umgekehrt.
+  auftrag_id      TEXT    REFERENCES auftraege (id),
   angelegt        TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rechnungen_nummer ON rechnungen (jahr, laufnummer);
 -- Jede Rechnung kann nur einmal storniert werden
 CREATE UNIQUE INDEX IF NOT EXISTS idx_rechnungen_storno ON rechnungen (storno_von);
+CREATE INDEX IF NOT EXISTS idx_rechnungen_auftrag ON rechnungen (auftrag_id);
