@@ -330,7 +330,7 @@ keinem Fahrer zuteilen.
 ### Cloudflare (produktiv)
 
 Die Website läuft als Cloudflare-Worker mit statischen Dateien, Projekt
-`myregio`, derzeit unter `https://myregio.assad-amin.workers.dev`. Cloudflare
+`myregio`, seit dem 20.09.2026 unter **`https://www.myregiocar.com`**. Cloudflare
 baut die Seite selbst. Es gibt deshalb **keinen Deploy-Workflow und keine
 FTP-Zugangsdaten** – Cloudflare holt sich den Code bei jedem Push direkt aus
 dem Repository.
@@ -347,6 +347,22 @@ DecapBridge schreibt einen Commit, der Rest passiert von selbst.
 > hat Folgen, die uns erwischt haben: `_redirects` erlaubt keine vollständigen
 > Adressen, und eine eigene Domain lässt sich nur verbinden, wenn ihr DNS bei
 > Cloudflare liegt.
+
+**Die eigene Domain** steht als `routes` in `wrangler.toml`; Cloudflare legt den
+DNS-Eintrag beim Veröffentlichen selbst an. Zwei Dinge liegen dagegen im
+Dashboard und nicht im Projekt:
+
+- **Weiterleitung `myregiocar.com` → `www`** (Regeln → Weiterleitungsregeln,
+  Platzhaltermuster `https://myregiocar.com/*` → `https://www.myregiocar.com/${1}`,
+  301). Ohne sie zeigt die nackte Domain die alte Platzhalterseite des
+  Domainanbieters.
+- **„Immer HTTPS verwenden"** (SSL/TLS → Edge-Zertifikate). Sonst wird
+  `http://` unverschlüsselt ausgeliefert.
+
+Sobald ein Worker eine eigene Domain hat, **schaltet Cloudflare seine
+`workers.dev`-Adresse ab** – sie antwortet danach mit 404. Das ist hier
+erwünscht (Google soll nur eine Adresse kennen), überrascht aber, wenn man den
+alten Link noch irgendwo verschickt hat.
 
 Einstellungen bei Cloudflare: Build-Befehl `npm run build`,
 Bereitstellungsbefehl `npx wrangler deploy`. Was dabei veröffentlicht wird,

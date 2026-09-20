@@ -1,18 +1,18 @@
-# Offene Punkte bis zum Livegang
+# Offene Punkte
 
-Stand: 13.09.2026 · Website: **Cloudflare** (Worker `myregio`) · Domain und
-E-Mail: **IONOS**, DNS zieht zu Cloudflare um · Repository:
-**github.com/437Amin/MyRegio** (öffentlich)
+Stand: 20.09.2026 · Website: **www.myregiocar.com**, läuft bei Cloudflare
+(Worker `myregio`) · Domain registriert und E-Mail bei **IONOS**, DNS bei
+**Cloudflare** · Repository: **github.com/437Amin/MyRegio** (öffentlich)
 
 ## Wo es gerade steht
 
 | | |
 |---|---|
-| Website | ✅ online unter https://myregio.assad-amin.workers.dev |
+| Website | ✅ online unter **https://www.myregiocar.com** |
 | Festpreise, Adressvorschläge | ✅ live geprüft |
 | Auftragsvermittlung | ✅ läuft – aber nur mit dem Testeintrag „Amin" |
 | **Bis echte Kunden bestellen** | 🔴 Fahrerliste und Telegram-ID von Önder |
-| **Bis `www.myregiocar.com`** | 🔴 Nameserver bei IONOS – braucht Önders IONOS-Zugang |
+| **`www.myregiocar.com`** | ✅ live seit 20.09.2026 |
 
 ---
 
@@ -66,42 +66,38 @@ verbinden lässt, deren DNS bei Cloudflare liegt.
       ```
       Bewusst **kein** `www` – das legt Cloudflare beim Verbinden selbst an.
 
-- [ ] **Nameserver bei IONOS ändern** – braucht **Önders IONOS-Zugang**
-      (früher 1&1; Rechnung kommt jedes Jahr im März). Anmeldung:
-      https://login.ionos.de → *Domains & SSL* → `myregiocar.com` → Nameserver:
-      ```
-      craig.ns.cloudflare.com
-      mary.ns.cloudflare.com
-      ```
-      Die vier `ns1052.ui-dns.*` entfernen. **Sonst nichts ändern, nichts
-      kündigen.** DNSSEC ist aus, das ist keine Falle.
-      > Dauert das Wochen, kann Cloudflare den Entwurf entfernen. Dann die
-      > Domain neu anlegen – die Einträge stehen oben.
+- [x] **Nameserver bei IONOS geändert** – 20.09.2026, 15:32 Uhr. Bei der
+      `.com`-Registry stehen `craig` und `mary.ns.cloudflare.com`.
 
-- [ ] **Bei Cloudflare „Ich habe meine Nameserver aktualisiert"** – erst
-      **nach** dem Speichern bei IONOS
+- [x] **Zone bei Cloudflare aktiv**
 
-- [ ] **Website verbinden** – *Workers und Pages* → `myregio` → *Domänen* →
-      `www.myregiocar.com`
+- [x] **Website verbunden** – `www.myregiocar.com` steht als `routes` in
+      `wrangler.toml`, Cloudflare legt den DNS-Eintrag beim Veröffentlichen an
 
-- [ ] **Weiterleitung `myregiocar.com` → `www`** – bei Cloudflare unter
-      *Regeln → Weiterleitungsregeln*: Hostname gleich `myregiocar.com` →
-      `https://www.myregiocar.com` + ursprünglicher Pfad, Status **301**,
-      Abfrage beibehalten
+- [x] **Weiterleitung `myregiocar.com` → `www`** – Umleitungsregel mit
+      Platzhaltermuster, 301, Pfad und Abfrage bleiben erhalten
 
-- [ ] **Prüfen**
-      - `https://www.myregiocar.com` zeigt die Seite, Schloss im Browser
-      - `http://myregiocar.com/kontakt` landet auf `https://www.myregiocar.com/kontakt`
-      - Test-E-Mail an `contact@myregiocar.com` kommt an
-      - Buchungsassistent einmal ganz durch
+- [x] **„Immer HTTPS verwenden"** unter *SSL/TLS → Edge-Zertifikate*
 
-- [ ] **Aufräumen**
-      - In `dispatch/wrangler.toml` bei `ERLAUBTE_HERKUNFT` nur
-        `https://www.myregiocar.com` stehen lassen, dann
-        `cd dispatch && npm run deploy`
-      - Die `workers.dev`-Adresse der Website abschalten (*Worker `myregio` →
-        Einstellungen → Domains & Routes*), damit Google nur eine Adresse kennt
-      - Alte Vorschauseite `myregiocar.netlify.app` löschen
+- [x] **Geprüft**
+      - Alle Seiten unter `www` mit gültigem Zertifikat, eigene 404-Seite
+      - `http://myregiocar.com/kontakt` → 2 Weiterleitungen →
+        `https://www.myregiocar.com/kontakt`
+      - MX, SPF und Microsoft-Bestätigung auf allen sechs Cloudflare-Servern
+        unverändert
+      - Der Vermittlungsdienst nimmt Anfragen von `www` an, Festpreis 46,50 €
+
+- [x] **Aufgeräumt** – `ERLAUBTE_HERKUNFT` enthält nur noch
+      `https://www.myregiocar.com`, deployt
+
+- [ ] **Test-E-Mail an `contact@myregiocar.com`** schicken und prüfen, ob sie
+      ankommt
+- [ ] **Buchungsassistent** auf `www.myregiocar.com` einmal ganz durchklicken
+- [ ] Alte Vorschauseite `myregiocar.netlify.app` löschen
+
+> Die `workers.dev`-Adresse der Website schaltet Cloudflare selbst ab, sobald
+> ein Worker eine eigene Domain hat – sie antwortet jetzt mit 404. Wer den
+> alten Link verschickt hat, braucht den neuen.
 
 > **Schlägt ein Build fehl**, wird nichts veröffentlicht – die bisherige
 > Fassung bleibt online. Cloudflare schickt eine E-Mail, der Grund steht unter

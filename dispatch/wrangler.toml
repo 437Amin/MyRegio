@@ -15,14 +15,15 @@ compatibility_date = "2025-07-18"
 
 # Diese Werte sind nicht geheim und duerfen im Repository stehen.
 [vars]
-# Mehrere Adressen mit Komma trennen.
-#   1. www.myregiocar.com         - die Website, bleibt dauerhaft
-#   2. myregio.….workers.dev      - dieselbe Website unter ihrer
-#                                   Cloudflare-Adresse, zum Testen vor der
-#                                   Domainumstellung
-#   3. localhost:4321             - der lokale Entwicklungsserver
-# 2. und 3. koennen nach dem Livegang entfernt werden.
-ERLAUBTE_HERKUNFT = "https://www.myregiocar.com,https://myregio.assad-amin.workers.dev,http://localhost:4321"
+# Woher Anfragen an /api/... kommen duerfen. Mehrere mit Komma trennen.
+#
+# Seit dem Livegang am 20.09.2026 steht hier nur noch die echte Adresse. Die
+# frueheren Eintraege sind weg: Die workers.dev-Adresse der Website schaltet
+# Cloudflare ab, sobald ein Worker eine eigene Domain hat, und der lokale
+# Entwicklungsserver wird nur voruebergehend gebraucht.
+#
+# Zum Entwickeln wieder ergaenzen: ",http://localhost:4321"
+ERLAUBTE_HERKUNFT = "https://www.myregiocar.com"
 TELEGRAM_BOT_NAME = "MyRegioBot"
 
 [[d1_databases]]
