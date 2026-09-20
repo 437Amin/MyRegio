@@ -22,6 +22,20 @@
 name = "myregio"
 compatibility_date = "2025-07-18"
 
+# Die eigene Domain. Cloudflare legt den noetigen DNS-Eintrag beim
+# Veroeffentlichen selbst an - im Dashboard ist dafuer nichts zu klicken.
+#
+# ACHTUNG: Das geht erst, wenn die Zone myregiocar.com bei Cloudflare AKTIV
+# ist. Solange sie auf die Nameserver wartet, scheitert der Build mit einer
+# Meldung, dass die Zone nicht gefunden wurde.
+#
+# Die nackte Domain steht bewusst NICHT hier: myregiocar.com wird per
+# Weiterleitungsregel auf www geschickt, damit Google nur eine Schreibweise
+# sieht (siehe HANDOFF.md).
+routes = [
+  { pattern = "www.myregiocar.com", custom_domain = true }
+]
+
 [assets]
 # Hier liegt die gebaute Website. Kein Programmcode, nur fertige Dateien -
 # deshalb gibt es keinen "main"-Eintrag wie beim Vermittlungsdienst.
