@@ -13,6 +13,21 @@ name = "myregiocar-vermittlung"
 main = "src/index.ts"
 compatibility_date = "2025-07-18"
 
+# Eigene Adresse fuer den Fahrerbereich. Cloudflare legt den DNS-Eintrag beim
+# Veroeffentlichen selbst an.
+routes = [
+  { pattern = "vermittlung.myregiocar.com", custom_domain = true }
+]
+
+# BLEIBT VORERST AN. Sonst schaltet Cloudflare die workers.dev-Adresse in
+# dem Moment ab, in dem die eigene Domain dazukommt - und der bei Telegram
+# hinterlegte Webhook zeigt noch dorthin. Die Fahrer koennten dann keine
+# Auftraege mehr annehmen.
+#
+# Reihenfolge: 1. veroeffentlichen  2. Webhook bei Telegram auf die neue
+# Adresse umstellen  3. hier auf false setzen und erneut veroeffentlichen.
+workers_dev = true
+
 # Diese Werte sind nicht geheim und duerfen im Repository stehen.
 [vars]
 # Woher Anfragen an /api/... kommen duerfen. Mehrere mit Komma trennen.

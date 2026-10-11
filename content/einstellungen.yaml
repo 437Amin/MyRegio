@@ -92,7 +92,7 @@ vermittlung:
   # Erst auf true stellen, wenn der Vermittlungsdienst eingerichtet ist.
   aktiv: true
   # Adresse des Vermittlungsdienstes (wird bei der Einrichtung eingetragen)
-  adresse: "https://myregiocar-vermittlung.assad-amin.workers.dev"
+  adresse: "https://vermittlung.myregiocar.com"
 
 einzugsgebiet:
   # Orte, in denen gefahren wird. Erscheinen im Text und bei Google.

@@ -18,7 +18,7 @@ WhatsApp-Nachricht, was sich ändern soll.
 
 Rufen Sie im Browser auf:
 
-**https://myregiocar-vermittlung.assad-amin.workers.dev/fahrer**
+**https://vermittlung.myregiocar.com/fahrer**
 
 Das Passwort bekommen Sie von Amin. Nach 12 Stunden werden Sie automatisch
 abgemeldet.
@@ -221,7 +221,7 @@ Anlass, Abholung, Fahrgast und Fahrer.
 
 Oben im Fahrerbereich auf **„Rechnungen"** tippen, oder direkt aufrufen:
 
-**https://myregiocar-vermittlung.assad-amin.workers.dev/fahrer/rechnungen**
+**https://vermittlung.myregiocar.com/fahrer/rechnungen**
 
 > **Tipp – als App aufs Handy:** Seite öffnen, dann auf dem iPhone
 > **Teilen → „Zum Home-Bildschirm"**, auf Android **⋮ → „Zum Startbildschirm

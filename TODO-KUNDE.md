@@ -176,7 +176,7 @@ Für den Fall, dass sie neu aufgesetzt werden muss.
       npx wrangler secret put ADMIN_PASSWORT
       npx wrangler secret put ORS_SCHLUESSEL
       ```
-- [x] **Veröffentlicht** – https://myregiocar-vermittlung.assad-amin.workers.dev,
+- [x] **Veröffentlicht** – https://vermittlung.myregiocar.com,
       Webhook bei Telegram registriert
       ```
       curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=<WORKER-ADRESSE>/telegram/webhook&secret_token=<GEHEIMNIS>"
