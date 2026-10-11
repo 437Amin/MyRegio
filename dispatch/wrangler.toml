@@ -19,13 +19,24 @@ routes = [
   { pattern = "vermittlung.myregiocar.com", custom_domain = true }
 ]
 
-# BLEIBT VORERST AN. Sonst schaltet Cloudflare die workers.dev-Adresse in
-# dem Moment ab, in dem die eigene Domain dazukommt - und der bei Telegram
-# hinterlegte Webhook zeigt noch dorthin. Die Fahrer koennten dann keine
-# Auftraege mehr annehmen.
+# BLEIBT AN - bewusst, kein Uebergangszustand.
 #
-# Reihenfolge: 1. veroeffentlichen  2. Webhook bei Telegram auf die neue
-# Adresse umstellen  3. hier auf false setzen und erneut veroeffentlichen.
+# Cloudflare schaltet die workers.dev-Adresse ab, sobald ein Worker eine
+# eigene Domain bekommt. Hier waere das ein Problem: Der bei Telegram
+# hinterlegte Webhook zeigt noch auf die alte Adresse, die Fahrer koennten
+# dann keine Auftraege mehr annehmen.
+#
+# Die alte Adresse umzustellen hiesse, das Bot-Token von Hand in einen
+# API-Aufruf zu setzen. Das ist den Aufwand nicht wert: Die Webhook-Adresse
+# sieht nie ein Mensch, nur Telegrams Server. Oender und die Fahrgaeste
+# bekommen die schoene Adresse, und die alte ist passwortgeschuetzt und
+# fuer Suchmaschinen gesperrt.
+#
+# Falls doch einmal nur eine Adresse bleiben soll:
+#   1. npx wrangler secret put TELEGRAM_WEBHOOK_GEHEIMNIS   (neuer Wert)
+#   2. https://api.telegram.org/bot<TOKEN>/setWebhook?url=
+#      https://vermittlung.myregiocar.com/telegram/webhook&secret_token=<WERT>
+#   3. hier auf false setzen und erneut veroeffentlichen
 workers_dev = true
 
 # Diese Werte sind nicht geheim und duerfen im Repository stehen.
