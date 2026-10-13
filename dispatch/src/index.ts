@@ -1,4 +1,5 @@
-import type { Bestellung, StatusAntwort, Umgebung } from './typen';
+import type { Bestellung, Fahrer, StatusAntwort, Umgebung } from './typen';
+import { gueltigerWunschfahrer, oeffentlicheFahrer } from './fahrer-liste';
 import { quittiereKnopf, sendeNachricht, setzeTelegramBasis } from './telegram';
 import { adminRoute } from './admin';
 import { adressenVorschlagen } from './strecke';
@@ -42,6 +43,10 @@ export default {
 
       if (pfad === '/api/adressen' && anfrage.method === 'GET') {
         return await adressenAnfragen(url, env, anfrage);
+      }
+
+      if (pfad === '/api/fahrer' && anfrage.method === 'GET') {
+        return await fahrerAnfragen(env, anfrage);
       }
 
       if (pfad === '/api/preis' && anfrage.method === 'POST') {
@@ -116,6 +121,12 @@ async function bestellungAnnehmen(
 
   const id = crypto.randomUUID();
 
+  // Den Wunschfahrer nachschlagen, bevor er in die Datenbank geht. Eine
+  // unbekannte Nummer - etwa aus einer lange offenen Seite, deren Fahrer
+  // inzwischen ausgetragen wurde - wuerde sonst am Fremdschluessel scheitern
+  // und die ganze Bestellung abbrechen. Die Fahrt ist wichtiger als der Wunsch.
+  const wunschFahrerId = await gueltigerWunschfahrer(roh.wunschFahrerId, env.DB);
+
   // Der Preis wird hier neu gerechnet und NICHT aus dem Browser uebernommen.
   // Faellt die Ermittlung aus, bleibt er bei 0 - dann wird er wie frueher
   // individuell abgesprochen, statt einen falschen Betrag festzuschreiben.
@@ -130,8 +141,9 @@ async function bestellungAnnehmen(
   await env.DB.prepare(
     `INSERT INTO auftraege
        (id, art, abholung, ziel, wunschzeit, wunsch_iso, sofort, personen, gepaeck,
-        kindersitze, anmerkung, preis, strecke_km, kunde_name, kunde_telefon)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        kindersitze, anmerkung, preis, strecke_km, kunde_name, kunde_telefon,
+        wunsch_fahrer_id)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -149,6 +161,7 @@ async function bestellungAnnehmen(
       festpreis?.km ?? 0,
       kurz(roh.name),
       kurz(roh.telefon, 40),
+      wunschFahrerId,
     )
     .run();
 
@@ -174,13 +187,20 @@ async function statusAbfragen(
   anfrage?: Request,
 ): Promise<Response> {
   const zeile = await env.DB.prepare(
-    `SELECT a.status, a.angenommen_um, f.name AS fahrername
+    `SELECT a.status, a.angenommen_um, a.wunsch_fahrer_id, a.fahrer_id,
+            f.name AS fahrername
        FROM auftraege a
        LEFT JOIN fahrer f ON f.id = a.fahrer_id
       WHERE a.id = ?`,
   )
     .bind(id)
-    .first<{ status: string; angenommen_um: string | null; fahrername: string | null }>();
+    .first<{
+      status: string;
+      angenommen_um: string | null;
+      wunsch_fahrer_id: number | null;
+      fahrer_id: number | null;
+      fahrername: string | null;
+    }>();
 
   if (!zeile) return antwort({ fehler: 'Unbekannter Auftrag' }, 404, env,
       anfrage,);
@@ -190,6 +210,12 @@ async function statusAbfragen(
     // Nur der Vorname - mehr braucht der Fahrgast nicht zu wissen
     fahrer: zeile.fahrername?.split(' ')[0],
     angenommenUm: zeile.angenommen_um ?? undefined,
+    // Damit die Seite sagen kann: "Ihr Wunschfahrer war nicht verfuegbar"
+    wunschVerfehlt: Boolean(
+      zeile.wunsch_fahrer_id &&
+        zeile.fahrer_id &&
+        zeile.wunsch_fahrer_id !== zeile.fahrer_id,
+    ),
   };
   return antwort(ergebnis, 200, env, anfrage);
 }
@@ -475,6 +501,21 @@ async function preisAnfragen(anfrage: Request, env: Umgebung): Promise<Response>
   );
 }
 
+
+/**
+ * Die Fahrer zur Auswahl im Buchungsassistenten.
+ *
+ * Nach aussen gehen nur Nummer und Vorname - was gefiltert wird und warum,
+ * steht in fahrer-liste.ts. Ohne Drosselung: Die Antwort kostet nichts und
+ * steht ohnehin auf jeder Seite der Website.
+ */
+async function fahrerAnfragen(env: Umgebung, anfrage: Request): Promise<Response> {
+  const alle = await env.DB.prepare(
+    'SELECT * FROM fahrer WHERE ausgeschieden = 0 ORDER BY reihenfolge, id',
+  ).all<Fahrer>();
+
+  return antwort({ fahrer: oeffentlicheFahrer(alle.results ?? []) }, 200, env, anfrage);
+}
 
 /** Adressvorschlaege fuer die Eingabefelder im Buchungsassistenten. */
 async function adressenAnfragen(

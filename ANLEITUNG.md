@@ -30,7 +30,8 @@ abgemeldet.
 
 ## So läuft eine Bestellung ab
 
-1. Ein Kunde bestellt auf der Website und sieht vorher den Festpreis.
+1. Ein Kunde bestellt auf der Website und sieht vorher den Festpreis. Er darf
+   sich dort einen **Wunschfahrer** aussuchen oder „Egal" ankreuzen.
 2. Der **erste passende Fahrer** bekommt eine Telegram-Nachricht mit der
    Abholadresse und zwei Knöpfen: **Annehmen** und **Ablehnen**.
 3. Lehnt er ab oder reagiert nicht innerhalb von **40 Sekunden**, ist der
@@ -46,6 +47,15 @@ abgemeldet.
 und dessen Schicht zur Uhrzeit der **Fahrt** passt – nicht zur Uhrzeit der
 Bestellung. Wer abends eine Fahrt für den nächsten Morgen bestellt, erreicht
 also die Tagfahrer.
+
+**Und der Wunschfahrer?** Er wird **zuerst** gefragt – aber nur, wenn er
+ohnehin in Frage kommt. Hat er frei, ist er nicht angemeldet oder sitzt er
+schon in einer anderen Fahrt, wird er übersprungen wie jeder andere auch.
+Sagt er ab oder meldet sich nicht, geht die Fahrt normal an den Nächsten.
+
+**Eine Fahrt bleibt also nie liegen, nur weil ein bestimmter Fahrer nicht
+kann.** Der Kunde sieht auf der Seite den Hinweis, dass sein Wunschfahrer
+nicht verfügbar war und jemand anderes kommt.
 
 ---
 
@@ -125,6 +135,12 @@ darunter einem Link, der mit `t.me/MyRegioBot` beginnt.
 
 **Erst dann bekommt er Aufträge.** Der Fahrer braucht dafür die Telegram-App
 auf seinem Handy.
+
+**Der Vorname steht auf der Website.** Sobald ein Fahrer angemeldet ist, können
+Kunden ihn als Wunschfahrer auswählen – sichtbar ist nur der Vorname, sonst
+nichts. Bei zwei gleichen Vornamen kommt der erste Buchstabe des Nachnamens
+dazu („Mehmet Y."). Die Auswahl erscheint erst ab **zwei** angemeldeten
+Fahrern. Wer pausiert oder ausgetragen ist, steht nicht in der Liste.
 
 ---
 

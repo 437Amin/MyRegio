@@ -70,6 +70,8 @@ export interface Auftrag {
   strecke_km: number;
   kunde_name: string;
   kunde_telefon: string;
+  /** Vom Fahrgast gewuenschter Fahrer - wird zuerst gefragt */
+  wunsch_fahrer_id: number | null;
   fahrer_id: number | null;
   angenommen_um: string | null;
   beendet_um: string | null;
@@ -92,6 +94,8 @@ export interface Bestellung {
   nachPunkt?: { breite: number; laenge: number; bezeichnung?: string };
   preis?: number;
   streckeKm?: number;
+  /** Nummer des gewuenschten Fahrers aus /api/fahrer, falls einer gewaehlt wurde */
+  wunschFahrerId?: number;
   name: string;
   telefon: string;
 }
@@ -102,4 +106,6 @@ export interface StatusAntwort {
   /** Vorname des Fahrers - mehr braucht der Kunde nicht */
   fahrer?: string;
   angenommenUm?: string;
+  /** true, wenn ein Wunschfahrer angegeben war, aber jemand anderes faehrt */
+  wunschVerfehlt?: boolean;
 }

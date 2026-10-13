@@ -10,7 +10,7 @@
     {
       "name": "vermittlung-lokal",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "dispatch", "run", "dev", "--", "--port", "8788", "--var", "ADMIN_PASSWORT:lokal-test"],
+      "runtimeArgs": ["--prefix", "dispatch", "run", "dev", "--", "--port", "8788", "--var", "ADMIN_PASSWORT:lokal-test", "--var", "ERLAUBTE_HERKUNFT:http://localhost:4321"],
       "port": 8788
     },
     {

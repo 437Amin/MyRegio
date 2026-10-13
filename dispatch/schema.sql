@@ -21,6 +21,10 @@
 --    ALTER TABLE auftraege  ADD COLUMN zuweisungsart TEXT NOT NULL DEFAULT 'selbst';
 --    ALTER TABLE auftraege  ADD COLUMN preis_quelle  TEXT NOT NULL DEFAULT 'berechnet';
 --    ALTER TABLE rechnungen ADD COLUMN auftrag_id    TEXT REFERENCES auftraege (id);
+--
+--  NACHTRAG Wunschfahrer (13.10.2026):
+--
+--    ALTER TABLE auftraege ADD COLUMN wunsch_fahrer_id INTEGER REFERENCES fahrer (id);
 -- =============================================================================
 
 -- --- Fahrerinnen und Fahrer --------------------------------------------------
@@ -92,6 +96,10 @@ CREATE TABLE IF NOT EXISTS auftraege (
 
   kunde_name     TEXT    NOT NULL,
   kunde_telefon  TEXT    NOT NULL,
+
+  -- Vom Fahrgast gewuenschter Fahrer. Er wird zuerst gefragt, ist aber nicht
+  -- der Einzige: Reagiert er nicht, laeuft die Vermittlung normal weiter.
+  wunsch_fahrer_id INTEGER REFERENCES fahrer (id),
 
   fahrer_id      INTEGER REFERENCES fahrer (id),
   angenommen_um  TEXT,

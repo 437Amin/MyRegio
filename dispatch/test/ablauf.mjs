@@ -38,10 +38,17 @@ function an(liste, chatId) {
   );
 }
 
-async function bestelle(zusatz = {}) {
+/**
+ * Legt eine Bestellung ab.
+ *
+ * Die Absender-IP ist angebbar, weil der Dienst nur fuenf Bestellungen pro
+ * Stunde und Absender annimmt. Ohne das gingen die spaeteren Abschnitte dieser
+ * Probe an der Drosselung zugrunde statt an der Vermittlung.
+ */
+async function bestelle(zusatz = {}, ip = '203.0.113.1') {
   const antwort = await fetch(`${DIENST}/api/bestellung`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json' },
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
     body: JSON.stringify({
       art: 'Flughafentransfer',
       abholung: 'Steiermärker Str. 3, Stuttgart',
@@ -73,6 +80,32 @@ async function knopfDruck(auftragId, fahrerId, chatId, annahme) {
       },
     }),
   });
+}
+
+/**
+ * Simuliert den Knopf "Fahrt erledigt".
+ *
+ * Danach ist der Fahrer wieder frei. Ohne das bleibt er fuer die geschaetzte
+ * Fahrtdauer gesperrt - richtig im Betrieb, aber hier waeren nach zwei
+ * Abschnitten beide Fahrer belegt.
+ */
+async function erledige(auftragId, fahrerId) {
+  const antwort = await fetch(`${DIENST}/telegram/webhook`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-telegram-bot-api-secret-token': 'test-geheimnis',
+    },
+    body: JSON.stringify({
+      callback_query: {
+        id: 'cb-fertig',
+        data: `fertig:${auftragId}:${fahrerId}`,
+        message: { chat: { id: String(fahrerId) }, message_id: 1 },
+      },
+    }),
+  });
+  await warte(300);
+  return antwort;
 }
 
 async function status(id) {
@@ -134,6 +167,19 @@ await leeren();
   const s = await status(koerper.auftragId);
   pruefe(s.status === 'angenommen', 'Status steht auf angenommen', JSON.stringify(s));
   pruefe(s.fahrer === 'Anna', 'Der Fahrgast sieht den Vornamen', JSON.stringify(s));
+
+  // Fahrt abmelden - sonst gilt Fahrer 1 im naechsten Abschnitt als unterwegs.
+  // Dass er danach wirklich wieder gefragt wird, zeigt Abschnitt 2.
+  await erledige(koerper.auftragId, 101);
+  pruefe(
+    (await aufrufe()).some(
+      (a) =>
+        a.methode === 'editMessageText' &&
+        String(a.daten.chat_id) === '101' &&
+        a.daten.text.includes('abgeschlossen'),
+    ),
+    'Nach dem Abmelden bekommt der Fahrer die Bestätigung',
+  );
 }
 
 console.log('\n=== 2. Fahrer 1 antwortet nicht, Fahrer 2 übernimmt ===');
@@ -163,6 +209,8 @@ await leeren();
   await warte(400);
   const s = await status(koerper.auftragId);
   pruefe(s.fahrer === 'Bekir', 'Fahrer 2 hat die Fahrt', JSON.stringify(s));
+
+  await erledige(koerper.auftragId, 102);
 }
 
 console.log('\n=== 3. Fahrer 1 lehnt ab – sofort weiter, ohne Wartezeit ===');
@@ -183,6 +231,7 @@ await leeren();
   // Abschnitt hinein und der Chef bekaeme dort zwei Meldungen.
   await knopfDruck(koerper.auftragId, 102, '102', true);
   await warte(300);
+  await erledige(koerper.auftragId, 102);
 }
 
 console.log('\n=== 4. Niemand nimmt an – der Chef wird benachrichtigt ===');
@@ -206,7 +255,104 @@ await leeren();
   pruefe(s.status === 'niemand', 'Status steht auf "kein Fahrer"', JSON.stringify(s));
 }
 
-console.log('\n=== 5. Absicherungen ===');
+console.log('\n=== 5. Wunschfahrer: der Gewünschte wird zuerst gefragt ===');
+await leeren();
+{
+  const { status: code, koerper } = await bestelle(
+    { wunschFahrerId: 102 },
+    '203.0.113.5',
+  );
+  pruefe(code === 201, 'Bestellung mit Wunschfahrer wird angenommen', `Code ${code}`);
+  await warte(600);
+
+  pruefe(an(await aufrufe(), '102').length === 1, 'Der Wunschfahrer wird gefragt');
+  pruefe(
+    an(await aufrufe(), '101').length === 0,
+    'Und zwar zuerst - der andere noch nicht',
+  );
+
+  // Kann der Wunschfahrer nicht, wird normal weitergesucht. Eine Fahrt bleibt
+  // nie liegen, nur weil ein bestimmter Fahrer nicht kann.
+  await knopfDruck(koerper.auftragId, 102, '102', false);
+  await warte(500);
+  pruefe(
+    an(await aufrufe(), '101').length === 1,
+    'Nach der Absage wird der Nächste gefragt',
+  );
+
+  await knopfDruck(koerper.auftragId, 101, '101', true);
+  await warte(400);
+  const s = await status(koerper.auftragId);
+  pruefe(s.fahrer === 'Anna', 'Die Fahrt ist vergeben', JSON.stringify(s));
+  pruefe(
+    s.wunschVerfehlt === true,
+    'Der Fahrgast erfährt, dass es ein anderer wurde',
+    JSON.stringify(s),
+  );
+
+  await erledige(koerper.auftragId, 101);
+}
+
+console.log('\n=== 6. Ein Wunschfahrer, der gerade unterwegs ist ===');
+await leeren();
+{
+  // Erst Fahrer 1 beschaeftigen ...
+  const erste = await bestelle({ wunschFahrerId: 101 }, '203.0.113.7');
+  await warte(600);
+  await knopfDruck(erste.koerper.auftragId, 101, '101', true);
+  await warte(400);
+  pruefe(
+    (await status(erste.koerper.auftragId)).fahrer === 'Anna',
+    'Fahrer 1 ist unterwegs',
+  );
+
+  // ... und ihn dann als Wunsch angeben. Er faellt wie jeder belegte Fahrer
+  // heraus, bevor der Wunsch ueberhaupt zum Zuge kommt.
+  await leeren();
+  const zweite = await bestelle({ wunschFahrerId: 101 }, '203.0.113.7');
+  await warte(600);
+  pruefe(an(await aufrufe(), '101').length === 0, 'Der Belegte wird nicht gefragt');
+  pruefe(an(await aufrufe(), '102').length === 1, 'Gefragt wird, wer frei ist');
+
+  await knopfDruck(zweite.koerper.auftragId, 102, '102', true);
+  await warte(400);
+  const s = await status(zweite.koerper.auftragId);
+  pruefe(
+    s.fahrer === 'Bekir' && s.wunschVerfehlt === true,
+    'Die Fahrt läuft, der Hinweis an den Fahrgast steht',
+    JSON.stringify(s),
+  );
+
+  await erledige(erste.koerper.auftragId, 101);
+  await erledige(zweite.koerper.auftragId, 102);
+}
+
+console.log('\n=== 7. Ein Wunsch, den es nicht gibt, kostet nie die Fahrt ===');
+await leeren();
+{
+  // Dieser Fall kommt vor: Die Seite stand lange offen, der gewünschte Fahrer
+  // ist inzwischen ausgetragen. Daran scheiterte vorher die ganze Bestellung.
+  const { status: code, koerper } = await bestelle(
+    { wunschFahrerId: 999 },
+    '203.0.113.6',
+  );
+  pruefe(code === 201, 'Die Bestellung geht trotzdem durch', `Code ${code}`);
+  await warte(600);
+
+  pruefe(an(await aufrufe(), '101').length === 1, 'Es wird normal vermittelt');
+  const s = await status(koerper.auftragId);
+  pruefe(
+    s.wunschVerfehlt === false,
+    'Kein falscher Hinweis an den Fahrgast',
+    JSON.stringify(s),
+  );
+
+  await knopfDruck(koerper.auftragId, 101, '101', true);
+  await warte(300);
+  await erledige(koerper.auftragId, 101);
+}
+
+console.log('\n=== 8. Absicherungen ===');
 {
   const ohneName = await bestelle({ name: '' });
   pruefe(ohneName.status === 400, 'Bestellung ohne Namen wird abgelehnt');

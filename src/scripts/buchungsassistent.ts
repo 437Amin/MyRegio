@@ -533,6 +533,44 @@ function einrichten(wurzel: HTMLElement): void {
 
   type StatusArt = 'suche' | 'gefunden' | 'keiner' | 'fehler';
 
+  /**
+   * Holt die Fahrer zur Auswahl.
+   *
+   * Der Block bleibt verborgen, bis wirklich jemand zur Auswahl steht - eine
+   * leere Liste oder ein stehengebliebenes "wird geladen" waere schlechter
+   * als gar kein Feld. Ohne Vermittlungsdienst passiert hier nichts.
+   */
+  async function fahrerladen(): Promise<void> {
+    const block = wurzel.querySelector<HTMLElement>('[data-wunschfahrer]');
+    const auswahl = block?.querySelector<HTMLSelectElement>('select');
+    if (!block || !auswahl || !vermittlungBasis) return;
+
+    try {
+      const antwort = await fetch(`${vermittlungBasis}/api/fahrer`);
+      if (!antwort.ok) return;
+
+      const { fahrer = [] } = (await antwort.json()) as {
+        fahrer?: { id: number; name: string }[];
+      };
+      // Bei nur einem Fahrer ist die Auswahl sinnlos
+      if (fahrer.length < 2) return;
+
+      for (const eintrag of fahrer) {
+        const auswahlfeld = document.createElement('option');
+        auswahlfeld.value = String(eintrag.id);
+        auswahlfeld.textContent = eintrag.name;
+        auswahl.append(auswahlfeld);
+      }
+
+      // Erst jetzt sichtbar machen - und einen gespeicherten Stand nachtragen
+      block.hidden = false;
+      const gespeichert = sicherLesen();
+      if (gespeichert.wunschFahrerId) auswahl.value = gespeichert.wunschFahrerId;
+    } catch {
+      // Ohne Liste bestellt man eben ohne Wunschfahrer
+    }
+  }
+
   /** Blendet das Formular aus und zeigt stattdessen den Stand der Suche. */
   function zeigeStatus(art: StatusArt): void {
     if (!statusFeld) return;
@@ -584,11 +622,17 @@ function einrichten(wurzel: HTMLElement): void {
           const stand = (await antwort.json()) as {
             status?: string;
             fahrer?: string;
+            wunschVerfehlt?: boolean;
           };
 
           if (stand.status === 'angenommen') {
             const name = wurzel.querySelector<HTMLElement>('[data-fahrername]');
             if (name) name.textContent = stand.fahrer || 'Ein Fahrer';
+
+            // Nur wenn ein Wunschfahrer angegeben war und jemand anderes faehrt
+            const hinweis = wurzel.querySelector<HTMLElement>('[data-status-wunsch]');
+            if (hinweis) hinweis.hidden = !stand.wunschVerfehlt;
+
             zeigeStatus('gefunden');
             return;
           }
@@ -649,6 +693,7 @@ function einrichten(wurzel: HTMLElement): void {
             .join(' · '),
           name: w.name,
           telefon: w.telefon,
+          wunschFahrerId: w.wunschFahrerId ? Number(w.wunschFahrerId) : undefined,
           vonPunkt: w.vonBreite
             ? {
                 breite: Number(w.vonBreite),
@@ -894,6 +939,7 @@ function einrichten(wurzel: HTMLElement): void {
 
   vorschlagfeldEinrichten('von');
   vorschlagfeldEinrichten('nach');
+  void fahrerladen();
 
   schrittZeigen(1, false);
 }

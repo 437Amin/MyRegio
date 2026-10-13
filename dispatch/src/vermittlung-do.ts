@@ -1,5 +1,5 @@
 import type { Auftrag, Fahrer, Umgebung } from './typen';
-import { fahrerFuerZeitpunkt } from './schichten';
+import { fahrerFuerZeitpunkt, wunschZuerst } from './schichten';
 import { belegteFahrerIds, type LaufenderAuftrag } from './belegung';
 import {
   ersetzeNachricht,
@@ -120,12 +120,17 @@ export class Vermittlung implements DurableObject {
     // Wer die Fahrt gerade abgegeben hat, wird nicht gleich wieder gefragt
     if (ohne) belegt.add(ohne);
 
-    const passende = fahrerFuerZeitpunkt(
-      alleFahrer.results ?? [],
-      fahrtzeit,
-      einstellungen.nacht_von,
-      einstellungen.nacht_bis,
-      belegt,
+    // Der Wunschfahrer wird zuerst gefragt - aber nicht als Einziger, sonst
+    // bliebe die Fahrt liegen, wenn er gerade nicht kann.
+    const passende = wunschZuerst(
+      fahrerFuerZeitpunkt(
+        alleFahrer.results ?? [],
+        fahrtzeit,
+        einstellungen.nacht_von,
+        einstellungen.nacht_bis,
+        belegt,
+      ),
+      auftrag.wunsch_fahrer_id,
     );
 
     const zustand: Zustand = {

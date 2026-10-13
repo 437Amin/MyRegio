@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { deutscheUhrzeit, istNacht, fahrerFuerZeitpunkt } from '../src/schichten';
+import {
+  deutscheUhrzeit,
+  istNacht,
+  fahrerFuerZeitpunkt,
+  wunschZuerst,
+} from '../src/schichten';
 import type { Fahrer } from '../src/typen';
 
 /** Baut einen Fahrer mit sinnvollen Vorgaben. */
@@ -154,5 +159,54 @@ describe('Fahrerauswahl', () => {
   it('gibt eine leere Liste zurück, wenn niemand eingeteilt ist', () => {
     const alle = [fahrer({ id: 1, schicht: 'tag' })];
     expect(fahrerFuerZeitpunkt(alle, nachts)).toEqual([]);
+  });
+});
+
+describe('Wunschfahrer', () => {
+  const warteschlange = [
+    fahrer({ id: 1, name: 'Anna', reihenfolge: 10 }),
+    fahrer({ id: 2, name: 'Bekir', reihenfolge: 20 }),
+    fahrer({ id: 3, name: 'Cem', reihenfolge: 30 }),
+  ];
+
+  it('fragt den gewünschten Fahrer zuerst', () => {
+    expect(wunschZuerst(warteschlange, 3).map((f) => f.name)).toEqual([
+      'Cem',
+      'Anna',
+      'Bekir',
+    ]);
+  });
+
+  it('lässt die anderen in ihrer Reihenfolge – die Fahrt bleibt nie liegen', () => {
+    // Der Wunschfahrer lehnt ab: Danach geht es ganz normal weiter
+    expect(wunschZuerst(warteschlange, 2).map((f) => f.name)).toEqual([
+      'Bekir',
+      'Anna',
+      'Cem',
+    ]);
+  });
+
+  it('ändert nichts, wenn kein Wunsch angegeben wurde', () => {
+    for (const ohne of [undefined, null, 0]) {
+      expect(wunschZuerst(warteschlange, ohne).map((f) => f.name)).toEqual([
+        'Anna',
+        'Bekir',
+        'Cem',
+      ]);
+    }
+  });
+
+  it('ändert nichts, wenn der Wunschfahrer gerade nicht zu haben ist', () => {
+    // Nicht im Dienst, nicht angemeldet oder schon unterwegs: Er steht dann
+    // gar nicht erst in der Liste
+    expect(wunschZuerst(warteschlange, 99).map((f) => f.name)).toEqual([
+      'Anna',
+      'Bekir',
+      'Cem',
+    ]);
+  });
+
+  it('kommt mit einer leeren Liste zurecht', () => {
+    expect(wunschZuerst([], 3)).toEqual([]);
   });
 });

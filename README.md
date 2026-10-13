@@ -175,6 +175,12 @@ Eigenschaften:
 - Der Sende-Knopf ist ein echtes `<a>`, dessen `href` laufend aktualisiert
   wird – so gibt es keine Probleme mit Popup-Blockern.
 - Vorauswahl möglich: `<Buchungsassistent vorauswahl="Park & Fly" />`
+- **Wunschfahrer.** In Schritt 4 steht eine Auswahlliste der Fahrer, geladen
+  von `GET /api/fahrer`. Sie erscheint nur, wenn es **mindestens zwei** gibt –
+  bei einem einzigen wäre sie eine Scheinwahl. Nach draußen gehen nur Nummer
+  und Vorname (`dispatch/src/fahrer-liste.ts`), nicht Handynummer, Anmeldecode
+  oder Schicht. Dass jemand gerade frei ist, steht **absichtlich nicht** dabei:
+  sonst könnte jeder Fremde von außen mitlesen, wer wann unterwegs ist.
 
 ---
 
@@ -188,6 +194,7 @@ Telegram, bis jemand zusagt.
 Kunde bestellt auf der Website
   → Auftrag wird angelegt und der Eingang protokolliert (§ 49 PBefG)
   → Fahrer 1 bekommt Telegram-Nachricht mit [Annehmen] [Ablehnen]
+     (ein Wunschfahrer wird vorgezogen, sofern er überhaupt in Frage kommt)
   → keine Antwort binnen 40 Sekunden oder Ablehnung → Fahrer 2, 3, …
   → Annahme: Name und Rufnummer des Fahrgasts werden nachgereicht
   → niemand nimmt an → Meldung an den Chef
@@ -207,6 +214,18 @@ Prozess, den nachts jemand neu starten müsste.
 - Gerechnet wird in **deutscher Ortszeit**. Cloudflare läuft in UTC; ohne
   Umrechnung wäre 23 Uhr im Sommer intern 21 Uhr und damit fälschlich
   Tagschicht. Dafür gibt es eigene Tests.
+- Ein **Wunschfahrer** wird nur **vorgezogen**, nicht bevorzugt behandelt:
+  `wunschZuerst()` in `schichten.ts` sortiert ihn an die Spitze der Liste, die
+  Schicht- und Belegungsprüfung läuft vorher und unverändert. Wer gerade
+  unterwegs ist, fällt also auch als Wunsch heraus. Sagt er ab oder antwortet
+  nicht, geht es normal weiter – **eine Fahrt bleibt nie liegen, nur weil ein
+  bestimmter Fahrer nicht kann.** Der Fahrgast erfährt über den Status
+  (`wunschVerfehlt`), dass es ein anderer geworden ist.
+- Die gewünschte Nummer wird **vor dem Eintrag nachgeschlagen**
+  (`gueltigerWunschfahrer()`). Eine unbekannte Nummer – etwa von einer lange
+  offenen Seite, deren Fahrer inzwischen ausgetragen wurde – würde sonst am
+  Fremdschlüssel scheitern und **die ganze Bestellung** abbrechen. Genau das
+  ist beim Durchspielen passiert; dagegen stehen jetzt Tests.
 
 **Fahrerdaten** liegen in der Cloudflare-Datenbank und bewusst **nicht** im
 Repository. Verwaltet werden sie unter `<worker>/fahrer` hinter einem Passwort.
@@ -309,9 +328,19 @@ npx wrangler d1 execute vermittlung --local --file=test/testdaten.sql
 node test/ablauf.mjs                 # Fenster 3
 ```
 
-Prüft Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef und die
-Absicherungen (fehlende Angaben, unsinnige Rufnummer, Telegram-Aufruf ohne
-Geheimnis).
+Acht Abschnitte: Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef, der
+Wunschfahrer (vorgezogen / unterwegs / unbekannt) und die Absicherungen
+(fehlende Angaben, unsinnige Rufnummer, Telegram-Aufruf ohne Geheimnis).
+
+Zwei Dinge, über die die Probe schon gestolpert ist und die beim Erweitern
+wichtig sind:
+
+- **Jede angenommene Fahrt muss abgemeldet werden** (`erledige(...)`), sonst
+  gilt der Fahrer als unterwegs und die folgenden Abschnitte prüfen in
+  Wahrheit nur noch die Belegung.
+- **Jeder Abschnitt hat seine eigene Absender-IP.** Der Dienst nimmt fünf
+  Bestellungen je Stunde und Absender an; ohne das scheitern die späteren
+  Abschnitte an der Drosselung statt an der Sache.
 
 ### Anschluss an die Website
 
@@ -418,6 +447,10 @@ dafür `npm run build`.
   Inhalte brechen den Build mit deutscher Meldung ab
 - JSON-LD: `LocalBusiness` + `FAQPage`; Sitemap mit 11 Seiten
   (Impressum/Datenschutz bewusst ausgenommen)
+- Wunschfahrer: 154 Einzeltests, End-zu-Ende-Probe in acht Abschnitten grün;
+  die Auswahl im Browser gegen den lokalen Dienst durchgespielt. Dass die Tests
+  greifen, ist mit zwei absichtlichen Fehlern belegt (Prüfung ausgehebelt /
+  ausgetragene Fahrer wieder zugelassen) – beide fielen sofort auf.
 
 ## Bewusst nicht enthalten
 

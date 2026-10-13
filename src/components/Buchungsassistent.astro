@@ -341,6 +341,24 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
             </div>
           </div>
 
+          <!--
+            Wunschfahrer. Die Liste wird beim Öffnen des Schritts geladen -
+            steht kein Fahrer zur Verfügung, bleibt der ganze Block verborgen,
+            statt eine leere Auswahl zu zeigen.
+          -->
+          <div class="feld mt-5" data-wunschfahrer hidden>
+            <label for="feld-wunschfahrer">
+              Wunschfahrer <span class="opt">optional</span>
+            </label>
+            <select id="feld-wunschfahrer" name="wunschFahrerId">
+              <option value="">Egal – wer gerade frei ist</option>
+            </select>
+            <p class="mt-2 text-sm text-nebel-500">
+              Ihr Wunschfahrer wird zuerst gefragt. Ist er gerade unterwegs,
+              übernimmt jemand anderes – damit Sie nicht warten müssen.
+            </p>
+          </div>
+
           <div class="feld mt-5">
             <label for="feld-anmerkung">
               Anmerkung <span class="opt">optional</span>
@@ -530,6 +548,10 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
           <h3 class="mt-5 text-xl font-bold text-white md:text-2xl">
             <span data-fahrername>Ein Fahrer</span> übernimmt Ihre Fahrt
           </h3>
+          <p class="mx-auto mt-3 max-w-md text-nebel-400" data-status-wunsch hidden>
+            Ihr Wunschfahrer war gerade nicht verfügbar – damit Sie nicht
+            warten müssen, übernimmt eine Kollegin oder ein Kollege.
+          </p>
           <p class="mx-auto mt-3 max-w-md text-nebel-400">
             Sie werden bei Bedarf kurz angerufen. Bezahlt wird bar oder mit
             Karte im Fahrzeug.

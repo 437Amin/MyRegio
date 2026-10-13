@@ -57,6 +57,29 @@ export function istNacht(
 }
 
 /**
+ * Stellt den Wunschfahrer an den Anfang der Warteschlange.
+ *
+ * Der Fahrgast kann sich auf der Website einen Fahrer wuenschen. Dieser wird
+ * dann ZUERST gefragt - aber nicht als Einziger: Reagiert er nicht oder lehnt
+ * er ab, laeuft die Vermittlung ganz normal weiter. Eine Fahrt bleibt nie
+ * liegen, nur weil der Wunschfahrer gerade nicht kann.
+ *
+ * Ist er nicht in der Liste (nicht im Dienst, nicht angemeldet, schon
+ * unterwegs), bleibt die Reihenfolge unveraendert.
+ */
+export function wunschZuerst(
+  passende: Fahrer[],
+  wunschFahrerId?: number | null,
+): Fahrer[] {
+  if (!wunschFahrerId) return passende;
+
+  const wunsch = passende.find((fahrer) => fahrer.id === wunschFahrerId);
+  if (!wunsch) return passende;
+
+  return [wunsch, ...passende.filter((fahrer) => fahrer.id !== wunschFahrerId)];
+}
+
+/**
  * Liefert die Fahrer, die jetzt gefragt werden - in der Reihenfolge, in der
  * sie gefragt werden sollen.
  *
