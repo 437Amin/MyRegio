@@ -114,10 +114,17 @@ auf – in dieser Reihenfolge abarbeiten.
 
 ### Schritt 1: Domain bei Brevo eintragen
 
-- [ ] Bei Brevo oben rechts auf den Firmennamen → **Senders, Domains &
-      Dedicated IPs** → Reiter **Domains** → **Add a domain**
-- [ ] `myregiocar.com` eingeben (ohne `www`, ohne `https://`)
-- [ ] Nach dem Anlegen auf **Authenticate this domain** tippen
+Das Brevo-Konto läuft auf Deutsch – die Menüpunkte heißen deshalb anders als
+in Brevos englischer Hilfe.
+
+- [ ] **Links in der Seitenleiste** unter *Einstellungen der Organisation* auf
+      **Absender:innen, Domains, IPs** (englisch: *Senders, Domains &
+      Dedicated IPs*). Nicht *Profil* – dort stehen nur die eigenen Kontaktdaten
+- [ ] Die Seite öffnet im Reiter **Absender**. Die DNS-Einträge stehen im
+      Reiter **Domains** daneben – dorthin wechseln
+- [ ] **Domain hinzufügen** → `myregiocar.com` (ohne `www`, ohne `https://`)
+- [ ] Bei der Domain auf **Authentifizieren** – **erst dann** zeigt Brevo die
+      Liste der DNS-Einträge
 
 Brevo zeigt nun eine Liste von DNS-Einträgen. **Diese Liste offen lassen** –
 sie wird in Schritt 2 gebraucht. Typisch sind es drei:
@@ -168,10 +175,17 @@ Für jeden Eintrag von Brevo einmal:
 
 ### Schritt 4: Absenderadresse bestätigen
 
-- [ ] Bei Brevo Reiter **Senders** → **Add a sender** → Name `MyRegioCar`,
-      E-Mail `contact@myregiocar.com`
-- [ ] Brevo schickt eine Bestätigungsmail **an diese Adresse**. Das Postfach
-      liegt bei IONOS – die Mail dort öffnen und den Link anklicken
+✅ **Schon erledigt** (13.10.2026): Im Reiter **Absender** steht
+`MyRegioCar <contact@myregiocar.com>` auf **Verifiziert**.
+
+Die beiden Warnungen dort – DKIM-Signatur „Standard" und „DMARC-Richtlinie ist
+nicht verfügbar" – verschwinden mit den DNS-Einträgen aus Schritt 2. Sie sind
+der Grund für den Hinweis oben auf der Seite: Google, Yahoo und Microsoft
+nehmen ohne DKIM und DMARC keine Massenmails mehr an.
+
+Falls später eine andere Absenderadresse gebraucht wird: Reiter **Absender** →
+**Absender hinzufügen**, Brevo schickt eine Bestätigungsmail dorthin, und das
+Postfach muss bei IONOS erreichbar sein.
 
 Antworten der Fahrgäste gehen später an genau diese Adresse. Soll es eine
 eigene wie `rechnung@myregiocar.com` sein, muss sie vorher bei IONOS
@@ -179,8 +193,9 @@ existieren – sonst gehen Antworten ins Leere.
 
 ### Schritt 5: API-Schlüssel anlegen und hinterlegen
 
-- [ ] Bei Brevo oben rechts → **SMTP & API** → Reiter **API keys** →
-      **Generate a new API key**, Name z. B. `myregiocar-vermittlung`
+- [ ] In der Seitenleiste auf **SMTP & API** (direkt unter *Absender:innen,
+      Domains, IPs*) → Reiter **API-Schlüssel** → **Einen neuen API-Schlüssel
+      generieren**, Name z. B. `myregiocar-vermittlung`
 - [ ] Den Schlüssel **sofort kopieren** – Brevo zeigt ihn nur einmal an
 - [ ] Im Projektordner ausführen und den Schlüssel einfügen:
       ```
