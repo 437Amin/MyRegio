@@ -75,7 +75,18 @@ enabled = true
 #    npx wrangler secret put TELEGRAM_WEBHOOK_GEHEIMNIS
 #    npx wrangler secret put CHEF_CHAT_ID
 #    npx wrangler secret put ADMIN_PASSWORT
+#    npx wrangler secret put BREVO_API_KEY
 #
 #  Sie liegen dann verschluesselt bei Cloudflare und tauchen nirgends im
-#  Repository auf.
+#  Repository auf. Ein Deploy ueberschreibt sie NICHT - anders als die Werte
+#  unter [vars], fuer die diese Datei die Quelle ist.
+#
+#  Unter Windows laeuft PowerShell: Dort gibt es kein "&&". Entweder zuerst
+#  "cd dispatch" und dann den Befehl, oder in einem Zug:
+#
+#    npx wrangler secret put BREVO_API_KEY --config dispatch/wrangler.toml
+#
+#  Der Befehl wartet danach auf die Eingabe ("Enter a secret value:"). Erst
+#  dann den Wert einfuegen - am Eingabeprompt der Shell waere er ein Befehl
+#  und stuende hinterher im Verlauf.
 # =============================================================================
