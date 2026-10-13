@@ -109,44 +109,96 @@ verbinden lässt, deren DNS bei Cloudflare liegt.
 ## 📧 Rechnung per E-Mail – Brevo einrichten
 
 Für die automatische Rechnung nach der Fahrt verschickt der Dienst E-Mails über
-**Brevo**. Das Konto ist angelegt (13.10.2026). Was noch fehlt:
+**Brevo**. Das Konto ist angelegt (13.10.2026). Die Schritte bauen aufeinander
+auf – in dieser Reihenfolge abarbeiten.
 
-- [ ] **Absenderdomain bestätigen.** Bei Brevo unter *Senders, Domains &
-      Dedicated IPs → Domains* die Domain `myregiocar.com` hinzufügen. Brevo
-      zeigt dann mehrere DNS-Einträge an. Diese in **Cloudflare** unter
-      *DNS → Records* anlegen – genau so, wie Brevo sie anzeigt
-      (Typ, Name, Inhalt), **Proxy aus** (graue Wolke).
+### Schritt 1: Domain bei Brevo eintragen
 
-      ⚠️ **Beim SPF-Eintrag nicht neu anlegen, sondern ergänzen.** Es darf nur
-      **einen** SPF-Eintrag geben, und der bestehende enthält schon IONOS und
-      Outlook. Falls Brevo SPF verlangt, den vorhandenen TXT-Eintrag für
-      `myregiocar.com` bearbeiten und daraus machen:
-      ```
-      v=spf1 include:_spf-eu.ionos.com include:spf.protection.outlook.com include:spf.brevo.com ~all
-      ```
-      Ein zweiter SPF-Eintrag macht **beide** ungültig – dann landen auch
-      Önders normale E-Mails im Spam.
+- [ ] Bei Brevo oben rechts auf den Firmennamen → **Senders, Domains &
+      Dedicated IPs** → Reiter **Domains** → **Add a domain**
+- [ ] `myregiocar.com` eingeben (ohne `www`, ohne `https://`)
+- [ ] Nach dem Anlegen auf **Authenticate this domain** tippen
 
-- [ ] **API-Schlüssel anlegen.** Bei Brevo unter *SMTP & API → API Keys* einen
-      neuen Schlüssel erzeugen und als Geheimnis hinterlegen. Der Schlüssel
-      wird dabei eingetippt und steht nirgends in einer Datei:
+Brevo zeigt nun eine Liste von DNS-Einträgen. **Diese Liste offen lassen** –
+sie wird in Schritt 2 gebraucht. Typisch sind es drei:
+
+| Zweck | Typ | Name bei Brevo |
+|---|---|---|
+| Eigentumsnachweis | TXT | `myregiocar.com` (Inhalt beginnt mit `brevo-code:`) |
+| DKIM-Signatur | TXT | `brevo._domainkey.myregiocar.com` |
+| DMARC | TXT | `_dmarc.myregiocar.com` |
+
+### Schritt 2: Dieselben Einträge in Cloudflare anlegen
+
+Cloudflare → Domain `myregiocar.com` → **DNS** → **Records** → **Add record**.
+Für jeden Eintrag von Brevo einmal:
+
+- [ ] **Type**: `TXT`
+- [ ] **Name**: nur der Teil **vor** `.myregiocar.com`, also `brevo._domainkey`
+      oder `_dmarc`. Gilt der Eintrag für die Domain selbst, ein `@` eintragen
+- [ ] **Content**: den Wert von Brevo **vollständig** hineinkopieren
+- [ ] **TTL**: `Auto`, dann **Save**
+
+> ⚠️ **Die häufigste Falle:** Wird bei *Name* der vollständige Hostname
+> eingetragen, macht Cloudflare daraus
+> `brevo._domainkey.myregiocar.com.myregiocar.com`. Der Eintrag ist dann
+> wirkungslos und Brevo findet ihn nicht. Nach dem Speichern zeigt Cloudflare
+> den vollen Namen an – dort prüfen, dass die Domain nur **einmal** vorkommt.
+
+> Einen **Proxy-Schalter** (orange/graue Wolke) gibt es bei TXT-Einträgen
+> nicht, der betrifft nur A-, AAAA- und CNAME-Einträge. Sollte Brevo einen
+> CNAME verlangen, dort **DNS only** (graue Wolke) wählen.
+
+> ⚠️ **Beim SPF-Eintrag nichts Neues anlegen, sondern den vorhandenen
+> ergänzen.** Es darf nur **einen** SPF-Eintrag geben, und der bestehende
+> enthält schon IONOS und Outlook. Falls Brevo SPF verlangt: den vorhandenen
+> TXT-Eintrag für `myregiocar.com` bearbeiten und daraus machen:
+> ```
+> v=spf1 include:_spf-eu.ionos.com include:spf.protection.outlook.com include:spf.brevo.com ~all
+> ```
+> Ein zweiter SPF-Eintrag macht **beide** ungültig – dann landen auch Önders
+> normale E-Mails im Spam.
+
+### Schritt 3: Von Brevo prüfen lassen
+
+- [ ] Zurück zu Brevo → bei der Domain auf **Verify** / **Authenticate**
+      tippen. Cloudflare veröffentlicht Änderungen in Sekunden; wenn Brevo
+      noch nichts findet, zwei Minuten warten und erneut tippen
+- [ ] Ziel: bei der Domain steht **Authenticated** mit grünem Haken
+
+### Schritt 4: Absenderadresse bestätigen
+
+- [ ] Bei Brevo Reiter **Senders** → **Add a sender** → Name `MyRegioCar`,
+      E-Mail `contact@myregiocar.com`
+- [ ] Brevo schickt eine Bestätigungsmail **an diese Adresse**. Das Postfach
+      liegt bei IONOS – die Mail dort öffnen und den Link anklicken
+
+Antworten der Fahrgäste gehen später an genau diese Adresse. Soll es eine
+eigene wie `rechnung@myregiocar.com` sein, muss sie vorher bei IONOS
+existieren – sonst gehen Antworten ins Leere.
+
+### Schritt 5: API-Schlüssel anlegen und hinterlegen
+
+- [ ] Bei Brevo oben rechts → **SMTP & API** → Reiter **API keys** →
+      **Generate a new API key**, Name z. B. `myregiocar-vermittlung`
+- [ ] Den Schlüssel **sofort kopieren** – Brevo zeigt ihn nur einmal an
+- [ ] Im Projektordner ausführen und den Schlüssel einfügen:
       ```
-      cd dispatch
-      npx wrangler secret put BREVO_API_KEY
+      cd dispatch && npx wrangler secret put BREVO_API_KEY
       ```
 
-- [ ] **Absenderadresse festlegen.** Vorgesehen ist `contact@myregiocar.com`.
-      Antworten der Fahrgäste gehen dorthin, also muss das Postfach bei IONOS
-      erreichbar sein.
+Der Schlüssel liegt danach verschlüsselt bei Cloudflare. Er steht in keiner
+Datei, nicht im Repository, und Claude bekommt ihn nicht zu sehen.
 
-- [ ] **DMARC ergänzen** (empfohlen, erhöht die Zustellrate). Neuer TXT-Eintrag
-      in Cloudflare, Name `_dmarc`, Inhalt:
-      ```
-      v=DMARC1; p=none; rua=mailto:contact@myregiocar.com
-      ```
+### Schritt 6: Erst danach
 
+- [ ] **Testrechnung an die eigene Adresse** schicken und prüfen, ob sie
+      ankommt und nicht im Spam landet
 - [ ] **Bewertungslink**, sobald das Google-Unternehmensprofil steht – er kommt
-      unter die Rechnung. Ohne Link bleibt die Zeile einfach weg.
+      unter die Rechnung. Ohne Link bleibt die Zeile einfach weg
+- [ ] **Datenschutzerklärung**: Brevo kommt als Auftragsverarbeiter hinzu.
+      Brevo stellt dafür einen Vertrag (DPA) im Konto bereit – abschließen und
+      den Abschnitt in der Datenschutzerklärung ergänzen
 
 ---
 
