@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  plausibleEmail,
   erfassungPruefen,
   plausibleTelefonnummer,
   type ErfassungsEingabe,
@@ -21,6 +22,8 @@ function eingabe(werte: Partial<ErfassungsEingabe> = {}): ErfassungsEingabe {
     zeit: '',
     name: 'Frau Keller',
     telefon: '0711 1234567',
+    rechnungGewuenscht: false,
+    email: '',
     personen: '2',
     anmerkung: '',
     preis: '',
@@ -167,5 +170,88 @@ describe('Aufräumen der Eingaben', () => {
       JETZT,
     );
     expect('fehler' in ergebnis && ergebnis.fehler.length).toBe(4);
+  });
+});
+
+describe('E-Mail-Adresse für die Rechnung', () => {
+  it('nimmt gewöhnliche Adressen an', () => {
+    for (const adresse of [
+      'oender@example.com',
+      'a@b.de',
+      'vorname.nachname+rechnung@firma-gmbh.co.uk',
+      'MAX@EXAMPLE.DE',
+      'kunde_123@sub.beispiel.de',
+    ]) {
+      expect(plausibleEmail(adresse), adresse).toBe(true);
+    }
+  });
+
+  it('fängt die Tippfehler, an denen eine Rechnung scheitert', () => {
+    for (const adresse of [
+      '',
+      'oender',
+      'oender@',
+      '@example.com',
+      'oender@example',
+      'oender@example.c',
+      'oender@.de',
+      'oender@example..de',
+      'oender@example.de.',
+      'oen der@example.de',
+      'oender@ example.de',
+      'oender@a@b.de',
+    ]) {
+      expect(plausibleEmail(adresse), adresse).toBe(false);
+    }
+  });
+
+  it('verträgt Leerzeichen am Rand', () => {
+    expect(plausibleEmail('  oender@example.com  ')).toBe(true);
+  });
+
+  it('weist unsinnig lange Angaben ab', () => {
+    expect(plausibleEmail('a'.repeat(250) + '@example.com')).toBe(false);
+    expect(plausibleEmail('a'.repeat(65) + '@example.com')).toBe(false);
+  });
+});
+
+describe('Rechnungswunsch bei der Aufnahme', () => {
+  it('übernimmt Wunsch und Adresse', () => {
+    const ergebnis = erfassungPruefen(
+      eingabe({ rechnungGewuenscht: true, email: 'kunde@example.com' }),
+      JETZT,
+    );
+    expect(ergebnis).toMatchObject({
+      auftrag: { rechnungGewuenscht: 1, kundeEmail: 'kunde@example.com' },
+    });
+  });
+
+  it('speichert ohne Wunsch keine Adresse', () => {
+    // Auch wenn im Feld noch etwas steht: Ohne Wunsch gibt es keinen Grund,
+    // die Adresse des Fahrgasts aufzubewahren.
+    const ergebnis = erfassungPruefen(
+      eingabe({ rechnungGewuenscht: false, email: 'kunde@example.com' }),
+      JETZT,
+    );
+    expect(ergebnis).toMatchObject({
+      auftrag: { rechnungGewuenscht: 0, kundeEmail: '' },
+    });
+  });
+
+  it('verlangt eine Adresse, wenn eine Rechnung gewünscht ist', () => {
+    const ergebnis = erfassungPruefen(
+      eingabe({ rechnungGewuenscht: true, email: '' }),
+      JETZT,
+    );
+    expect(ergebnis).toHaveProperty('fehler');
+    expect(JSON.stringify(ergebnis)).toContain('fehlt die Adresse');
+  });
+
+  it('meldet eine unsinnige Adresse eigens', () => {
+    const ergebnis = erfassungPruefen(
+      eingabe({ rechnungGewuenscht: true, email: 'kunde@example' }),
+      JETZT,
+    );
+    expect(JSON.stringify(ergebnis)).toContain('nicht richtig aus');
   });
 });

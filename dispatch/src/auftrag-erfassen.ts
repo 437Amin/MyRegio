@@ -45,6 +45,9 @@ export interface ErfassungsEingabe {
   zeit: string;
   name: string;
   telefon: string;
+  /** Moechte der Fahrgast eine Rechnung per E-Mail? */
+  rechnungGewuenscht: boolean;
+  email: string;
   personen: string;
   anmerkung: string;
   preis: string;
@@ -65,6 +68,10 @@ export interface GepruefterAuftrag {
   anmerkung: string;
   kundeName: string;
   kundeTelefon: string;
+  /** 1, wenn eine Rechnung per E-Mail gewuenscht ist */
+  rechnungGewuenscht: number;
+  /** Leer, wenn keine Rechnung gewuenscht ist - dann wird nichts gespeichert */
+  kundeEmail: string;
   eingangIso: string;
   /**
    * true: Der Server rechnet den Festpreis aus den gewaehlten Punkten.
@@ -83,6 +90,36 @@ export type Erfassungsergebnis =
 export function plausibleTelefonnummer(wert: string): boolean {
   const ziffern = String(wert).replace(/[^0-9]/g, '');
   return ziffern.length >= 7 && ziffern.length <= 15;
+}
+
+/**
+ * Prueft eine E-Mail-Adresse so streng wie noetig und so locker wie moeglich.
+ *
+ * Streng genug fuer die Tippfehler, an denen eine Rechnung wirklich scheitert:
+ * fehlendes @, Leerzeichen, abgeschnittene Endung ("gmail.c"), doppelter
+ * Punkt. Locker genug, um keine echte Adresse abzuweisen - Pluszeichen, lange
+ * Endungen und Umlautdomains sind erlaubt.
+ *
+ * Bewusst nicht strenger: Wer eine gueltige Adresse hat und sie nicht
+ * eintragen darf, bekommt gar keine Rechnung. Das waere der schlimmere
+ * Fehler als eine Mail, die zurueckkommt.
+ */
+export function plausibleEmail(wert: string): boolean {
+  const text = String(wert).trim();
+  if (text.length < 6 || text.length > 254) return false;
+  if (/\s/.test(text)) return false;
+
+  const teile = text.split('@');
+  if (teile.length !== 2) return false;
+
+  const [davor, danach] = teile;
+  if (!davor || davor.length > 64) return false;
+  if (!danach || danach.includes('..')) return false;
+  if (danach.startsWith('.') || danach.endsWith('.')) return false;
+
+  // Es muss eine Endung geben, und sie braucht mindestens zwei Zeichen
+  const punkt = danach.lastIndexOf('.');
+  return punkt >= 1 && danach.length - punkt - 1 >= 2;
 }
 
 function kurz(wert: string, laenge = 500): string {
@@ -110,6 +147,19 @@ export function erfassungPruefen(
     fehler.push('Die Telefonnummer des Fahrgasts fehlt.');
   } else if (!plausibleTelefonnummer(telefon)) {
     fehler.push('Die Telefonnummer sieht nicht richtig aus – bitte prüfen.');
+  }
+
+  // --- Rechnung per E-Mail -------------------------------------------------
+  // Die Adresse wird NUR gespeichert, wenn eine Rechnung gewuenscht ist. Ohne
+  // Wunsch gibt es keinen Grund, sie aufzubewahren.
+  const rechnungGewuenscht = Boolean(eingabe.rechnungGewuenscht);
+  const email = rechnungGewuenscht ? kurz(eingabe.email, 254) : '';
+  if (rechnungGewuenscht && !plausibleEmail(email)) {
+    fehler.push(
+      email
+        ? 'Die E-Mail-Adresse für die Rechnung sieht nicht richtig aus – bitte prüfen.'
+        : 'Für die Rechnung per E-Mail fehlt die Adresse des Fahrgasts.',
+    );
   }
 
   // --- Zeitpunkt der Fahrt -------------------------------------------------
@@ -191,6 +241,8 @@ export function erfassungPruefen(
       anmerkung: kurz(eingabe.anmerkung),
       kundeName: name,
       kundeTelefon: telefon,
+      rechnungGewuenscht: rechnungGewuenscht ? 1 : 0,
+      kundeEmail: email,
       eingangIso,
       preisBerechnen,
       preisCent,

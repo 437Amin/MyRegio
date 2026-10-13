@@ -571,6 +571,31 @@ function einrichten(wurzel: HTMLElement): void {
     }
   }
 
+  /**
+   * Das Adressfeld erscheint erst, wenn eine Rechnung gewuenscht ist.
+   *
+   * Ohne JavaScript bleibt es sichtbar: ein Feld zu viel, aber nichts kaputt.
+   * Das Feld ist absichtlich nicht "required" - sonst blockierte ein leeres
+   * Feld das Absenden, obwohl der Haken gar nicht gesetzt ist.
+   */
+  function rechnungsfeldEinrichten(): void {
+    const haken = wurzel.querySelector<HTMLInputElement>('[data-rechnung-haken]');
+    const adresse = wurzel.querySelector<HTMLElement>('[data-rechnung-adresse]');
+    if (!haken || !adresse) return;
+
+    const umschalten = (): void => {
+      adresse.hidden = !haken.checked;
+      const feld = adresse.querySelector<HTMLInputElement>('input');
+      if (feld) feld.required = haken.checked;
+    };
+
+    haken.addEventListener('change', () => {
+      umschalten();
+      if (haken.checked) adresse.querySelector('input')?.focus();
+    });
+    umschalten();
+  }
+
   /** Blendet das Formular aus und zeigt stattdessen den Stand der Suche. */
   function zeigeStatus(art: StatusArt): void {
     if (!statusFeld) return;
@@ -694,6 +719,10 @@ function einrichten(wurzel: HTMLElement): void {
           name: w.name,
           telefon: w.telefon,
           wunschFahrerId: w.wunschFahrerId ? Number(w.wunschFahrerId) : undefined,
+          // Haken liegen hier als Text vor: Boolean('nein') waere true
+          rechnungGewuenscht: w.rechnungGewuenscht === 'ja',
+          // Nur mitschicken, wenn auch eine Rechnung gewuenscht ist
+          kundeEmail: w.rechnungGewuenscht === 'ja' ? w.kundeEmail : undefined,
           vonPunkt: w.vonBreite
             ? {
                 breite: Number(w.vonBreite),
@@ -939,6 +968,7 @@ function einrichten(wurzel: HTMLElement): void {
 
   vorschlagfeldEinrichten('von');
   vorschlagfeldEinrichten('nach');
+  rechnungsfeldEinrichten();
   void fahrerladen();
 
   schrittZeigen(1, false);

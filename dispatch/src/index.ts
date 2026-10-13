@@ -4,7 +4,7 @@ import { quittiereKnopf, sendeNachricht, setzeTelegramBasis } from './telegram';
 import { adminRoute } from './admin';
 import { adressenVorschlagen } from './strecke';
 import { HEIMAT, festpreisErmitteln, pruefePunkt, type Punkt } from './festpreis';
-import { plausibleTelefonnummer } from './auftrag-erfassen';
+import { plausibleEmail, plausibleTelefonnummer } from './auftrag-erfassen';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -106,6 +106,21 @@ async function bestellungAnnehmen(
     );
   }
 
+  // Die Adresse wird nur gespeichert, wenn wirklich eine Rechnung gewuenscht
+  // ist. Eine unbrauchbare Adresse wird hier abgewiesen und nicht einfach
+  // verworfen: Sonst bestellt jemand mit Rechnungswunsch und bekommt
+  // kommentarlos keine.
+  const rechnungGewuenscht = Boolean(roh.rechnungGewuenscht);
+  const kundeEmail = rechnungGewuenscht ? kurz(roh.kundeEmail, 254) : '';
+  if (rechnungGewuenscht && !plausibleEmail(kundeEmail)) {
+    return antwort(
+      { fehler: 'Bitte geben Sie für die Rechnung eine gültige E-Mail-Adresse an.' },
+      400,
+      env,
+      anfrage,
+    );
+  }
+
   const kennung = await ipKennung(anfrage, env);
   if (await zuVieleBestellungen(kennung, env)) {
     return antwort(
@@ -142,8 +157,8 @@ async function bestellungAnnehmen(
     `INSERT INTO auftraege
        (id, art, abholung, ziel, wunschzeit, wunsch_iso, sofort, personen, gepaeck,
         kindersitze, anmerkung, preis, strecke_km, kunde_name, kunde_telefon,
-        wunsch_fahrer_id)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        wunsch_fahrer_id, rechnung_gewuenscht, kunde_email)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -162,6 +177,8 @@ async function bestellungAnnehmen(
       kurz(roh.name),
       kurz(roh.telefon, 40),
       wunschFahrerId,
+      rechnungGewuenscht ? 1 : 0,
+      kundeEmail,
     )
     .run();
 

@@ -66,6 +66,8 @@ function eintrag(werte: Partial<AuftragEintrag> = {}): AuftragEintrag {
     preisQuelle: 'berechnet',
     kundeName: 'Frau Keller',
     kundeTelefon: '0711 1234567',
+    rechnungGewuenscht: 0,
+    kundeEmail: '',
     ...werte,
   };
 }
@@ -203,5 +205,27 @@ describe('Rechnung zum Auftrag', () => {
         )
         .run(),
     ).toThrow(/FOREIGN KEY/i);
+  });
+});
+
+describe('Rechnungswunsch beim Auftrag', () => {
+  it('schreibt Wunsch und Adresse in die Spalten', async () => {
+    const { db, zeile } = testDatenbank();
+    await auftragEintragen(
+      db,
+      eintrag({ rechnungGewuenscht: 1, kundeEmail: 'kunde@example.com' }),
+    );
+
+    expect(zeile('A1')).toMatchObject({
+      rechnung_gewuenscht: 1,
+      kunde_email: 'kunde@example.com',
+    });
+  });
+
+  it('legt ohne Wunsch keine Adresse ab', async () => {
+    const { db, zeile } = testDatenbank();
+    await auftragEintragen(db, eintrag());
+
+    expect(zeile('A1')).toMatchObject({ rechnung_gewuenscht: 0, kunde_email: '' });
   });
 });

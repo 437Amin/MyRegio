@@ -96,6 +96,10 @@ export interface Bestellung {
   streckeKm?: number;
   /** Nummer des gewuenschten Fahrers aus /api/fahrer, falls einer gewaehlt wurde */
   wunschFahrerId?: number;
+  /** Moechte der Fahrgast die Rechnung per E-Mail? */
+  rechnungGewuenscht?: boolean;
+  /** Nur gesetzt und nur gespeichert, wenn eine Rechnung gewuenscht ist */
+  kundeEmail?: string;
   name: string;
   telefon: string;
 }

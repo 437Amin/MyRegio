@@ -38,6 +38,10 @@ export interface AuftragEintrag {
   preisQuelle: 'berechnet' | 'manuell';
   kundeName: string;
   kundeTelefon: string;
+  /** 1, wenn eine Rechnung per E-Mail gewuenscht ist */
+  rechnungGewuenscht: number;
+  /** Leer, wenn keine Rechnung gewuenscht ist */
+  kundeEmail: string;
 }
 
 /**
@@ -56,8 +60,9 @@ export async function auftragEintragen(
     .prepare(
       `INSERT INTO auftraege
          (id, eingang, kanal, art, abholung, ziel, wunschzeit, wunsch_iso, sofort,
-          personen, anmerkung, preis, strecke_km, preis_quelle, kunde_name, kunde_telefon)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          personen, anmerkung, preis, strecke_km, preis_quelle, kunde_name, kunde_telefon,
+          rechnung_gewuenscht, kunde_email)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       eintrag.id,
@@ -76,6 +81,8 @@ export async function auftragEintragen(
       eintrag.preisQuelle,
       eintrag.kundeName,
       eintrag.kundeTelefon,
+      eintrag.rechnungGewuenscht,
+      eintrag.kundeEmail,
     )
     .run();
 }

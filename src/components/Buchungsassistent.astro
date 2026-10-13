@@ -359,6 +359,30 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
             </p>
           </div>
 
+          <!--
+            Rechnung per E-Mail. Das Adressfeld erscheint erst mit dem Haken -
+            ohne Wunsch wird die Adresse weder gebraucht noch gespeichert.
+          -->
+          <label class="schalter mt-5">
+            <input type="checkbox" name="rechnungGewuenscht" data-rechnung-haken />
+            <span>Ich möchte eine Rechnung per E-Mail</span>
+          </label>
+          <div class="feld mt-4" data-rechnung-adresse hidden>
+            <label for="feld-email">E-Mail-Adresse</label>
+            <input
+              id="feld-email"
+              name="kundeEmail"
+              type="email"
+              inputmode="email"
+              autocomplete="email"
+              placeholder="name@beispiel.de"
+            />
+            <p class="mt-2 text-sm text-nebel-500">
+              Die Rechnung kommt automatisch, sobald die Fahrt beendet ist.
+              Ihre Adresse wird nur dafür verwendet.
+            </p>
+          </div>
+
           <div class="feld mt-5">
             <label for="feld-anmerkung">
               Anmerkung <span class="opt">optional</span>

@@ -69,6 +69,8 @@ async function auftragAnlegen(anfrage: Request, env: Umgebung): Promise<Response
     zeit: text('zeit'),
     name: text('name'),
     telefon: text('telefon'),
+    rechnungGewuenscht: Boolean(f.get('rechnung_gewuenscht')),
+    email: text('email'),
     personen: text('personen'),
     anmerkung: text('anmerkung'),
     preis: text('preis'),
@@ -131,6 +133,8 @@ async function auftragAnlegen(anfrage: Request, env: Umgebung): Promise<Response
     preisQuelle: quelle,
     kundeName: auftrag.kundeName,
     kundeTelefon: auftrag.kundeTelefon,
+    rechnungGewuenscht: auftrag.rechnungGewuenscht,
+    kundeEmail: auftrag.kundeEmail,
   });
 
   const objekt = env.VERMITTLUNG.get(env.VERMITTLUNG.idFromName(id));
@@ -231,6 +235,8 @@ async function uebersicht(
     zeit: vorgabe.zeit,
     name: '',
     telefon: '',
+    rechnungGewuenscht: false,
+    email: '',
     personen: '1',
     anmerkung: '',
     preis: '',
@@ -381,6 +387,27 @@ async function uebersicht(
           <input type="number" name="personen" min="1" max="8" value="${sicher(e.personen)}">
         </label>
       </div>
+
+      <!--
+        Rechnung per E-Mail. Das Adressfeld steht immer im Quelltext, wird aber
+        erst sichtbar, wenn der Haken gesetzt ist - ohne Wunsch wird die
+        Adresse weder gebraucht noch gespeichert.
+      -->
+      <label class="haken">
+        <input type="checkbox" name="rechnung_gewuenscht" id="rechnung-haken"
+               ${e.rechnungGewuenscht ? 'checked' : ''}>
+        Fahrgast möchte eine Rechnung per E-Mail
+      </label>
+      <label id="rechnung-adresse" ${e.rechnungGewuenscht ? '' : 'hidden'}>E-Mail-Adresse
+        <input type="email" name="email" value="${sicher(e.email)}"
+               inputmode="email" autocomplete="off" placeholder="name@beispiel.de">
+      </label>
+      <p class="hinweis" id="rechnung-hinweis" ${e.rechnungGewuenscht ? '' : 'hidden'}>
+        Die Rechnung geht automatisch raus, sobald der Fahrer die Fahrt in
+        Telegram als erledigt meldet. Ab 250 € müssen Name und Anschrift des
+        Fahrgasts darauf stehen – dann melden wir uns bei Ihnen, statt
+        automatisch zu verschicken.
+      </p>
 
       <label>Notiz für den Fahrer
         <textarea name="anmerkung" rows="2" placeholder="z. B. Hauseingang hinten, Rollstuhl">${sicher(e.anmerkung)}</textarea>
@@ -538,6 +565,17 @@ for (const knopf of formular.querySelectorAll('[name="wann"]')) {
     zeitpunkt.hidden = formular.querySelector('[name="wann"]:checked').value !== 'spaeter';
   });
 }
+
+// Adressfeld nur zeigen, wenn eine Rechnung gewuenscht ist. Ohne JavaScript
+// bleibt es sichtbar - dann ist ein Feld zu viel zu sehen, aber nichts kaputt.
+const rechnungHaken = document.getElementById('rechnung-haken');
+const rechnungAdresse = document.getElementById('rechnung-adresse');
+const rechnungHinweis = document.getElementById('rechnung-hinweis');
+rechnungHaken.addEventListener('change', () => {
+  rechnungAdresse.hidden = !rechnungHaken.checked;
+  rechnungHinweis.hidden = !rechnungHaken.checked;
+  if (rechnungHaken.checked) rechnungAdresse.querySelector('input').focus();
+});
 
 preisHolen();`;
 

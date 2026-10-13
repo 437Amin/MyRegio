@@ -25,6 +25,14 @@
 --  NACHTRAG Wunschfahrer (13.10.2026):
 --
 --    ALTER TABLE auftraege ADD COLUMN wunsch_fahrer_id INTEGER REFERENCES fahrer (id);
+--
+--  NACHTRAG Rechnung per E-Mail (13.10.2026). Einmalig ausfuehren, BEVOR
+--  neuer Code veroeffentlicht wird:
+--
+--    ALTER TABLE auftraege  ADD COLUMN rechnung_gewuenscht INTEGER NOT NULL DEFAULT 0;
+--    ALTER TABLE auftraege  ADD COLUMN kunde_email         TEXT    NOT NULL DEFAULT '';
+--    ALTER TABLE rechnungen ADD COLUMN versendet_um        TEXT;
+--    ALTER TABLE rechnungen ADD COLUMN versand_an          TEXT    NOT NULL DEFAULT '';
 -- =============================================================================
 
 -- --- Fahrerinnen und Fahrer --------------------------------------------------
@@ -96,6 +104,12 @@ CREATE TABLE IF NOT EXISTS auftraege (
 
   kunde_name     TEXT    NOT NULL,
   kunde_telefon  TEXT    NOT NULL,
+
+  -- Will der Fahrgast eine Rechnung per E-Mail? Nur dann wird die Adresse
+  -- ueberhaupt gespeichert - ohne Wunsch bleibt kunde_email leer. Die
+  -- Rechnung entsteht automatisch, sobald der Fahrer die Fahrt abmeldet.
+  rechnung_gewuenscht INTEGER NOT NULL DEFAULT 0,
+  kunde_email    TEXT    NOT NULL DEFAULT '',
 
   -- Vom Fahrgast gewuenschter Fahrer. Er wird zuerst gefragt, ist aber nicht
   -- der Einzige: Reagiert er nicht, laeuft die Vermittlung normal weiter.
@@ -205,6 +219,14 @@ CREATE TABLE IF NOT EXISTS rechnungen (
   -- zwei Rechnungen haben (Original und Storno), deshalb steht der Verweis
   -- hier und nicht umgekehrt.
   auftrag_id      TEXT    REFERENCES auftraege (id),
+
+  -- Wann und wohin die Rechnung per E-Mail ging. Leer heisst: nicht
+  -- verschickt - etwa weil sie im Fahrerbereich von Hand geschrieben wurde
+  -- oder der Versand gescheitert ist. Beides muss unterscheidbar bleiben,
+  -- sonst bekommt ein Fahrgast die Rechnung zweimal oder gar nicht.
+  versendet_um    TEXT,
+  versand_an      TEXT    NOT NULL DEFAULT '',
+
   angelegt        TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
