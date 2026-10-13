@@ -112,84 +112,35 @@ Für die automatische Rechnung nach der Fahrt verschickt der Dienst E-Mails übe
 **Brevo**. Das Konto ist angelegt (13.10.2026). Die Schritte bauen aufeinander
 auf – in dieser Reihenfolge abarbeiten.
 
-### Schritt 1: Domain bei Brevo eintragen
+### ✅ Schritte 1–4: Domain authentifiziert (13.10.2026)
 
-Das Brevo-Konto läuft auf Deutsch – die Menüpunkte heißen deshalb anders als
-in Brevos englischer Hilfe.
+Erledigt. Vier Einträge stehen in Cloudflare, von außen bei Cloudflare **und**
+Google geprüft, Brevo meldet **authentifiziert**:
 
-- [ ] **Links in der Seitenleiste** unter *Einstellungen der Organisation* auf
-      **Absender:innen, Domains, IPs** (englisch: *Senders, Domains &
-      Dedicated IPs*). Nicht *Profil* – dort stehen nur die eigenen Kontaktdaten
-- [ ] Die Seite öffnet im Reiter **Absender**. Die DNS-Einträge stehen im
-      Reiter **Domains** daneben – dorthin wechseln
-- [ ] **Domain hinzufügen** → `myregiocar.com` (ohne `www`, ohne `https://`)
-- [ ] Bei der Domain auf **Authentifizieren** – **erst dann** zeigt Brevo die
-      Liste der DNS-Einträge
+| Typ | Name | Inhalt | Proxy |
+|---|---|---|---|
+| TXT | `@` | `brevo-code:4d0def44555333c4394af983827700dc` | — |
+| CNAME | `brevo1._domainkey` | `b1.myregiocar-com.dkim.brevo.com` | DNS only |
+| CNAME | `brevo2._domainkey` | `b2.myregiocar-com.dkim.brevo.com` | DNS only |
+| TXT | `_dmarc` | `v=DMARC1; p=none; rua=mailto:rua@dmarc.brevo.com` | — |
 
-Brevo zeigt nun eine Liste von DNS-Einträgen. **Diese Liste offen lassen** –
-sie wird in Schritt 2 gebraucht. Typisch sind es drei:
+Der Absender `MyRegioCar <contact@myregiocar.com>` ist verifiziert.
 
-| Zweck | Typ | Name bei Brevo |
-|---|---|---|
-| Eigentumsnachweis | TXT | `myregiocar.com` (Inhalt beginnt mit `brevo-code:`) |
-| DKIM-Signatur | TXT | `brevo._domainkey.myregiocar.com` |
-| DMARC | TXT | `_dmarc.myregiocar.com` |
+**Was dabei wichtig war** – falls es je wiederholt werden muss:
 
-### Schritt 2: Dieselben Einträge in Cloudflare anlegen
-
-Cloudflare → Domain `myregiocar.com` → **DNS** → **Records** → **Add record**.
-Für jeden Eintrag von Brevo einmal:
-
-- [ ] **Type**: `TXT`
-- [ ] **Name**: nur der Teil **vor** `.myregiocar.com`, also `brevo._domainkey`
-      oder `_dmarc`. Gilt der Eintrag für die Domain selbst, ein `@` eintragen
-- [ ] **Content**: den Wert von Brevo **vollständig** hineinkopieren
-- [ ] **TTL**: `Auto`, dann **Save**
-
-> ⚠️ **Die häufigste Falle:** Wird bei *Name* der vollständige Hostname
-> eingetragen, macht Cloudflare daraus
-> `brevo._domainkey.myregiocar.com.myregiocar.com`. Der Eintrag ist dann
-> wirkungslos und Brevo findet ihn nicht. Nach dem Speichern zeigt Cloudflare
-> den vollen Namen an – dort prüfen, dass die Domain nur **einmal** vorkommt.
-
-> Einen **Proxy-Schalter** (orange/graue Wolke) gibt es bei TXT-Einträgen
-> nicht, der betrifft nur A-, AAAA- und CNAME-Einträge. Sollte Brevo einen
-> CNAME verlangen, dort **DNS only** (graue Wolke) wählen.
-
-> ⚠️ **Beim SPF-Eintrag nichts Neues anlegen, sondern den vorhandenen
-> ergänzen.** Es darf nur **einen** SPF-Eintrag geben, und der bestehende
-> enthält schon IONOS und Outlook. Falls Brevo SPF verlangt: den vorhandenen
-> TXT-Eintrag für `myregiocar.com` bearbeiten und daraus machen:
-> ```
-> v=spf1 include:_spf-eu.ionos.com include:spf.protection.outlook.com include:spf.brevo.com ~all
-> ```
-> Ein zweiter SPF-Eintrag macht **beide** ungültig – dann landen auch Önders
-> normale E-Mails im Spam.
-
-### Schritt 3: Von Brevo prüfen lassen
-
-- [ ] Zurück zu Brevo → bei der Domain auf **Verify** / **Authenticate**
-      tippen. Cloudflare veröffentlicht Änderungen in Sekunden; wenn Brevo
-      noch nichts findet, zwei Minuten warten und erneut tippen
-- [ ] Ziel: bei der Domain steht **Authenticated** mit grünem Haken
-
-### Schritt 4: Absenderadresse bestätigen
-
-✅ **Schon erledigt** (13.10.2026): Im Reiter **Absender** steht
-`MyRegioCar <contact@myregiocar.com>` auf **Verifiziert**.
-
-Die beiden Warnungen dort – DKIM-Signatur „Standard" und „DMARC-Richtlinie ist
-nicht verfügbar" – verschwinden mit den DNS-Einträgen aus Schritt 2. Sie sind
-der Grund für den Hinweis oben auf der Seite: Google, Yahoo und Microsoft
-nehmen ohne DKIM und DMARC keine Massenmails mehr an.
-
-Falls später eine andere Absenderadresse gebraucht wird: Reiter **Absender** →
-**Absender hinzufügen**, Brevo schickt eine Bestätigungsmail dorthin, und das
-Postfach muss bei IONOS erreichbar sein.
-
-Antworten der Fahrgäste gehen später an genau diese Adresse. Soll es eine
-eigene wie `rechnung@myregiocar.com` sein, muss sie vorher bei IONOS
-existieren – sonst gehen Antworten ins Leere.
+- Bei *Name* in Cloudflare nur den vorderen Teil eintragen (`brevo1._domainkey`,
+  nicht den vollen Hostnamen). Cloudflare hängt die Domain selbst an, sonst
+  entsteht `brevo1._domainkey.myregiocar.com.myregiocar.com`
+- Bei den CNAMEs die Wolke auf **grau** (DNS only). Orange beantwortet
+  Cloudflare mit eigenen Adressen, und die DKIM-Prüfung schlägt fehl
+- **Manuell** statt *Automatisch* gewählt: Automatisch hätte Brevo
+  Schreibrechte auf die ganze DNS-Zone gegeben, inklusive des SPF-Eintrags mit
+  IONOS und Outlook
+- Der SPF-Eintrag blieb unberührt und kommt weiterhin genau **einmal** vor.
+  Brevo hat keinen verlangt
+- DMARC steht auf `p=none` – reiner Beobachtungsmodus, weist nichts ab. Die
+  Berichte gehen an Brevo, nicht ins Postfach: Es sind XML-Dateien, die täglich
+  kommen
 
 ### Schritt 5: API-Schlüssel anlegen und hinterlegen
 
