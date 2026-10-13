@@ -106,6 +106,50 @@ verbinden lässt, deren DNS bei Cloudflare liegt.
 
 ---
 
+## 📧 Rechnung per E-Mail – Brevo einrichten
+
+Für die automatische Rechnung nach der Fahrt verschickt der Dienst E-Mails über
+**Brevo**. Das Konto ist angelegt (13.10.2026). Was noch fehlt:
+
+- [ ] **Absenderdomain bestätigen.** Bei Brevo unter *Senders, Domains &
+      Dedicated IPs → Domains* die Domain `myregiocar.com` hinzufügen. Brevo
+      zeigt dann mehrere DNS-Einträge an. Diese in **Cloudflare** unter
+      *DNS → Records* anlegen – genau so, wie Brevo sie anzeigt
+      (Typ, Name, Inhalt), **Proxy aus** (graue Wolke).
+
+      ⚠️ **Beim SPF-Eintrag nicht neu anlegen, sondern ergänzen.** Es darf nur
+      **einen** SPF-Eintrag geben, und der bestehende enthält schon IONOS und
+      Outlook. Falls Brevo SPF verlangt, den vorhandenen TXT-Eintrag für
+      `myregiocar.com` bearbeiten und daraus machen:
+      ```
+      v=spf1 include:_spf-eu.ionos.com include:spf.protection.outlook.com include:spf.brevo.com ~all
+      ```
+      Ein zweiter SPF-Eintrag macht **beide** ungültig – dann landen auch
+      Önders normale E-Mails im Spam.
+
+- [ ] **API-Schlüssel anlegen.** Bei Brevo unter *SMTP & API → API Keys* einen
+      neuen Schlüssel erzeugen und als Geheimnis hinterlegen. Der Schlüssel
+      wird dabei eingetippt und steht nirgends in einer Datei:
+      ```
+      cd dispatch
+      npx wrangler secret put BREVO_API_KEY
+      ```
+
+- [ ] **Absenderadresse festlegen.** Vorgesehen ist `contact@myregiocar.com`.
+      Antworten der Fahrgäste gehen dorthin, also muss das Postfach bei IONOS
+      erreichbar sein.
+
+- [ ] **DMARC ergänzen** (empfohlen, erhöht die Zustellrate). Neuer TXT-Eintrag
+      in Cloudflare, Name `_dmarc`, Inhalt:
+      ```
+      v=DMARC1; p=none; rua=mailto:contact@myregiocar.com
+      ```
+
+- [ ] **Bewertungslink**, sobald das Google-Unternehmensprofil steht – er kommt
+      unter die Rechnung. Ohne Link bleibt die Zeile einfach weg.
+
+---
+
 ## 📋 Von Önder
 
 - [ ] Fahrerliste und Telegram-ID (siehe oben)
