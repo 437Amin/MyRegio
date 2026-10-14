@@ -23,7 +23,6 @@ function eingabe(werte: Partial<ErfassungsEingabe> = {}): ErfassungsEingabe {
     name: 'Frau Keller',
     telefon: '0711 1234567',
     rechnungGewuenscht: false,
-    bewertungGewuenscht: false,
     email: '',
     personen: '2',
     anmerkung: '',
@@ -223,19 +222,32 @@ describe('Rechnungswunsch bei der Aufnahme', () => {
       JETZT,
     );
     expect(ergebnis).toMatchObject({
-      auftrag: { rechnungGewuenscht: 1, kundeEmail: 'kunde@example.com' },
+      auftrag: {
+        rechnungGewuenscht: 1,
+        bewertungGewuenscht: 1,
+        kundeEmail: 'kunde@example.com',
+      },
     });
   });
 
-  it('speichert ohne Wunsch keine Adresse', () => {
-    // Auch wenn im Feld noch etwas steht: Ohne Wunsch gibt es keinen Grund,
-    // die Adresse des Fahrgasts aufzubewahren.
+  it('nimmt die Adresse auch ohne Rechnungswunsch – dann für die Nachricht', () => {
     const ergebnis = erfassungPruefen(
       eingabe({ rechnungGewuenscht: false, email: 'kunde@example.com' }),
       JETZT,
     );
     expect(ergebnis).toMatchObject({
-      auftrag: { rechnungGewuenscht: 0, kundeEmail: '' },
+      auftrag: {
+        rechnungGewuenscht: 0,
+        bewertungGewuenscht: 1,
+        kundeEmail: 'kunde@example.com',
+      },
+    });
+  });
+
+  it('speichert ohne Adresse nichts', () => {
+    const ergebnis = erfassungPruefen(eingabe({ email: '' }), JETZT);
+    expect(ergebnis).toMatchObject({
+      auftrag: { rechnungGewuenscht: 0, bewertungGewuenscht: 0, kundeEmail: '' },
     });
   });
 

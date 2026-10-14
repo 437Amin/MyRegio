@@ -427,7 +427,7 @@ await leeren();
   const { status: code, koerper } = await bestelle(
     {
       name: 'Herr Vogt',
-      bewertungGewuenscht: true,
+      // Nur die Adresse, kein Rechnungswunsch - die Angabe allein genuegt
       kundeEmail: 'gast@example.com',
     },
     '203.0.113.9',

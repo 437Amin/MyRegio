@@ -70,7 +70,6 @@ async function auftragAnlegen(anfrage: Request, env: Umgebung): Promise<Response
     name: text('name'),
     telefon: text('telefon'),
     rechnungGewuenscht: Boolean(f.get('rechnung_gewuenscht')),
-    bewertungGewuenscht: Boolean(f.get('bewertung_gewuenscht')),
     email: text('email'),
     personen: text('personen'),
     anmerkung: text('anmerkung'),
@@ -238,7 +237,6 @@ async function uebersicht(
     name: '',
     telefon: '',
     rechnungGewuenscht: false,
-    bewertungGewuenscht: false,
     email: '',
     personen: '1',
     anmerkung: '',
@@ -396,25 +394,25 @@ async function uebersicht(
         erst sichtbar, wenn der Haken gesetzt ist - ohne Wunsch wird die
         Adresse weder gebraucht noch gespeichert.
       -->
+      <label>E-Mail-Adresse <span class="klein">– nur wenn der Fahrgast sie nennt</span>
+        <input type="email" name="email" value="${sicher(e.email)}"
+               inputmode="email" autocomplete="off" placeholder="name@beispiel.de">
+      </label>
       <label class="haken">
         <input type="checkbox" name="rechnung_gewuenscht" id="rechnung-haken"
                ${e.rechnungGewuenscht ? 'checked' : ''}>
-        Fahrgast möchte eine Rechnung per E-Mail
-      </label>
-      <label class="haken">
-        <input type="checkbox" name="bewertung_gewuenscht" id="bewertung-haken"
-               ${e.bewertungGewuenscht ? 'checked' : ''}>
-        Fahrgast ist mit einer kurzen Nachricht nach der Fahrt einverstanden
-      </label>
-      <label id="rechnung-adresse" ${e.rechnungGewuenscht || e.bewertungGewuenscht ? '' : 'hidden'}>E-Mail-Adresse
-        <input type="email" name="email" value="${sicher(e.email)}"
-               inputmode="email" autocomplete="off" placeholder="name@beispiel.de">
+        Fahrgast möchte eine Rechnung an diese Adresse
       </label>
       <p class="hinweis" id="rechnung-hinweis" ${e.rechnungGewuenscht ? '' : 'hidden'}>
         Die Rechnung geht automatisch raus, sobald der Fahrer die Fahrt in
         Telegram als erledigt meldet. Ab 250 € müssen Name und Anschrift des
         Fahrgasts darauf stehen – dann melden wir uns bei Ihnen, statt
         automatisch zu verschicken.
+      </p>
+      <p class="hinweis">
+        Ohne Rechnungswunsch bekommt der Fahrgast nach der Fahrt eine kurze
+        Nachricht mit der Bitte um eine Bewertung. Die Adresse also nur
+        eintragen, wenn er sie von sich aus genannt hat.
       </p>
 
       <label>Notiz für den Fahrer
@@ -576,19 +574,12 @@ for (const knopf of formular.querySelectorAll('[name="wann"]')) {
 
 // Adressfeld nur zeigen, wenn eine Rechnung gewuenscht ist. Ohne JavaScript
 // bleibt es sichtbar - dann ist ein Feld zu viel zu sehen, aber nichts kaputt.
+// Der Hinweis zur Automatik gilt nur, wenn eine Rechnung gewuenscht ist
 const rechnungHaken = document.getElementById('rechnung-haken');
-const bewertungHaken = document.getElementById('bewertung-haken');
-const rechnungAdresse = document.getElementById('rechnung-adresse');
 const rechnungHinweis = document.getElementById('rechnung-hinweis');
-const adresseZeigen = () => {
-  const gebraucht = rechnungHaken.checked || bewertungHaken.checked;
-  rechnungAdresse.hidden = !gebraucht;
-  // Der Hinweis zur Automatik gilt nur fuer die Rechnung
+rechnungHaken.addEventListener('change', () => {
   rechnungHinweis.hidden = !rechnungHaken.checked;
-  if (gebraucht) rechnungAdresse.querySelector('input').focus();
-};
-rechnungHaken.addEventListener('change', adresseZeigen);
-bewertungHaken.addEventListener('change', adresseZeigen);
+});
 
 preisHolen();`;
 

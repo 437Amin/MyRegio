@@ -175,15 +175,20 @@ Eigenschaften:
 - Der Sende-Knopf ist ein echtes `<a>`, dessen `href` laufend aktualisiert
   wird – so gibt es keine Probleme mit Popup-Blockern.
 - Vorauswahl möglich: `<Buchungsassistent vorauswahl="Park & Fly" />`
-- **Zwei E-Mail-Häkchen in Schritt 4**: „Rechnung per E-Mail" und „kurze
-  Nachricht nach der Fahrt". Getrennt, weil es zwei verschiedene Dinge sind –
-  eine Rechnung schuldet man dem Fahrgast, eine Bitte um eine Bewertung ist
-  Werbung und braucht seine Zustimmung. Das gemeinsame Adressfeld erscheint,
-  sobald eines angekreuzt ist, und ist dann Pflicht. Ohne Haken wird die
-  Adresse **nicht gespeichert**, auch wenn im Feld noch etwas steht. Eine
-  unbrauchbare Adresse wird abgewiesen statt verworfen – sonst bestellt jemand
-  mit Rechnungswunsch und bekommt kommentarlos keine.
-- **Wunschfahrer.** In Schritt 4 steht eine Auswahlliste der Fahrer, geladen
+- **E-Mail-Adresse, freiwillig.** Das Feld steht offen da; der Hinweis
+  darunter sagt **vor** der Eingabe, was folgt – eine kurze Nachricht nach der
+  Fahrt mit der Bitte um eine Bewertung. Damit ist die Angabe die Zustimmung,
+  und es braucht kein eigenes Häkchen dafür (die erste Fassung hatte eines,
+  der Auftraggeber fand es umständlich und unnötig förmlich). Darunter ein
+  Häkchen für die Rechnung; ist es gesetzt, wird die Adresse zur Pflicht.
+  Ohne Adresse wird nichts gespeichert. Eine unbrauchbare Adresse wird
+  abgewiesen statt verworfen – sonst bestellt jemand mit Rechnungswunsch und
+  bekommt kommentarlos keine.
+- **Wunschfahrer.** Auswahlliste in Schritt 4, Vorauswahl „Kein bestimmter
+  Fahrer". Das `select` braucht `color-scheme: dark`: Ohne das zeichnet der
+  Browser die aufgeklappte Liste hell, und die Namen stehen weiß auf weiß. Die
+  Liste selbst gehört dem Betriebssystem und lässt sich nicht frei gestalten.
+  Die Einträge kommen geladen
   von `GET /api/fahrer`. Sie erscheint, sobald **mindestens ein** Fahrer
   angemeldet ist; ohne jeden Fahrer bleibt sie verborgen, weil eine leere
   Liste schlechter wäre als gar kein Feld. Nach draußen gehen nur Nummer
@@ -274,11 +279,13 @@ Rechnung kostet eher Vertrauen, als sie nützt. Festgehalten wird, *wann* und
 
 ### Nachricht nach der Fahrt (`danke-mail.ts`)
 
-Wer nur das zweite Häkchen setzt, bekommt nach der Fahrt eine kurze Mail mit
-Dank und der Bitte um eine Bewertung. Drei Regeln:
+Wer seine Adresse angibt, ohne eine Rechnung zu wollen, bekommt nach der
+Fahrt eine kurze Mail mit Dank und der Bitte um eine Bewertung. Drei Regeln:
 
-- **Nie zwei Mails nach einer Fahrt.** Ging die Rechnung raus, steht die Bitte
-  dort schon drin – dann unterbleibt die zweite Nachricht.
+- **Nie zwei Mails nach einer Fahrt.** War eine Rechnung im Spiel – gleich mit
+  welchem Ausgang –, unterbleibt die Dankesmail. Ging die Rechnung raus, steht
+  die Bitte schon darin; ging sie nicht raus, wartet der Fahrgast darauf, und
+  ihn dann um eine Bewertung zu bitten wäre der falsche Ton.
 - **Ohne Bewertungslink wird sie nicht sinnlos**, sondern zu einem Dank mit der
   Einladung, auf die Mail zu antworten. Besser als ein toter Link.
 - **Der Hinweis auf den Widerspruch steht in jeder Nachricht**, nicht nur in

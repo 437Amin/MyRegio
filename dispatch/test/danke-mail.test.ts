@@ -66,9 +66,9 @@ describe('Wann die Nachricht fällig ist', () => {
     expect(dankeFaellig(auftrag({ kunde_email: '  ' }), false)).toBe(false);
   });
 
-  it('unterbleibt, wenn die Rechnung schon rausging', () => {
-    // Dort steht die Bitte um eine Bewertung bereits drin - zwei Mails nach
-    // einer Fahrt sind eine zu viel
+  it('unterbleibt, wenn eine Rechnung im Spiel war', () => {
+    // Ging sie raus, steht die Bitte schon darin. Ging sie nicht raus, wartet
+    // der Fahrgast darauf - dann waere eine Bitte um Bewertung der falsche Ton
     expect(dankeFaellig(auftrag(), true)).toBe(false);
   });
 });

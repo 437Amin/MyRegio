@@ -108,9 +108,7 @@ export interface Bestellung {
   wunschFahrerId?: number;
   /** Moechte der Fahrgast die Rechnung per E-Mail? */
   rechnungGewuenscht?: boolean;
-  /** Moechte er nach der Fahrt eine kurze Nachricht? */
-  bewertungGewuenscht?: boolean;
-  /** Nur gesetzt und nur gespeichert, wenn eines von beidem gewuenscht ist */
+  /** Freiwillig. Mit der Angabe stimmt der Fahrgast der Nachricht danach zu. */
   kundeEmail?: string;
   name: string;
   telefon: string;

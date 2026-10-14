@@ -351,32 +351,25 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
               Wunschfahrer <span class="opt">optional</span>
             </label>
             <select id="feld-wunschfahrer" name="wunschFahrerId">
-              <option value="">Egal – wer gerade frei ist</option>
+              <option value="">Kein bestimmter Fahrer</option>
             </select>
             <p class="mt-2 text-sm text-nebel-500">
               Ihr Wunschfahrer wird zuerst gefragt. Ist er gerade unterwegs,
-              übernimmt jemand anderes – damit Sie nicht warten müssen.
+              übernimmt eine Kollegin oder ein Kollege – damit Sie nicht
+              warten müssen.
             </p>
           </div>
 
           <!--
-            E-Mail: Rechnung und/oder kurze Nachricht nach der Fahrt. Zwei
-            getrennte Haken, weil es zwei verschiedene Dinge sind - eine
-            Rechnung schuldet man dem Fahrgast, eine Bitte um eine Bewertung
-            ist Werbung und braucht seine ausdrueckliche Zustimmung. Das
-            Adressfeld erscheint, sobald eines von beidem angekreuzt ist;
-            ohne das wird die Adresse weder gebraucht noch gespeichert.
+            Die Adresse ist freiwillig. Wer sie angibt, hoert nach der Fahrt
+            einmal kurz von uns - der Hinweis darunter sagt das vor der
+            Eingabe, damit die Angabe eine bewusste ist. Wer sie weglaesst,
+            bestellt wie bisher und bekommt nichts.
           -->
-          <label class="schalter mt-5">
-            <input type="checkbox" name="rechnungGewuenscht" data-rechnung-haken />
-            <span>Ich möchte eine Rechnung per E-Mail</span>
-          </label>
-          <label class="schalter mt-3">
-            <input type="checkbox" name="bewertungGewuenscht" data-bewertung-haken />
-            <span>Schicken Sie mir nach der Fahrt eine kurze Nachricht</span>
-          </label>
-          <div class="feld mt-4" data-rechnung-adresse hidden>
-            <label for="feld-email">E-Mail-Adresse</label>
+          <div class="feld mt-5" data-rechnung-adresse>
+            <label for="feld-email">
+              E-Mail-Adresse <span class="opt">optional</span>
+            </label>
             <input
               id="feld-email"
               name="kundeEmail"
@@ -386,11 +379,15 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
               placeholder="name@beispiel.de"
             />
             <p class="mt-2 text-sm text-nebel-500">
-              Ihre Adresse wird nur für das Angekreuzte verwendet – die
-              Rechnung kommt automatisch nach der Fahrt, die Nachricht enthält
-              eine Bitte um Rückmeldung. Sie können jederzeit widersprechen.
+              Wenn Sie möchten, melden wir uns nach der Fahrt einmal kurz und
+              bitten um eine Bewertung. Eine Antwort genügt, wenn Sie das nicht
+              wünschen.
             </p>
           </div>
+          <label class="schalter mt-4">
+            <input type="checkbox" name="rechnungGewuenscht" data-rechnung-haken />
+            <span>Ich möchte eine Rechnung an diese Adresse</span>
+          </label>
 
           <div class="feld mt-5">
             <label for="feld-anmerkung">
@@ -736,6 +733,7 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
   }
 
   .feld input,
+  .feld select,
   .feld textarea {
     width: 100%;
     min-height: 3rem;
@@ -745,6 +743,17 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
     background-color: rgb(5 7 10 / 0.6);
     color: #fff;
     transition: border-color 0.2s ease;
+  }
+
+  /*
+    Ohne color-scheme zeichnet der Browser die aufgeklappte Liste hell: weisse
+    Schrift auf weissem Grund, die Namen sind praktisch unlesbar. Die Liste
+    selbst gehoert dem Betriebssystem und laesst sich nicht frei gestalten -
+    nur ueber diesen Schalter.
+  */
+  .feld select {
+    color-scheme: dark;
+    cursor: pointer;
   }
 
   .feld textarea {
@@ -758,6 +767,7 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
   }
 
   .feld input:focus,
+  .feld select:focus,
   .feld textarea:focus {
     border-color: var(--color-cyan-500);
     outline: none;

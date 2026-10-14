@@ -285,18 +285,14 @@ function einrichten(wurzel: HTMLElement): void {
     zeilen.push(`Mein Name: ${w.name || '(bitte noch ergänzen)'}`);
     if (w.telefon) zeilen.push(`Meine Telefonnummer: ${w.telefon}`);
 
-    // Auch ueber WhatsApp muessen die Wuensche ankommen. Sonst setzt jemand
-    // das Haekchen, bestellt dann aber ueber WhatsApp - und niemand erfaehrt
-    // davon. Automatisch verschickt wird nur bei einer Bestellung ueber
-    // "Jetzt Fahrer anfordern"; hier muss es von Hand kommen.
-    if (w.kundeEmail && (w.rechnungGewuenscht === 'ja' || w.bewertungGewuenscht === 'ja')) {
-      const wunsch = [
-        w.rechnungGewuenscht === 'ja' ? 'Rechnung' : '',
-        w.bewertungGewuenscht === 'ja' ? 'kurze Nachricht nach der Fahrt' : '',
-      ]
-        .filter(Boolean)
-        .join(' und ');
-      zeilen.push(`Bitte per E-Mail an ${w.kundeEmail}: ${wunsch}`);
+    // Auch ueber WhatsApp muss die Adresse ankommen. Sonst traegt jemand sie
+    // ein, bestellt dann aber ueber WhatsApp - und niemand erfaehrt davon.
+    // Automatisch laeuft es nur bei einer Bestellung ueber die Vermittlung.
+    if (w.kundeEmail) {
+      zeilen.push(`Meine E-Mail-Adresse: ${w.kundeEmail}`);
+      if (w.rechnungGewuenscht === 'ja') {
+        zeilen.push('Bitte Rechnung an diese Adresse');
+      }
     }
 
     return zeilen.join('\n');
@@ -596,28 +592,24 @@ function einrichten(wurzel: HTMLElement): void {
    * Das Feld ist absichtlich nicht "required" - sonst blockierte ein leeres
    * Feld das Absenden, obwohl der Haken gar nicht gesetzt ist.
    */
+  /**
+   * Das Adressfeld steht immer da und ist freiwillig.
+   *
+   * Pflicht wird es nur, wenn jemand eine Rechnung ankreuzt - ohne Adresse
+   * koennte sie nirgends hingehen. Ansonsten bleibt es leer und es passiert
+   * nichts.
+   */
   function rechnungsfeldEinrichten(): void {
-    const haken = [
-      wurzel.querySelector<HTMLInputElement>('[data-rechnung-haken]'),
-      wurzel.querySelector<HTMLInputElement>('[data-bewertung-haken]'),
-    ].filter((h): h is HTMLInputElement => Boolean(h));
+    const haken = wurzel.querySelector<HTMLInputElement>('[data-rechnung-haken]');
     const adresse = wurzel.querySelector<HTMLElement>('[data-rechnung-adresse]');
-    if (haken.length === 0 || !adresse) return;
+    const feld = adresse?.querySelector<HTMLInputElement>('input');
+    if (!haken || !feld) return;
 
-    const umschalten = (): void => {
-      const gebraucht = haken.some((h) => h.checked);
-      adresse.hidden = !gebraucht;
-      const feld = adresse.querySelector<HTMLInputElement>('input');
-      if (feld) feld.required = gebraucht;
-    };
-
-    for (const kasten of haken) {
-      kasten.addEventListener('change', () => {
-        umschalten();
-        if (kasten.checked) adresse.querySelector('input')?.focus();
-      });
-    }
-    umschalten();
+    haken.addEventListener('change', () => {
+      feld.required = haken.checked;
+      if (haken.checked && !feld.value) feld.focus();
+    });
+    feld.required = haken.checked;
   }
 
   /** Blendet das Formular aus und zeigt stattdessen den Stand der Suche. */
@@ -745,12 +737,7 @@ function einrichten(wurzel: HTMLElement): void {
           wunschFahrerId: w.wunschFahrerId ? Number(w.wunschFahrerId) : undefined,
           // Haken liegen hier als Text vor: Boolean('nein') waere true
           rechnungGewuenscht: w.rechnungGewuenscht === 'ja',
-          bewertungGewuenscht: w.bewertungGewuenscht === 'ja',
-          // Nur mitschicken, wenn die Adresse auch gebraucht wird
-          kundeEmail:
-            w.rechnungGewuenscht === 'ja' || w.bewertungGewuenscht === 'ja'
-              ? w.kundeEmail
-              : undefined,
+          kundeEmail: w.kundeEmail || undefined,
           vonPunkt: w.vonBreite
             ? {
                 breite: Number(w.vonBreite),

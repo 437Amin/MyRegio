@@ -47,8 +47,7 @@ export interface ErfassungsEingabe {
   telefon: string;
   /** Moechte der Fahrgast eine Rechnung per E-Mail? */
   rechnungGewuenscht: boolean;
-  /** Moechte er nach der Fahrt eine kurze Nachricht mit Bitte um Bewertung? */
-  bewertungGewuenscht: boolean;
+  /** Freiwillig. Mit der Angabe stimmt er der Nachricht nach der Fahrt zu. */
   email: string;
   personen: string;
   anmerkung: string;
@@ -153,18 +152,16 @@ export function erfassungPruefen(
     fehler.push('Die Telefonnummer sieht nicht richtig aus – bitte prüfen.');
   }
 
-  // --- E-Mail: Rechnung und/oder Nachricht nach der Fahrt -------------------
-  // Die Adresse wird NUR gespeichert, wenn sie auch gebraucht wird. Ohne
-  // Wunsch gibt es keinen Grund, sie aufzubewahren.
+  // --- E-Mail --------------------------------------------------------------
+  // Freiwillig. Wer sie angibt, bekommt nach der Fahrt eine kurze Nachricht;
+  // fuer eine Rechnung ist sie Pflicht. Ohne Angabe wird nichts gespeichert.
   const rechnungGewuenscht = Boolean(eingabe.rechnungGewuenscht);
-  const bewertungGewuenscht = Boolean(eingabe.bewertungGewuenscht);
-  const brauchtAdresse = rechnungGewuenscht || bewertungGewuenscht;
-  const email = brauchtAdresse ? kurz(eingabe.email, 254) : '';
-  if (brauchtAdresse && !plausibleEmail(email)) {
+  const email = kurz(eingabe.email, 254);
+  if ((email || rechnungGewuenscht) && !plausibleEmail(email)) {
     fehler.push(
       email
         ? 'Die E-Mail-Adresse sieht nicht richtig aus – bitte prüfen.'
-        : 'Für die E-Mail fehlt die Adresse des Fahrgasts.',
+        : 'Für die Rechnung per E-Mail fehlt die Adresse des Fahrgasts.',
     );
   }
 
@@ -248,7 +245,7 @@ export function erfassungPruefen(
       kundeName: name,
       kundeTelefon: telefon,
       rechnungGewuenscht: rechnungGewuenscht ? 1 : 0,
-      bewertungGewuenscht: bewertungGewuenscht ? 1 : 0,
+      bewertungGewuenscht: email ? 1 : 0,
       kundeEmail: email,
       eingangIso,
       preisBerechnen,

@@ -428,9 +428,9 @@ export class Vermittlung implements DurableObject {
     // Rechnung und Dankesmail kommen NACH der Freimeldung. Scheitert etwas,
     // bleibt der Fahrer trotzdem frei - sonst sperrte ihn eine fremde Stoerung.
     const rechnung = await rechnungAusFahrt(this.env, zustand.auftragId, zahlungsart);
-    // Steckt die Bitte um eine Bewertung schon in der Rechnung, kommt sie
-    // nicht noch einmal einzeln.
-    await dankeNachFahrt(this.env, zustand.auftragId, rechnung === 'verschickt');
+    // Wurde eine Rechnung angestossen - gleich mit welchem Ausgang -, bleibt
+    // die Dankesmail aus. Zwei Nachrichten nach einer Fahrt sind eine zu viel.
+    await dankeNachFahrt(this.env, zustand.auftragId, rechnung !== 'keine');
 
     return { ergebnis: 'erledigt' };
   }

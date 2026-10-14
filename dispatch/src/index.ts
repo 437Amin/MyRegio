@@ -106,15 +106,13 @@ async function bestellungAnnehmen(
     );
   }
 
-  // Die Adresse wird nur gespeichert, wenn sie auch gebraucht wird - fuer die
-  // Rechnung oder fuer die Nachricht nach der Fahrt. Eine unbrauchbare
-  // Adresse wird abgewiesen und nicht einfach verworfen: Sonst bestellt
-  // jemand mit Rechnungswunsch und bekommt kommentarlos keine.
+  // Die Adresse ist freiwillig. Wer sie angibt, hat damit zugestimmt, nach
+  // der Fahrt einmal von uns zu hoeren - so steht es im Formular. Eine
+  // unbrauchbare Adresse wird abgewiesen und nicht einfach verworfen: Sonst
+  // bestellt jemand mit Rechnungswunsch und bekommt kommentarlos keine.
   const rechnungGewuenscht = Boolean(roh.rechnungGewuenscht);
-  const bewertungGewuenscht = Boolean(roh.bewertungGewuenscht);
-  const brauchtAdresse = rechnungGewuenscht || bewertungGewuenscht;
-  const kundeEmail = brauchtAdresse ? kurz(roh.kundeEmail, 254) : '';
-  if (brauchtAdresse && !plausibleEmail(kundeEmail)) {
+  const kundeEmail = kurz(roh.kundeEmail, 254);
+  if ((kundeEmail || rechnungGewuenscht) && !plausibleEmail(kundeEmail)) {
     return antwort(
       { fehler: 'Bitte geben Sie eine gültige E-Mail-Adresse an.' },
       400,
@@ -180,7 +178,9 @@ async function bestellungAnnehmen(
       kurz(roh.telefon, 40),
       wunschFahrerId,
       rechnungGewuenscht ? 1 : 0,
-      bewertungGewuenscht ? 1 : 0,
+      // Festgehalten, wozu der Fahrgast ja gesagt hat: Mit der Adresse kam
+      // die Zustimmung zur Nachricht nach der Fahrt.
+      kundeEmail ? 1 : 0,
       kundeEmail,
     )
     .run();

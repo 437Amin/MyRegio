@@ -84,12 +84,17 @@ export function dankeAnschreiben(
 /** Soll nach dieser Fahrt eine Nachricht raus? */
 export function dankeFaellig(
   auftrag: AuftragFuerDanke,
-  rechnungVerschickt: boolean,
+  /** Wurde zu dieser Fahrt eine Rechnung angestossen - gleich mit welchem Ausgang? */
+  rechnungAngestossen: boolean,
 ): boolean {
   if (!auftrag.bewertung_gewuenscht) return false;
   if (!auftrag.kunde_email.trim()) return false;
-  // Steckt die Bitte schon in der Rechnung, kommt sie nicht noch einmal
-  return !rechnungVerschickt;
+
+  // Wer eine Rechnung wollte, bekommt keine Dankesmail. Ging sie raus, steht
+  // die Bitte um eine Bewertung schon darin. Ging sie NICHT raus, wartet der
+  // Fahrgast auf eine Rechnung - ihn dann um eine Bewertung zu bitten, waere
+  // der falsche Ton.
+  return !rechnungAngestossen;
 }
 
 /**
@@ -102,7 +107,7 @@ export function dankeFaellig(
 export async function dankeNachFahrt(
   env: Umgebung,
   auftragId: string,
-  rechnungVerschickt: boolean,
+  rechnungAngestossen: boolean,
 ): Promise<'keine' | 'verschickt' | 'fehler'> {
   try {
     const auftrag = await env.DB.prepare(
@@ -111,7 +116,7 @@ export async function dankeNachFahrt(
       .bind(auftragId)
       .first<AuftragFuerDanke>();
 
-    if (!auftrag || !dankeFaellig(auftrag, rechnungVerschickt)) return 'keine';
+    if (!auftrag || !dankeFaellig(auftrag, rechnungAngestossen)) return 'keine';
 
     const einstellungen = await ladeEinstellungen(env);
     const brief = dankeAnschreiben(
