@@ -1,5 +1,6 @@
 import type { Auftrag, Fahrer, Umgebung } from './typen';
 import { rechnungAusFahrt } from './rechnung-fahrt';
+import { dankeNachFahrt } from './danke-mail';
 import { zahlungsartLesen } from './rechnung-automatik';
 import type { Zahlungsart } from './rechnung';
 import { fahrerFuerZeitpunkt, wunschZuerst } from './schichten';
@@ -424,9 +425,12 @@ export class Vermittlung implements DurableObject {
       '✅ <b>Fahrt abgeschlossen.</b> Danke – du bekommst wieder Aufträge.',
     );
 
-    // Die Rechnung kommt NACH der Freimeldung. Scheitert der Versand, bleibt
-    // der Fahrer trotzdem frei - sonst sperrte ihn eine fremde Stoerung.
-    await rechnungAusFahrt(this.env, zustand.auftragId, zahlungsart);
+    // Rechnung und Dankesmail kommen NACH der Freimeldung. Scheitert etwas,
+    // bleibt der Fahrer trotzdem frei - sonst sperrte ihn eine fremde Stoerung.
+    const rechnung = await rechnungAusFahrt(this.env, zustand.auftragId, zahlungsart);
+    // Steckt die Bitte um eine Bewertung schon in der Rechnung, kommt sie
+    // nicht noch einmal einzeln.
+    await dankeNachFahrt(this.env, zustand.auftragId, rechnung === 'verschickt');
 
     return { ergebnis: 'erledigt' };
   }

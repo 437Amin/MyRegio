@@ -258,6 +258,22 @@ Telegram-Nachricht mit allen Angaben:
 
 ---
 
+## Dankesnachricht und Bewertungen
+
+Der Fahrgast kann bei der Bestellung auch **nur** ankreuzen, dass er nach der
+Fahrt eine kurze Nachricht möchte – ohne Rechnung. Dann bekommt er automatisch
+eine E-Mail mit Dank und der Bitte um eine Bewertung.
+
+- **Zwei Mails gibt es nie.** Wer eine Rechnung bekommt, findet die Bitte um
+  eine Bewertung schon dort.
+- **Ohne hinterlegten Bewertungslink** wird daraus ein Dank mit der Einladung,
+  auf die Mail zu antworten. Diese Antworten landen bei
+  `contact@myregiocar.com` – es lohnt sich, dort hineinzuschauen.
+- Den Link tragen Sie unter **Rechnungen → Firmendaten → Link zur
+  Bewertungsseite** ein.
+
+---
+
 ## Eine Rechnung korrigieren
 
 Auf der Rechnung den Knopf **„Rechnung korrigieren"**. Damit passiert alles

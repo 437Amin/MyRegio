@@ -175,11 +175,14 @@ Eigenschaften:
 - Der Sende-Knopf ist ein echtes `<a>`, dessen `href` laufend aktualisiert
   wird – so gibt es keine Probleme mit Popup-Blockern.
 - Vorauswahl möglich: `<Buchungsassistent vorauswahl="Park & Fly" />`
-- **Rechnung per E-Mail.** Häkchen in Schritt 4; das Adressfeld erscheint erst
-  damit und ist dann Pflicht. Ohne Haken wird die Adresse **nicht gespeichert**,
-  auch wenn im Feld noch etwas steht. Eine unbrauchbare Adresse wird abgewiesen
-  statt verworfen – sonst bestellt jemand mit Rechnungswunsch und bekommt
-  kommentarlos keine.
+- **Zwei E-Mail-Häkchen in Schritt 4**: „Rechnung per E-Mail" und „kurze
+  Nachricht nach der Fahrt". Getrennt, weil es zwei verschiedene Dinge sind –
+  eine Rechnung schuldet man dem Fahrgast, eine Bitte um eine Bewertung ist
+  Werbung und braucht seine Zustimmung. Das gemeinsame Adressfeld erscheint,
+  sobald eines angekreuzt ist, und ist dann Pflicht. Ohne Haken wird die
+  Adresse **nicht gespeichert**, auch wenn im Feld noch etwas steht. Eine
+  unbrauchbare Adresse wird abgewiesen statt verworfen – sonst bestellt jemand
+  mit Rechnungswunsch und bekommt kommentarlos keine.
 - **Wunschfahrer.** In Schritt 4 steht eine Auswahlliste der Fahrer, geladen
   von `GET /api/fahrer`. Sie erscheint nur, wenn es **mindestens zwei** gibt –
   bei einem einzigen wäre sie eine Scheinwahl. Nach draußen gehen nur Nummer
@@ -267,6 +270,22 @@ HTML-Mails um, um Klicks zu zählen, und eine fremde Zähladresse auf einer
 Rechnung kostet eher Vertrauen, als sie nützt. Festgehalten wird, *wann* und
 *wohin* verschickt wurde (`versendet_um`, `versand_an`) – ohne das ließe sich
 „nie verschickt" nicht von „Versand gescheitert" unterscheiden.
+
+### Nachricht nach der Fahrt (`danke-mail.ts`)
+
+Wer nur das zweite Häkchen setzt, bekommt nach der Fahrt eine kurze Mail mit
+Dank und der Bitte um eine Bewertung. Drei Regeln:
+
+- **Nie zwei Mails nach einer Fahrt.** Ging die Rechnung raus, steht die Bitte
+  dort schon drin – dann unterbleibt die zweite Nachricht.
+- **Ohne Bewertungslink wird sie nicht sinnlos**, sondern zu einem Dank mit der
+  Einladung, auf die Mail zu antworten. Besser als ein toter Link.
+- **Der Hinweis auf den Widerspruch steht in jeder Nachricht**, nicht nur in
+  der ersten.
+
+Ein Fehlschlag wird bewusst **nicht** an den Chef gemeldet: Eine Dankesmail,
+die nicht ankommt, ist ein Schönheitsfehler und würde zwischen den wichtigen
+Meldungen nur stören.
 
 **Korrigieren** ist ein Knopf, aber zwei Vorgänge: Eine ausgestellte Rechnung
 darf nicht geändert werden (GoBD, § 14 UStG). „Rechnung korrigieren" storniert
@@ -372,10 +391,10 @@ npx wrangler d1 execute vermittlung --local --file=test/testdaten.sql
 node test/ablauf.mjs                 # Fenster 3
 ```
 
-Neun Abschnitte: Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef, der
-Wunschfahrer (vorgezogen / unterwegs / unbekannt), die Rechnung nach der Fahrt
-und die Absicherungen (fehlende Angaben, unsinnige Rufnummer, Telegram-Aufruf
-ohne Geheimnis).
+Zehn Abschnitte: Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef, der
+Wunschfahrer (vorgezogen / unterwegs / unbekannt), die Rechnung nach der Fahrt,
+die Nachricht nach der Fahrt und die Absicherungen (fehlende Angaben, unsinnige
+Rufnummer, Telegram-Aufruf ohne Geheimnis).
 
 Dazu `node test/versand.mjs` – es prüft im echten Workers-Lauf, was vitest
 nicht kann: Anmeldung, PDF-Erzeugung in der Worker-Umgebung, Versand,

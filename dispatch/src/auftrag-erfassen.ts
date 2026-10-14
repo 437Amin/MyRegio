@@ -47,6 +47,8 @@ export interface ErfassungsEingabe {
   telefon: string;
   /** Moechte der Fahrgast eine Rechnung per E-Mail? */
   rechnungGewuenscht: boolean;
+  /** Moechte er nach der Fahrt eine kurze Nachricht mit Bitte um Bewertung? */
+  bewertungGewuenscht: boolean;
   email: string;
   personen: string;
   anmerkung: string;
@@ -70,7 +72,9 @@ export interface GepruefterAuftrag {
   kundeTelefon: string;
   /** 1, wenn eine Rechnung per E-Mail gewuenscht ist */
   rechnungGewuenscht: number;
-  /** Leer, wenn keine Rechnung gewuenscht ist - dann wird nichts gespeichert */
+  /** 1, wenn eine Nachricht nach der Fahrt gewuenscht ist */
+  bewertungGewuenscht: number;
+  /** Leer, wenn nichts davon gewuenscht ist - dann wird nichts gespeichert */
   kundeEmail: string;
   eingangIso: string;
   /**
@@ -149,16 +153,18 @@ export function erfassungPruefen(
     fehler.push('Die Telefonnummer sieht nicht richtig aus – bitte prüfen.');
   }
 
-  // --- Rechnung per E-Mail -------------------------------------------------
-  // Die Adresse wird NUR gespeichert, wenn eine Rechnung gewuenscht ist. Ohne
+  // --- E-Mail: Rechnung und/oder Nachricht nach der Fahrt -------------------
+  // Die Adresse wird NUR gespeichert, wenn sie auch gebraucht wird. Ohne
   // Wunsch gibt es keinen Grund, sie aufzubewahren.
   const rechnungGewuenscht = Boolean(eingabe.rechnungGewuenscht);
-  const email = rechnungGewuenscht ? kurz(eingabe.email, 254) : '';
-  if (rechnungGewuenscht && !plausibleEmail(email)) {
+  const bewertungGewuenscht = Boolean(eingabe.bewertungGewuenscht);
+  const brauchtAdresse = rechnungGewuenscht || bewertungGewuenscht;
+  const email = brauchtAdresse ? kurz(eingabe.email, 254) : '';
+  if (brauchtAdresse && !plausibleEmail(email)) {
     fehler.push(
       email
-        ? 'Die E-Mail-Adresse für die Rechnung sieht nicht richtig aus – bitte prüfen.'
-        : 'Für die Rechnung per E-Mail fehlt die Adresse des Fahrgasts.',
+        ? 'Die E-Mail-Adresse sieht nicht richtig aus – bitte prüfen.'
+        : 'Für die E-Mail fehlt die Adresse des Fahrgasts.',
     );
   }
 
@@ -242,6 +248,7 @@ export function erfassungPruefen(
       kundeName: name,
       kundeTelefon: telefon,
       rechnungGewuenscht: rechnungGewuenscht ? 1 : 0,
+      bewertungGewuenscht: bewertungGewuenscht ? 1 : 0,
       kundeEmail: email,
       eingangIso,
       preisBerechnen,

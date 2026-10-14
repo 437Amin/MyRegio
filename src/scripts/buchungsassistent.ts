@@ -285,12 +285,18 @@ function einrichten(wurzel: HTMLElement): void {
     zeilen.push(`Mein Name: ${w.name || '(bitte noch ergänzen)'}`);
     if (w.telefon) zeilen.push(`Meine Telefonnummer: ${w.telefon}`);
 
-    // Auch ueber WhatsApp muss der Rechnungswunsch ankommen. Sonst setzt
-    // jemand das Haekchen, bestellt dann aber ueber WhatsApp - und niemand
-    // erfaehrt davon. Automatisch verschickt wird nur bei einer Bestellung
-    // ueber "Jetzt Fahrer anfordern"; hier muss die Rechnung von Hand kommen.
-    if (w.rechnungGewuenscht === 'ja' && w.kundeEmail) {
-      zeilen.push(`Rechnung bitte per E-Mail an: ${w.kundeEmail}`);
+    // Auch ueber WhatsApp muessen die Wuensche ankommen. Sonst setzt jemand
+    // das Haekchen, bestellt dann aber ueber WhatsApp - und niemand erfaehrt
+    // davon. Automatisch verschickt wird nur bei einer Bestellung ueber
+    // "Jetzt Fahrer anfordern"; hier muss es von Hand kommen.
+    if (w.kundeEmail && (w.rechnungGewuenscht === 'ja' || w.bewertungGewuenscht === 'ja')) {
+      const wunsch = [
+        w.rechnungGewuenscht === 'ja' ? 'Rechnung' : '',
+        w.bewertungGewuenscht === 'ja' ? 'kurze Nachricht nach der Fahrt' : '',
+      ]
+        .filter(Boolean)
+        .join(' und ');
+      zeilen.push(`Bitte per E-Mail an ${w.kundeEmail}: ${wunsch}`);
     }
 
     return zeilen.join('\n');
@@ -587,20 +593,26 @@ function einrichten(wurzel: HTMLElement): void {
    * Feld das Absenden, obwohl der Haken gar nicht gesetzt ist.
    */
   function rechnungsfeldEinrichten(): void {
-    const haken = wurzel.querySelector<HTMLInputElement>('[data-rechnung-haken]');
+    const haken = [
+      wurzel.querySelector<HTMLInputElement>('[data-rechnung-haken]'),
+      wurzel.querySelector<HTMLInputElement>('[data-bewertung-haken]'),
+    ].filter((h): h is HTMLInputElement => Boolean(h));
     const adresse = wurzel.querySelector<HTMLElement>('[data-rechnung-adresse]');
-    if (!haken || !adresse) return;
+    if (haken.length === 0 || !adresse) return;
 
     const umschalten = (): void => {
-      adresse.hidden = !haken.checked;
+      const gebraucht = haken.some((h) => h.checked);
+      adresse.hidden = !gebraucht;
       const feld = adresse.querySelector<HTMLInputElement>('input');
-      if (feld) feld.required = haken.checked;
+      if (feld) feld.required = gebraucht;
     };
 
-    haken.addEventListener('change', () => {
-      umschalten();
-      if (haken.checked) adresse.querySelector('input')?.focus();
-    });
+    for (const kasten of haken) {
+      kasten.addEventListener('change', () => {
+        umschalten();
+        if (kasten.checked) adresse.querySelector('input')?.focus();
+      });
+    }
     umschalten();
   }
 
@@ -729,8 +741,12 @@ function einrichten(wurzel: HTMLElement): void {
           wunschFahrerId: w.wunschFahrerId ? Number(w.wunschFahrerId) : undefined,
           // Haken liegen hier als Text vor: Boolean('nein') waere true
           rechnungGewuenscht: w.rechnungGewuenscht === 'ja',
-          // Nur mitschicken, wenn auch eine Rechnung gewuenscht ist
-          kundeEmail: w.rechnungGewuenscht === 'ja' ? w.kundeEmail : undefined,
+          bewertungGewuenscht: w.bewertungGewuenscht === 'ja',
+          // Nur mitschicken, wenn die Adresse auch gebraucht wird
+          kundeEmail:
+            w.rechnungGewuenscht === 'ja' || w.bewertungGewuenscht === 'ja'
+              ? w.kundeEmail
+              : undefined,
           vonPunkt: w.vonBreite
             ? {
                 breite: Number(w.vonBreite),

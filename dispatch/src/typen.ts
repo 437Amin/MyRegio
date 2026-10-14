@@ -78,7 +78,9 @@ export interface Auftrag {
   wunsch_fahrer_id: number | null;
   /** 1, wenn der Fahrgast eine Rechnung per E-Mail moechte */
   rechnung_gewuenscht: number;
-  /** Nur gesetzt, wenn eine Rechnung gewuenscht ist */
+  /** 1, wenn er nach der Fahrt eine Nachricht moechte */
+  bewertung_gewuenscht: number;
+  /** Nur gesetzt, wenn eines von beidem gewuenscht ist */
   kunde_email: string;
   fahrer_id: number | null;
   angenommen_um: string | null;
@@ -106,7 +108,9 @@ export interface Bestellung {
   wunschFahrerId?: number;
   /** Moechte der Fahrgast die Rechnung per E-Mail? */
   rechnungGewuenscht?: boolean;
-  /** Nur gesetzt und nur gespeichert, wenn eine Rechnung gewuenscht ist */
+  /** Moechte er nach der Fahrt eine kurze Nachricht? */
+  bewertungGewuenscht?: boolean;
+  /** Nur gesetzt und nur gespeichert, wenn eines von beidem gewuenscht ist */
   kundeEmail?: string;
   name: string;
   telefon: string;

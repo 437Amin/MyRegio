@@ -29,7 +29,8 @@
 --  NACHTRAG Rechnung per E-Mail (13.10.2026). Einmalig ausfuehren, BEVOR
 --  neuer Code veroeffentlicht wird:
 --
---    ALTER TABLE auftraege  ADD COLUMN rechnung_gewuenscht INTEGER NOT NULL DEFAULT 0;
+--    ALTER TABLE auftraege  ADD COLUMN rechnung_gewuenscht  INTEGER NOT NULL DEFAULT 0;
+--    ALTER TABLE auftraege  ADD COLUMN bewertung_gewuenscht INTEGER NOT NULL DEFAULT 0;
 --    ALTER TABLE auftraege  ADD COLUMN kunde_email         TEXT    NOT NULL DEFAULT '';
 --    ALTER TABLE rechnungen ADD COLUMN versendet_um        TEXT;
 --    ALTER TABLE rechnungen ADD COLUMN versand_an          TEXT    NOT NULL DEFAULT '';
@@ -109,6 +110,13 @@ CREATE TABLE IF NOT EXISTS auftraege (
   -- ueberhaupt gespeichert - ohne Wunsch bleibt kunde_email leer. Die
   -- Rechnung entsteht automatisch, sobald der Fahrer die Fahrt abmeldet.
   rechnung_gewuenscht INTEGER NOT NULL DEFAULT 0,
+
+  -- Moechte der Fahrgast nach der Fahrt eine kurze Nachricht mit der Bitte um
+  -- eine Bewertung? Das ist eine EIGENE Einwilligung, getrennt von der
+  -- Rechnung: Eine Rechnung schuldet man dem Kunden, eine Bitte um Bewertung
+  -- ist Werbung. Deshalb ein eigenes Haekchen und keine Koppelung.
+  bewertung_gewuenscht INTEGER NOT NULL DEFAULT 0,
+
   kunde_email    TEXT    NOT NULL DEFAULT '',
 
   -- Vom Fahrgast gewuenschter Fahrer. Er wird zuerst gefragt, ist aber nicht

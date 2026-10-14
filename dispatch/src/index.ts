@@ -106,15 +106,17 @@ async function bestellungAnnehmen(
     );
   }
 
-  // Die Adresse wird nur gespeichert, wenn wirklich eine Rechnung gewuenscht
-  // ist. Eine unbrauchbare Adresse wird hier abgewiesen und nicht einfach
-  // verworfen: Sonst bestellt jemand mit Rechnungswunsch und bekommt
-  // kommentarlos keine.
+  // Die Adresse wird nur gespeichert, wenn sie auch gebraucht wird - fuer die
+  // Rechnung oder fuer die Nachricht nach der Fahrt. Eine unbrauchbare
+  // Adresse wird abgewiesen und nicht einfach verworfen: Sonst bestellt
+  // jemand mit Rechnungswunsch und bekommt kommentarlos keine.
   const rechnungGewuenscht = Boolean(roh.rechnungGewuenscht);
-  const kundeEmail = rechnungGewuenscht ? kurz(roh.kundeEmail, 254) : '';
-  if (rechnungGewuenscht && !plausibleEmail(kundeEmail)) {
+  const bewertungGewuenscht = Boolean(roh.bewertungGewuenscht);
+  const brauchtAdresse = rechnungGewuenscht || bewertungGewuenscht;
+  const kundeEmail = brauchtAdresse ? kurz(roh.kundeEmail, 254) : '';
+  if (brauchtAdresse && !plausibleEmail(kundeEmail)) {
     return antwort(
-      { fehler: 'Bitte geben Sie für die Rechnung eine gültige E-Mail-Adresse an.' },
+      { fehler: 'Bitte geben Sie eine gültige E-Mail-Adresse an.' },
       400,
       env,
       anfrage,
@@ -157,8 +159,8 @@ async function bestellungAnnehmen(
     `INSERT INTO auftraege
        (id, art, abholung, ziel, wunschzeit, wunsch_iso, sofort, personen, gepaeck,
         kindersitze, anmerkung, preis, strecke_km, kunde_name, kunde_telefon,
-        wunsch_fahrer_id, rechnung_gewuenscht, kunde_email)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        wunsch_fahrer_id, rechnung_gewuenscht, bewertung_gewuenscht, kunde_email)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -178,6 +180,7 @@ async function bestellungAnnehmen(
       kurz(roh.telefon, 40),
       wunschFahrerId,
       rechnungGewuenscht ? 1 : 0,
+      bewertungGewuenscht ? 1 : 0,
       kundeEmail,
     )
     .run();

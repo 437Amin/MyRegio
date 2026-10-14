@@ -419,7 +419,72 @@ await leeren();
   );
 }
 
-console.log('\n=== 9. Absicherungen ===');
+console.log('\n=== 9. Nachricht nach der Fahrt ===');
+await leeren();
+{
+  // Nur die Nachricht, keine Rechnung. Lokal steht ohnehin kein Festpreis
+  // fest - um so klarer trennt dieser Abschnitt die beiden Wege.
+  const { status: code, koerper } = await bestelle(
+    {
+      name: 'Herr Vogt',
+      bewertungGewuenscht: true,
+      kundeEmail: 'gast@example.com',
+    },
+    '203.0.113.9',
+  );
+  pruefe(code === 201, 'Bestellung ohne Rechnung, aber mit Nachricht', `Code ${code}`);
+  await warte(600);
+
+  await knopfDruck(koerper.auftragId, 101, '101', true);
+  await warte(400);
+
+  // Ohne Rechnungswunsch bleibt es bei EINEM Abmeldeknopf - die Zahlungsart
+  // braucht nur eine Rechnung
+  const zusage = (await aufrufe())
+    .filter((a) => a.methode === 'editMessageText' && String(a.daten.chat_id) === '101')
+    .at(-1);
+  const knoepfe = (zusage?.daten.reply_markup?.inline_keyboard ?? []).flat();
+  pruefe(
+    knoepfe.length === 1 && knoepfe[0].callback_data?.split(':').length === 3,
+    'Ohne Rechnungswunsch nur ein Abmeldeknopf',
+    JSON.stringify(knoepfe.map((k) => k.callback_data)),
+  );
+
+  await leeren();
+  await erledige(koerper.auftragId, 101);
+  await warte(900);
+
+  const mails = (await aufrufe()).filter((a) => a.methode === 'email');
+  pruefe(mails.length === 1, 'Genau eine Nachricht geht raus', `${mails.length}`);
+
+  const mail = mails[0]?.daten ?? {};
+  pruefe(
+    mail.to?.[0]?.email === 'gast@example.com',
+    'An die angegebene Adresse',
+    JSON.stringify(mail.to),
+  );
+  pruefe(
+    String(mail.subject).includes('Danke'),
+    'Der Betreff ist ein Dank, keine Rechnung',
+    String(mail.subject),
+  );
+  pruefe(
+    !mail.attachment,
+    'Ohne Anhang – es gibt ja keine Rechnung',
+  );
+  pruefe(
+    String(mail.textContent).includes('künftig nicht mehr'),
+    'Der Hinweis auf den Widerspruch steht drin',
+  );
+
+  // Der Chef bekommt hier NICHTS: Es war keine Rechnung gewuenscht
+  pruefe(
+    an(await aufrufe(), '999').length === 0,
+    'Keine Meldung an den Chef – es war keine Rechnung gewünscht',
+  );
+}
+
+console.log('\n=== 10. Absicherungen ===');
 {
   const ohneName = await bestelle({ name: '' });
   pruefe(ohneName.status === 400, 'Bestellung ohne Namen wird abgelehnt');

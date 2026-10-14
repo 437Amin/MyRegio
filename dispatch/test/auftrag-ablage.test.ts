@@ -67,6 +67,7 @@ function eintrag(werte: Partial<AuftragEintrag> = {}): AuftragEintrag {
     kundeName: 'Frau Keller',
     kundeTelefon: '0711 1234567',
     rechnungGewuenscht: 0,
+    bewertungGewuenscht: 0,
     kundeEmail: '',
     ...werte,
   };

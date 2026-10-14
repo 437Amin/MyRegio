@@ -360,12 +360,20 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
           </div>
 
           <!--
-            Rechnung per E-Mail. Das Adressfeld erscheint erst mit dem Haken -
-            ohne Wunsch wird die Adresse weder gebraucht noch gespeichert.
+            E-Mail: Rechnung und/oder kurze Nachricht nach der Fahrt. Zwei
+            getrennte Haken, weil es zwei verschiedene Dinge sind - eine
+            Rechnung schuldet man dem Fahrgast, eine Bitte um eine Bewertung
+            ist Werbung und braucht seine ausdrueckliche Zustimmung. Das
+            Adressfeld erscheint, sobald eines von beidem angekreuzt ist;
+            ohne das wird die Adresse weder gebraucht noch gespeichert.
           -->
           <label class="schalter mt-5">
             <input type="checkbox" name="rechnungGewuenscht" data-rechnung-haken />
             <span>Ich möchte eine Rechnung per E-Mail</span>
+          </label>
+          <label class="schalter mt-3">
+            <input type="checkbox" name="bewertungGewuenscht" data-bewertung-haken />
+            <span>Schicken Sie mir nach der Fahrt eine kurze Nachricht</span>
           </label>
           <div class="feld mt-4" data-rechnung-adresse hidden>
             <label for="feld-email">E-Mail-Adresse</label>
@@ -378,8 +386,9 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
               placeholder="name@beispiel.de"
             />
             <p class="mt-2 text-sm text-nebel-500">
-              Die Rechnung kommt automatisch, sobald die Fahrt beendet ist.
-              Ihre Adresse wird nur dafür verwendet.
+              Ihre Adresse wird nur für das Angekreuzte verwendet – die
+              Rechnung kommt automatisch nach der Fahrt, die Nachricht enthält
+              eine Bitte um Rückmeldung. Sie können jederzeit widersprechen.
             </p>
           </div>
 

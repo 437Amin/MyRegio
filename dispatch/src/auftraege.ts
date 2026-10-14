@@ -70,6 +70,7 @@ async function auftragAnlegen(anfrage: Request, env: Umgebung): Promise<Response
     name: text('name'),
     telefon: text('telefon'),
     rechnungGewuenscht: Boolean(f.get('rechnung_gewuenscht')),
+    bewertungGewuenscht: Boolean(f.get('bewertung_gewuenscht')),
     email: text('email'),
     personen: text('personen'),
     anmerkung: text('anmerkung'),
@@ -134,6 +135,7 @@ async function auftragAnlegen(anfrage: Request, env: Umgebung): Promise<Response
     kundeName: auftrag.kundeName,
     kundeTelefon: auftrag.kundeTelefon,
     rechnungGewuenscht: auftrag.rechnungGewuenscht,
+    bewertungGewuenscht: auftrag.bewertungGewuenscht,
     kundeEmail: auftrag.kundeEmail,
   });
 
@@ -236,6 +238,7 @@ async function uebersicht(
     name: '',
     telefon: '',
     rechnungGewuenscht: false,
+    bewertungGewuenscht: false,
     email: '',
     personen: '1',
     anmerkung: '',
@@ -398,7 +401,12 @@ async function uebersicht(
                ${e.rechnungGewuenscht ? 'checked' : ''}>
         Fahrgast möchte eine Rechnung per E-Mail
       </label>
-      <label id="rechnung-adresse" ${e.rechnungGewuenscht ? '' : 'hidden'}>E-Mail-Adresse
+      <label class="haken">
+        <input type="checkbox" name="bewertung_gewuenscht" id="bewertung-haken"
+               ${e.bewertungGewuenscht ? 'checked' : ''}>
+        Fahrgast ist mit einer kurzen Nachricht nach der Fahrt einverstanden
+      </label>
+      <label id="rechnung-adresse" ${e.rechnungGewuenscht || e.bewertungGewuenscht ? '' : 'hidden'}>E-Mail-Adresse
         <input type="email" name="email" value="${sicher(e.email)}"
                inputmode="email" autocomplete="off" placeholder="name@beispiel.de">
       </label>
@@ -569,13 +577,18 @@ for (const knopf of formular.querySelectorAll('[name="wann"]')) {
 // Adressfeld nur zeigen, wenn eine Rechnung gewuenscht ist. Ohne JavaScript
 // bleibt es sichtbar - dann ist ein Feld zu viel zu sehen, aber nichts kaputt.
 const rechnungHaken = document.getElementById('rechnung-haken');
+const bewertungHaken = document.getElementById('bewertung-haken');
 const rechnungAdresse = document.getElementById('rechnung-adresse');
 const rechnungHinweis = document.getElementById('rechnung-hinweis');
-rechnungHaken.addEventListener('change', () => {
-  rechnungAdresse.hidden = !rechnungHaken.checked;
+const adresseZeigen = () => {
+  const gebraucht = rechnungHaken.checked || bewertungHaken.checked;
+  rechnungAdresse.hidden = !gebraucht;
+  // Der Hinweis zur Automatik gilt nur fuer die Rechnung
   rechnungHinweis.hidden = !rechnungHaken.checked;
-  if (rechnungHaken.checked) rechnungAdresse.querySelector('input').focus();
-});
+  if (gebraucht) rechnungAdresse.querySelector('input').focus();
+};
+rechnungHaken.addEventListener('change', adresseZeigen);
+bewertungHaken.addEventListener('change', adresseZeigen);
 
 preisHolen();`;
 

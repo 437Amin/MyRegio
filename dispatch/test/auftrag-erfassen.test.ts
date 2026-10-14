@@ -23,6 +23,7 @@ function eingabe(werte: Partial<ErfassungsEingabe> = {}): ErfassungsEingabe {
     name: 'Frau Keller',
     telefon: '0711 1234567',
     rechnungGewuenscht: false,
+    bewertungGewuenscht: false,
     email: '',
     personen: '2',
     anmerkung: '',
