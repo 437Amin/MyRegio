@@ -31,6 +31,14 @@
 --
 --    ALTER TABLE auftraege  ADD COLUMN rechnung_gewuenscht  INTEGER NOT NULL DEFAULT 0;
 --    ALTER TABLE auftraege  ADD COLUMN bewertung_gewuenscht INTEGER NOT NULL DEFAULT 0;
+--
+--  NACHTRAG Ankunftszeit (14.10.2026): zwei Spalten und eine neue Tabelle.
+--  Einmalig ausfuehren, BEVOR neuer Code veroeffentlicht wird:
+--
+--    ALTER TABLE auftraege ADD COLUMN von_breite REAL NOT NULL DEFAULT 0;
+--    ALTER TABLE auftraege ADD COLUMN von_laenge REAL NOT NULL DEFAULT 0;
+--
+--  Die Tabelle "fahrer_standort" legt "npm run db:anlegen" selbst an.
 --    ALTER TABLE auftraege  ADD COLUMN kunde_email         TEXT    NOT NULL DEFAULT '';
 --    ALTER TABLE rechnungen ADD COLUMN versendet_um        TEXT;
 --    ALTER TABLE rechnungen ADD COLUMN versand_an          TEXT    NOT NULL DEFAULT '';
@@ -123,6 +131,12 @@ CREATE TABLE IF NOT EXISTS auftraege (
   -- der Einzige: Reagiert er nicht, laeuft die Vermittlung normal weiter.
   wunsch_fahrer_id INTEGER REFERENCES fahrer (id),
 
+  -- Koordinaten der Abholadresse, falls der Fahrgast sie aus den Vorschlaegen
+  -- gewaehlt hat. 0 heisst: nur Freitext - dann gibt es keine Ankunftszeit,
+  -- weil sich ohne Punkt nichts rechnen laesst.
+  von_breite     REAL    NOT NULL DEFAULT 0,
+  von_laenge     REAL    NOT NULL DEFAULT 0,
+
   fahrer_id      INTEGER REFERENCES fahrer (id),
   angenommen_um  TEXT,
   beendet_um     TEXT
@@ -147,6 +161,25 @@ CREATE TABLE IF NOT EXISTS verlauf (
 );
 
 CREATE INDEX IF NOT EXISTS idx_verlauf_auftrag ON verlauf (auftrag_id, zeitpunkt);
+
+-- --- Standort der Fahrer -----------------------------------------------------
+-- ACHTUNG: Beschaeftigtendaten. Deshalb so sparsam wie moeglich:
+--
+--   * Nur der LETZTE Punkt, kein Verlauf. Es entsteht kein Bewegungsprofil.
+--   * Nur waehrend einer laufenden Fahrt. Ohne angenommenen Auftrag wird eine
+--     Standortmeldung verworfen, nicht gespeichert.
+--   * Mit dem Abmelden der Fahrt wird der Eintrag geloescht.
+--   * Nach aussen geht nie der Punkt, sondern nur ein Satz wie "etwa 4
+--     Minuten entfernt" - und den sieht allein der Fahrgast dieser Fahrt.
+--
+-- Der Fahrer teilt den Standort aktiv in Telegram ("Live-Standort"). Tut er es
+-- nicht, laeuft alles wie bisher; die Zeile faellt dann einfach weg.
+CREATE TABLE IF NOT EXISTS fahrer_standort (
+  fahrer_id INTEGER PRIMARY KEY REFERENCES fahrer (id),
+  breite    REAL NOT NULL,
+  laenge    REAL NOT NULL,
+  zeitpunkt TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 -- --- Einstellungen -----------------------------------------------------------
 -- Damit der Chef Nachtfenster und Antwortzeit selbst aendern kann.

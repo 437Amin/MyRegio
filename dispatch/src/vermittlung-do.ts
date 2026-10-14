@@ -1,6 +1,7 @@
 import type { Auftrag, Fahrer, Umgebung } from './typen';
 import { rechnungAusFahrt } from './rechnung-fahrt';
 import { dankeNachFahrt } from './danke-mail';
+import { standortVergessen } from './standort';
 import { zahlungsartLesen } from './rechnung-automatik';
 import type { Zahlungsart } from './rechnung';
 import { fahrerFuerZeitpunkt, wunschZuerst } from './schichten';
@@ -418,6 +419,10 @@ export class Vermittlung implements DurableObject {
 
     if (ergebnis.meta.changes === 0) return { ergebnis: 'unbekannt' };
 
+    // Der Standort wird nicht mehr gebraucht - also weg damit. Was nicht
+    // gespeichert ist, kann auch nicht missbraucht werden.
+    await standortVergessen(this.env.DB, fahrerId);
+
     await this.protokolliere(zustand.auftragId, fahrerId, 'erledigt');
     await this.entwerteNachricht(
       zustand,
@@ -589,6 +594,8 @@ export class Vermittlung implements DurableObject {
         : 'Preis mit dem Fahrgast absprechen. Zahlung bar oder mit Karte im Fahrzeug.',
       '',
       'Tippe nach der Fahrt auf „Fahrt erledigt“ – erst dann bekommst du wieder Angebote.',
+      '',
+      '📍 <b>Freiwillig:</b> Teile deinen Live-Standort (Büroklammer → Standort → „Live-Standort teilen“). Der Fahrgast sieht dann nur, wie lange es noch etwa dauert – nie, wo du bist. Nach dem Abmelden wird er gelöscht.',
     ]
       .filter(Boolean)
       .join('\n');

@@ -1,0 +1,102 @@
+/**
+ * Wie weit ist der Fahrer noch weg?
+ *
+ * Gerechnet wird aus der Luftlinie, nicht aus einer gefahrenen Route. Das ist
+ * Absicht: Die Statusseite fragt alle paar Sekunden nach, und jede Anfrage an
+ * einen Kartendienst waere eine Anfrage zu viel - fuer Geld, fuer Wartezeit
+ * und fuer die Zusage, dass auf der Seite nichts von fremden Servern laeuft.
+ *
+ * Die Zahl ist deshalb eine Schaetzung und wird dem Fahrgast auch so gesagt
+ * ("etwa"). Lieber ehrlich ungenau als genau falsch.
+ *
+ * Rein und ohne Datenbank, damit sich jede Regel einzeln pruefen laesst.
+ */
+
+/** Erdradius in Kilometern. */
+const ERDRADIUS_KM = 6371;
+
+/**
+ * Umweg-Zuschlag auf die Luftlinie.
+ *
+ * Strassen laufen nicht schnurgerade. 1,35 trifft Stuttgarter Stadtverkehr
+ * brauchbar - durch die Kessellage sind es stellenweise mehr, auf den
+ * Ausfallstrassen weniger.
+ */
+const UMWEG = 1.35;
+
+/** Durchschnittstempo in km/h, inklusive Ampeln und Suchen der Einfahrt. */
+const TEMPO_KMH = 27;
+
+/** Zuschlag fuer das Anhalten, Parken und die letzten Meter zu Fuss. */
+const ZUSCHLAG_MINUTEN = 2;
+
+/**
+ * Aelter als das - dann sagen wir lieber nichts.
+ *
+ * Ein Standort von vor zehn Minuten ist schlimmer als keiner: Der Fahrgast
+ * verlaesst sich auf eine Zahl, die nicht mehr stimmt.
+ */
+export const HOECHSTALTER_SEKUNDEN = 180;
+
+export interface Punkt {
+  breite: number;
+  laenge: number;
+}
+
+/** Luftlinie zwischen zwei Punkten in Kilometern (Haversine). */
+export function luftlinieKm(von: Punkt, nach: Punkt): number {
+  const bogen = (grad: number): number => (grad * Math.PI) / 180;
+
+  const dBreite = bogen(nach.breite - von.breite);
+  const dLaenge = bogen(nach.laenge - von.laenge);
+
+  const a =
+    Math.sin(dBreite / 2) ** 2 +
+    Math.cos(bogen(von.breite)) * Math.cos(bogen(nach.breite)) * Math.sin(dLaenge / 2) ** 2;
+
+  return 2 * ERDRADIUS_KM * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+/** Geschaetzte Minuten bis zur Abholung, mindestens 1. */
+export function ankunftMinuten(von: Punkt, nach: Punkt): number {
+  const strecke = luftlinieKm(von, nach) * UMWEG;
+  return Math.max(1, Math.round((strecke / TEMPO_KMH) * 60 + ZUSCHLAG_MINUTEN));
+}
+
+export interface Standort extends Punkt {
+  /** Zeitpunkt der Meldung, als ISO-Text oder SQLite-Zeit */
+  zeitpunkt: string;
+}
+
+/**
+ * Der Satz, den der Fahrgast liest - oder null, wenn wir nichts sagen sollten.
+ *
+ * Null statt eines vagen Satzes ist hier die bessere Antwort: Ohne Standort,
+ * ohne Abholpunkt oder mit einer veralteten Meldung waere jede Zahl geraten.
+ * Dann steht auf der Seite einfach nichts weiter - der Fahrgast weiss ja, dass
+ * jemand unterwegs ist.
+ */
+export function ankunftstext(
+  standort: Standort | null,
+  abholung: Punkt | null,
+  jetzt: Date,
+): string | null {
+  if (!standort || !abholung) return null;
+
+  const gemeldet = new Date(
+    /[TZ]|[+-]\d\d:\d\d$/.test(standort.zeitpunkt)
+      ? standort.zeitpunkt
+      : standort.zeitpunkt.replace(' ', 'T') + 'Z',
+  );
+  if (Number.isNaN(gemeldet.getTime())) return null;
+
+  const alterSekunden = (jetzt.getTime() - gemeldet.getTime()) / 1000;
+  // Auch ein Standort aus der Zukunft ist unbrauchbar - dann geht eine Uhr falsch
+  if (alterSekunden < -60 || alterSekunden > HOECHSTALTER_SEKUNDEN) return null;
+
+  const minuten = ankunftMinuten(standort, abholung);
+
+  if (minuten <= 1) return 'Ihr Fahrer ist gleich da.';
+  if (minuten <= 2) return 'Ihr Fahrer ist etwa 2 Minuten entfernt.';
+  return `Ihr Fahrer ist etwa ${minuten} Minuten entfernt.`;
+}

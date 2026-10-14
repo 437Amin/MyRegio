@@ -277,6 +277,36 @@ Rechnung kostet eher Vertrauen, als sie nützt. Festgehalten wird, *wann* und
 *wohin* verschickt wurde (`versendet_um`, `versand_an`) – ohne das ließe sich
 „nie verschickt" nicht von „Versand gescheitert" unterscheiden.
 
+### Ankunftszeit (`ankunft.ts`, `standort.ts`)
+
+Der Fahrer teilt in Telegram seinen **Live-Standort** (freiwillig). Der
+Fahrgast sieht auf der Statusseite einen Satz wie „Ihr Fahrer ist etwa
+4 Minuten entfernt" – **keine Karte**: Die käme von einem fremden Server, und
+die Seite ist vollständig frei davon.
+
+**Gerechnet wird aus der Luftlinie**, nicht aus einer Route: Die Statusseite
+fragt alle paar Sekunden nach, und jede Anfrage an einen Kartendienst wäre
+eine zu viel – für Geld, Wartezeit und die Zusage, dass nichts von fremden
+Servern läuft. Luftlinie × 1,35 Umwegfaktor, 27 km/h, plus zwei Minuten fürs
+Anhalten. Eine Schätzung, und sie wird auch so benannt („etwa").
+
+**Geschwiegen wird in vier Fällen** – lieber nichts als eine geratene Zahl:
+kein Standort, kein Abholpunkt (die Adresse wurde frei eingetippt), eine
+Meldung älter als drei Minuten, oder eine Meldung aus der Zukunft (dann geht
+eine Uhr falsch).
+
+**Beschäftigtendaten, deshalb sparsam** (siehe `schema.sql` bei der Tabelle):
+
+- nur der **letzte** Punkt, kein Verlauf – es entsteht kein Bewegungsprofil
+- nur **während** einer angenommenen Fahrt; eine Meldung außerhalb wird
+  verworfen, nicht aufgehoben
+- mit dem Abmelden der Fahrt wird der Eintrag **gelöscht**
+- nach außen geht nie der Punkt, sondern nur der Satz – und den sieht allein
+  der Fahrgast dieser Fahrt
+
+Telegram schickt den ersten Punkt als `message`, jede Aktualisierung als
+`edited_message`; beides fängt `standortmeldung()` ab.
+
 ### Nachricht nach der Fahrt (`danke-mail.ts`)
 
 Wer seine Adresse angibt, ohne eine Rechnung zu wollen, bekommt nach der
@@ -399,10 +429,10 @@ npx wrangler d1 execute vermittlung --local --file=test/testdaten.sql
 node test/ablauf.mjs                 # Fenster 3
 ```
 
-Zehn Abschnitte: Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef, der
+Elf Abschnitte: Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef, der
 Wunschfahrer (vorgezogen / unterwegs / unbekannt), die Rechnung nach der Fahrt,
-die Nachricht nach der Fahrt und die Absicherungen (fehlende Angaben, unsinnige
-Rufnummer, Telegram-Aufruf ohne Geheimnis).
+die Nachricht nach der Fahrt, Standort und Ankunftszeit und die Absicherungen
+(fehlende Angaben, unsinnige Rufnummer, Telegram-Aufruf ohne Geheimnis).
 
 Dazu `node test/versand.mjs` – es prüft im echten Workers-Lauf, was vitest
 nicht kann: Anmeldung, PDF-Erzeugung in der Worker-Umgebung, Versand,

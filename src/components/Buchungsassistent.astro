@@ -578,6 +578,13 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
           <h3 class="mt-5 text-xl font-bold text-white md:text-2xl">
             <span data-fahrername>Ein Fahrer</span> übernimmt Ihre Fahrt
           </h3>
+          <!--
+            Ankunftszeit. Erscheint nur, wenn der Fahrer seinen Live-Standort
+            teilt - sonst bleibt die Zeile weg, statt zu raten. Bewusst keine
+            Karte: Die kaeme von einem fremden Server.
+          -->
+          <p class="mx-auto mt-4 max-w-md text-lg font-semibold text-cyan-400"
+             data-status-ankunft hidden aria-live="polite"></p>
           <p class="mx-auto mt-3 max-w-md text-nebel-400" data-status-wunsch hidden>
             Ihr Wunschfahrer war gerade nicht verfügbar – damit Sie nicht
             warten müssen, übernimmt eine Kollegin oder ein Kollege.

@@ -122,4 +122,6 @@ export interface StatusAntwort {
   angenommenUm?: string;
   /** true, wenn ein Wunschfahrer angegeben war, aber jemand anderes faehrt */
   wunschVerfehlt?: boolean;
+  /** "Ihr Fahrer ist etwa 4 Minuten entfernt." - fehlt, wenn unbekannt */
+  ankunft?: string;
 }

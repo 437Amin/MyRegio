@@ -258,6 +258,31 @@ Telegram-Nachricht mit allen Angaben:
 
 ---
 
+## Der Fahrgast sieht, wann der Fahrer kommt
+
+Teilt ein Fahrer in Telegram seinen **Live-Standort**, steht auf der Seite des
+Fahrgasts ein Satz wie „Ihr Fahrer ist etwa 4 Minuten entfernt". Das spart
+Rückrufe und Nachfragen.
+
+**So macht es der Fahrer:** Im Chat mit dem Bot auf die **Büroklammer** →
+**Standort** → **„Live-Standort teilen"**, Dauer wählen, fertig. Der Hinweis
+dazu steht auch in der Nachricht, die er nach dem Annehmen bekommt.
+
+**Was der Fahrgast NICHT sieht:** wo der Fahrer ist. Keine Karte, kein Punkt,
+keine Adresse – nur die geschätzte Zeit. Und auch die nur, solange die Fahrt
+läuft.
+
+**Freiwillig.** Teilt ein Fahrer den Standort nicht, läuft alles wie bisher,
+die Zeile fällt einfach weg. Der Standort wird nur während einer laufenden
+Fahrt gespeichert, immer nur der letzte Punkt, und mit dem Abmelden der Fahrt
+wird er gelöscht. Es entsteht kein Bewegungsprofil.
+
+**Wenn die Adresse frei eingetippt wurde**, gibt es keine Zeitangabe – ohne
+Koordinaten lässt sich nichts rechnen. Das betrifft vor allem telefonisch
+aufgenommene Aufträge.
+
+---
+
 ## Dankesnachricht und Bewertungen
 
 Der Fahrgast kann bei der Bestellung seine E-Mail-Adresse angeben, ohne eine

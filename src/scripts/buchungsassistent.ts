@@ -721,6 +721,7 @@ function einrichten(wurzel: HTMLElement): void {
             status?: string;
             fahrer?: string;
             wunschVerfehlt?: boolean;
+            ankunft?: string;
           };
 
           if (stand.status === 'angenommen') {
@@ -730,6 +731,15 @@ function einrichten(wurzel: HTMLElement): void {
             // Nur wenn ein Wunschfahrer angegeben war und jemand anderes faehrt
             const hinweis = wurzel.querySelector<HTMLElement>('[data-status-wunsch]');
             if (hinweis) hinweis.hidden = !stand.wunschVerfehlt;
+
+            // Ankunftszeit, solange der Fahrer seinen Standort teilt. Faellt
+            // sie weg - etwa weil er die Freigabe beendet -, verschwindet die
+            // Zeile wieder, statt eine veraltete Zahl stehen zu lassen.
+            const ankunft = wurzel.querySelector<HTMLElement>('[data-status-ankunft]');
+            if (ankunft) {
+              ankunft.textContent = stand.ankunft ?? '';
+              ankunft.hidden = !stand.ankunft;
+            }
 
             zeigeStatus('gefunden');
             return;

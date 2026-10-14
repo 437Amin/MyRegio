@@ -5,6 +5,8 @@ import { adminRoute } from './admin';
 import { adressenVorschlagen } from './strecke';
 import { HEIMAT, festpreisErmitteln, pruefePunkt, type Punkt } from './festpreis';
 import { plausibleEmail, plausibleTelefonnummer } from './auftrag-erfassen';
+import { standortLesen, standortmeldung } from './standort';
+import { ankunftstext } from './ankunft';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -145,11 +147,12 @@ async function bestellungAnnehmen(
   // Der Preis wird hier neu gerechnet und NICHT aus dem Browser uebernommen.
   // Faellt die Ermittlung aus, bleibt er bei 0 - dann wird er wie frueher
   // individuell abgesprochen, statt einen falschen Betrag festzuschreiben.
+  const vonPunkt = pruefePunkt(roh.vonPunkt);
   const festpreis = await festpreisErmitteln(
     kurz(roh.abholung),
     kurz(roh.ziel ?? ''),
     env,
-    pruefePunkt(roh.vonPunkt),
+    vonPunkt,
     pruefePunkt(roh.nachPunkt),
   );
 
@@ -157,8 +160,9 @@ async function bestellungAnnehmen(
     `INSERT INTO auftraege
        (id, art, abholung, ziel, wunschzeit, wunsch_iso, sofort, personen, gepaeck,
         kindersitze, anmerkung, preis, strecke_km, kunde_name, kunde_telefon,
-        wunsch_fahrer_id, rechnung_gewuenscht, bewertung_gewuenscht, kunde_email)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        wunsch_fahrer_id, rechnung_gewuenscht, bewertung_gewuenscht, kunde_email,
+        von_breite, von_laenge)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
       id,
@@ -182,6 +186,10 @@ async function bestellungAnnehmen(
       // die Zustimmung zur Nachricht nach der Fahrt.
       kundeEmail ? 1 : 0,
       kundeEmail,
+      // Nur vorhanden, wenn der Fahrgast die Adresse aus den Vorschlaegen
+      // gewaehlt hat. Ohne Punkt gibt es spaeter keine Ankunftszeit.
+      vonPunkt?.breite ?? 0,
+      vonPunkt?.laenge ?? 0,
     )
     .run();
 
@@ -208,7 +216,7 @@ async function statusAbfragen(
 ): Promise<Response> {
   const zeile = await env.DB.prepare(
     `SELECT a.status, a.angenommen_um, a.wunsch_fahrer_id, a.fahrer_id,
-            f.name AS fahrername
+            a.von_breite, a.von_laenge, a.beendet_um, f.name AS fahrername
        FROM auftraege a
        LEFT JOIN fahrer f ON f.id = a.fahrer_id
       WHERE a.id = ?`,
@@ -219,6 +227,9 @@ async function statusAbfragen(
       angenommen_um: string | null;
       wunsch_fahrer_id: number | null;
       fahrer_id: number | null;
+      von_breite: number;
+      von_laenge: number;
+      beendet_um: string | null;
       fahrername: string | null;
     }>();
 
@@ -236,8 +247,37 @@ async function statusAbfragen(
         zeile.fahrer_id &&
         zeile.wunsch_fahrer_id !== zeile.fahrer_id,
     ),
+    ankunft: (await ankunftSatz(zeile, env)) ?? undefined,
   };
   return antwort(ergebnis, 200, env, anfrage);
+}
+
+/**
+ * Der Satz zur Ankunft - oder nichts.
+ *
+ * Nach aussen geht nie der Standort des Fahrers, sondern nur eine geschaetzte
+ * Zeit. Und nur, solange die Fahrt laeuft: Danach hat niemand mehr ein
+ * berechtigtes Interesse daran, wo der Wagen gerade steht.
+ */
+async function ankunftSatz(
+  zeile: {
+    status: string;
+    fahrer_id: number | null;
+    von_breite: number;
+    von_laenge: number;
+    beendet_um: string | null;
+  },
+  env: Umgebung,
+): Promise<string | null> {
+  if (zeile.status !== 'angenommen' || zeile.beendet_um || !zeile.fahrer_id) return null;
+  if (!zeile.von_breite || !zeile.von_laenge) return null;
+
+  const standort = await standortLesen(env.DB, zeile.fahrer_id);
+  return ankunftstext(
+    standort,
+    { breite: zeile.von_breite, laenge: zeile.von_laenge },
+    new Date(),
+  );
 }
 
 /* ========================================================================== */
@@ -257,6 +297,12 @@ async function telegramEmpfangen(
 
   const update = (await anfrage.json().catch(() => null)) as any;
   if (!update) return new Response('ok');
+
+  // --- Fahrer teilt seinen Live-Standort ----------------------------------
+  // Telegram schickt den ersten Punkt als Nachricht und jede Aktualisierung
+  // als bearbeitete Nachricht. Beides faengt standortmeldung() ab; alles
+  // Weitere laeuft unveraendert.
+  if (await standortmeldung(update, env)) return new Response('ok');
 
   // --- Fahrer meldet sich am Bot an: /start ABC123 -------------------------
   const text: string | undefined = update.message?.text;

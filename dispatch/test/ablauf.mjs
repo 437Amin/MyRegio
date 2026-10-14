@@ -108,6 +108,23 @@ async function erledige(auftragId, fahrerId, zahlungsart = '') {
   return antwort;
 }
 
+/** Simuliert eine Standortmeldung des Fahrers aus Telegram. */
+async function standortMelden(chatId, breite, laenge, bearbeitet = false) {
+  const nachricht = {
+    message_id: 7,
+    chat: { id: chatId },
+    location: { latitude: breite, longitude: laenge, live_period: 900 },
+  };
+  return fetch(`${DIENST}/telegram/webhook`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-telegram-bot-api-secret-token': 'test-geheimnis',
+    },
+    body: JSON.stringify(bearbeitet ? { edited_message: nachricht } : { message: nachricht }),
+  });
+}
+
 async function status(id) {
   return (await fetch(`${DIENST}/api/status/${id}`)).json();
 }
@@ -484,7 +501,73 @@ await leeren();
   );
 }
 
-console.log('\n=== 10. Absicherungen ===');
+console.log('\n=== 10. Standort und Ankunftszeit ===');
+await leeren();
+{
+  // Die Abholung liegt beim Betriebssitz; der Fahrer meldet sich ein Stueck
+  // entfernt. Ohne gewaehlte Adresse gaebe es keine Koordinaten - deshalb
+  // werden sie hier mitgeschickt.
+  const { koerper } = await bestelle(
+    {
+      name: 'Frau Wagner',
+      abholung: 'Steiermärker Straße 3-5, Stuttgart',
+      vonPunkt: { breite: 48.8143644, laenge: 9.165389 },
+    },
+    '203.0.113.10',
+  );
+  await warte(600);
+  await knopfDruck(koerper.auftragId, 101, '101', true);
+  await warte(400);
+
+  const ohne = await status(koerper.auftragId);
+  pruefe(
+    ohne.ankunft === undefined,
+    'Ohne Standort steht keine Ankunftszeit da',
+    JSON.stringify(ohne),
+  );
+
+  // Der Fahrer teilt seinen Live-Standort: rund 2 km entfernt
+  await standortMelden('101', 48.7985, 9.1744);
+  await warte(300);
+
+  const mit = await status(koerper.auftragId);
+  pruefe(
+    /^Ihr Fahrer ist etwa \d+ Minuten entfernt\.$/.test(mit.ankunft ?? ''),
+    'Mit Standort erscheint die geschätzte Zeit',
+    JSON.stringify(mit.ankunft),
+  );
+  pruefe(
+    !JSON.stringify(mit).includes('48.79') && !JSON.stringify(mit).includes('9.17'),
+    'Der Standort selbst geht NICHT nach außen',
+    JSON.stringify(mit),
+  );
+
+  // Aktualisierung als bearbeitete Nachricht - naeher dran
+  await standortMelden('101', 48.8125, 9.1662, true);
+  await warte(300);
+  const naeher = await status(koerper.auftragId);
+  const minuten = (text) => Number(/(\d+)/.exec(text ?? '')?.[1] ?? 0);
+  pruefe(
+    minuten(naeher.ankunft) < minuten(mit.ankunft),
+    'Die Aktualisierung kommt an und die Zeit sinkt',
+    `${mit.ankunft} -> ${naeher.ankunft}`,
+  );
+
+  await erledige(koerper.auftragId, 101);
+  await warte(400);
+  const danach = await status(koerper.auftragId);
+  pruefe(
+    danach.ankunft === undefined,
+    'Nach der Fahrt ist der Standort gelöscht',
+    JSON.stringify(danach),
+  );
+
+  // Dass ohne laufende Fahrt gar nichts gespeichert wird, prueft
+  // test/standort.test.ts gegen eine echte Datenbank - von aussen waere es
+  // nicht zu sehen, und eine Pruefung, die immer besteht, ist keine.
+}
+
+console.log('\n=== 11. Absicherungen ===');
 {
   const ohneName = await bestelle({ name: '' });
   pruefe(ohneName.status === 400, 'Bestellung ohne Namen wird abgelehnt');
