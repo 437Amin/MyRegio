@@ -10,7 +10,7 @@
     {
       "name": "vermittlung-lokal",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["--prefix", "dispatch", "run", "dev", "--", "--port", "8788", "--var", "ADMIN_PASSWORT:lokal-test", "--var", "ERLAUBTE_HERKUNFT:http://localhost:4321"],
+      "runtimeArgs": ["--prefix", "dispatch", "run", "dev", "--", "--port", "8788", "--var", "ADMIN_PASSWORT:lokal-test", "--var", "ERLAUBTE_HERKUNFT:http://localhost:4321", "--var", "BREVO_API_KEY:lokal-test", "--var", "BREVO_BASIS:http://127.0.0.1:8799"],
       "port": 8788
     },
     {

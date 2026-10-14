@@ -31,6 +31,8 @@ export async function rechnungAnlegen(
   r: GepruefteRechnung,
   absender: Absender,
   rechnungsdatum: string,
+  /** Gefahrener Auftrag, falls die Rechnung aus einem stammt */
+  auftragId: string | null = null,
 ): Promise<number> {
   const jahr = Number(rechnungsdatum.slice(0, 4));
   const zeile = await db
@@ -38,9 +40,9 @@ export async function rechnungAnlegen(
       `INSERT INTO rechnungen
          (jahr, laufnummer, rechnungsdatum, fahrtdatum, von, nach, kunde_name,
           kunde_anschrift, zahlungsart, brutto_cent, netto_cent, steuer_cent,
-          steuersatz, absender)
+          steuersatz, absender, auftrag_id)
        VALUES (?, (SELECT COALESCE(MAX(laufnummer), 0) + 1 FROM rechnungen WHERE jahr = ?),
-               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        RETURNING id`,
     )
     .bind(
@@ -58,6 +60,7 @@ export async function rechnungAnlegen(
       r.steuerCent,
       r.steuersatz,
       JSON.stringify(absender),
+      auftragId,
     )
     .first<{ id: number }>();
 

@@ -23,6 +23,8 @@ import {
   type RechnungMitStorno,
 } from './rechnung-ablage';
 import { rechnungAlsPdf } from './rechnung-pdf';
+import { rechnungVerschicken } from './rechnung-versand';
+import { plausibleEmail } from './auftrag-erfassen';
 import { html, seite, sicher } from './seite';
 import { VORSCHLAEGE_SKRIPT, VORSCHLAG_STIL, adressfeld } from './vorschlagfeld';
 
@@ -51,6 +53,16 @@ export async function rechnungenRoute(anfrage: Request, env: Umgebung): Promise<
     return stornieren(Number(storno[1]), env);
   }
 
+  const korrektur = pfad.match(/^\/fahrer\/rechnungen\/(\d+)\/korrigieren$/);
+  if (korrektur && post) {
+    return korrigieren(Number(korrektur[1]), env);
+  }
+
+  const senden = pfad.match(/^\/fahrer\/rechnungen\/(\d+)\/senden$/);
+  if (senden && post) {
+    return erneutSenden(Number(senden[1]), anfrage, env);
+  }
+
   const pdf = pfad.match(/^\/fahrer\/rechnungen\/(\d+)\/[\w-]+\.pdf$/);
   if (pdf) {
     return pdfAusliefern(Number(pdf[1]), env);
@@ -60,10 +72,42 @@ export async function rechnungenRoute(anfrage: Request, env: Umgebung): Promise<
   if (einzeln) {
     const r = await rechnungLaden(env.DB, Number(einzeln[1]));
     if (!r) return html(seite('<h1>Rechnung nicht gefunden</h1><p><a href="/fahrer/rechnungen">Zu den Rechnungen</a></p>', { titel: 'Rechnungen' }), 404);
-    return html(await einzelSeite(r, env, url.searchParams.has('neu')), 200);
+    return html(
+      await einzelSeite(
+        r,
+        env,
+        url.searchParams.has('neu'),
+        url.searchParams.get('versand') ?? '',
+      ),
+      200,
+    );
   }
 
-  return html(await uebersicht(env, { gespeichert: url.searchParams.has('gespeichert') }), 200);
+  // Nach dem Korrigieren: Formular mit den Werten der alten Rechnung oeffnen
+  const korrigiert = Number(url.searchParams.get('korrigiert') ?? '');
+  const vorlage = Number.isFinite(korrigiert) && korrigiert > 0
+    ? await rechnungLaden(env.DB, korrigiert)
+    : null;
+
+  return html(
+    await uebersicht(env, {
+      gespeichert: url.searchParams.has('gespeichert'),
+      eingabe: vorlage
+        ? {
+            von: vorlage.von,
+            nach: vorlage.nach,
+            betrag: betragFuerEingabe(vorlage.brutto_cent),
+            fahrtdatum: vorlage.fahrtdatum,
+            kundeName: vorlage.kunde_name,
+            kundeAnschrift: vorlage.kunde_anschrift,
+            zahlungsart: vorlage.zahlungsart,
+          }
+        : undefined,
+      sendenAn: url.searchParams.get('an') ?? '',
+      korrigiert: Boolean(vorlage),
+    }),
+    200,
+  );
 }
 
 /* =============================================================== Aktionen */
@@ -93,6 +137,28 @@ async function rechnungErstellen(anfrage: Request, env: Umgebung): Promise<Respo
   }
 
   const id = await rechnungAnlegen(env.DB, ergebnis.rechnung, absender, heute);
+
+  // Stammt die Rechnung aus einer Korrektur, geht sie gleich an dieselbe
+  // Adresse wie die alte. Ein Fehlschlag haelt nichts auf - die Rechnung ist
+  // angelegt, und auf ihrer Seite steht der Knopf zum Nachschicken.
+  const sendenAn = String(f.get('senden_an') ?? '').trim().slice(0, 254);
+  if (plausibleEmail(sendenAn)) {
+    const neue = await rechnungLaden(env.DB, id);
+    if (neue) {
+      const ergebnisVersand = await rechnungVerschicken(
+        env.DB,
+        env,
+        neue,
+        sendenAn,
+        absender,
+        await einstellung(env, 'bewertung_link'),
+      );
+      return weiter(
+        `/fahrer/rechnungen/${id}?neu&versand=${ergebnisVersand.ok ? 'ok' : 'fehler'}`,
+      );
+    }
+  }
+
   return weiter(`/fahrer/rechnungen/${id}?neu`);
 }
 
@@ -101,6 +167,86 @@ async function stornieren(id: number, env: Umgebung): Promise<Response> {
   const stornoId = await rechnungStornieren(env.DB, id, await ladeAbsender(env), heute);
   // Null: gibt es nicht oder ist selbst eine Stornorechnung
   return weiter(stornoId ? `/fahrer/rechnungen/${stornoId}?neu` : `/fahrer/rechnungen/${id}`);
+}
+
+/**
+ * Rechnung korrigieren - in einem Schritt.
+ *
+ * Eine Rechnung zu aendern ist nicht erlaubt (GoBD, § 14 UStG): Sie wird
+ * storniert, und es entsteht eine neue. Fuer Oender soll das trotzdem ein
+ * Knopf sein. Also: stornieren, die Stornorechnung an den Fahrgast schicken
+ * und das Formular mit allen Werten der alten Rechnung oeffnen.
+ */
+async function korrigieren(id: number, env: Umgebung): Promise<Response> {
+  const alt = await rechnungLaden(env.DB, id);
+  if (!alt || alt.storno_von !== null) return weiter(`/fahrer/rechnungen/${id}`);
+
+  const absender = await ladeAbsender(env);
+  const stornoId = await rechnungStornieren(
+    env.DB,
+    id,
+    absender,
+    heuteInDeutschland(new Date()),
+  );
+
+  // Der Fahrgast hat die alte Rechnung bekommen - dann gehoert ihm auch die
+  // Stornorechnung. Scheitert der Versand, geht es trotzdem weiter: Die
+  // Korrektur ist wichtiger als die Benachrichtigung darueber.
+  const adresse = await empfaengerZu(env, alt);
+  if (stornoId && adresse) {
+    const storno = await rechnungLaden(env.DB, stornoId);
+    if (storno) {
+      await rechnungVerschicken(env.DB, env, storno, adresse, absender, '', alt);
+    }
+  }
+
+  const ziel = new URLSearchParams({ korrigiert: String(id) });
+  if (adresse) ziel.set('an', adresse);
+  return weiter(`/fahrer/rechnungen?${ziel}`);
+}
+
+/** Eine bereits angelegte Rechnung (erneut) verschicken. */
+async function erneutSenden(
+  id: number,
+  anfrage: Request,
+  env: Umgebung,
+): Promise<Response> {
+  const r = await rechnungLaden(env.DB, id);
+  if (!r) return weiter('/fahrer/rechnungen');
+
+  const f = await anfrage.formData();
+  const adresse = String(f.get('an') ?? '').trim().slice(0, 254);
+  if (!plausibleEmail(adresse)) {
+    return weiter(`/fahrer/rechnungen/${id}?versand=adresse`);
+  }
+
+  const original = r.storno_von ? await rechnungLaden(env.DB, r.storno_von) : null;
+  const ergebnis = await rechnungVerschicken(
+    env.DB,
+    env,
+    r,
+    adresse,
+    await ladeAbsender(env),
+    await einstellung(env, 'bewertung_link'),
+    original,
+  );
+
+  return weiter(`/fahrer/rechnungen/${id}?versand=${ergebnis.ok ? 'ok' : 'fehler'}`);
+}
+
+/** An welche Adresse ging oder geht diese Rechnung? */
+async function empfaengerZu(env: Umgebung, r: Rechnung): Promise<string> {
+  if (r.versand_an) return r.versand_an;
+
+  const zeile = await env.DB.prepare(
+    `SELECT a.kunde_email FROM rechnungen r
+       JOIN auftraege a ON a.id = r.auftrag_id
+      WHERE r.id = ?`,
+  )
+    .bind(r.id)
+    .first<{ kunde_email: string }>();
+
+  return zeile?.kunde_email ?? '';
 }
 
 async function pdfAusliefern(id: number, env: Umgebung): Promise<Response> {
@@ -146,6 +292,17 @@ async function absenderSpeichern(anfrage: Request, env: Umgebung): Promise<Respo
       .bind(`rechnung_${feld}`, wert)
       .run();
   }
+
+  // Der Bewertungslink gehoert nicht zum Absender und steht deshalb unter
+  // einem eigenen Schluessel. Nur http(s) wird uebernommen - ein "javascript:"
+  // in einer E-Mail waere eine offene Tuer.
+  const link = String(f.get('bewertung_link') ?? '').trim().slice(0, 300);
+  await env.DB.prepare(
+    'INSERT INTO einstellungen (schluessel, wert) VALUES (?, ?) ON CONFLICT(schluessel) DO UPDATE SET wert = excluded.wert',
+  )
+    .bind('bewertung_link', /^https?:\/\//i.test(link) ? link : '')
+    .run();
+
   return weiter('/fahrer/rechnungen?gespeichert#firmendaten');
 }
 
@@ -170,12 +327,17 @@ async function uebersicht(
     absenderEingabe,
     absenderFehler,
     gespeichert = false,
+    sendenAn = '',
+    korrigiert = false,
   }: {
     eingabe?: RechnungsEingabe;
     fehler?: string[];
     absenderEingabe?: Record<string, string>;
     absenderFehler?: string;
     gespeichert?: boolean;
+    /** Adresse, an die die neue Rechnung automatisch gehen soll */
+    sendenAn?: string;
+    korrigiert?: boolean;
   },
 ): Promise<string> {
   const heute = heuteInDeutschland(new Date());
@@ -189,6 +351,7 @@ async function uebersicht(
     zahlungsart: 'bar',
   };
   const absender: Record<string, string> = absenderEingabe ?? { ...(await ladeAbsender(env)) };
+  const bewertungLink = await einstellung(env, 'bewertung_link');
   const rechnungen = await letzteRechnungen(env.DB);
 
   const fahrgastOffen = Boolean(e.kundeName || e.kundeAnschrift || fehler.some((t) => t.includes('Anschrift')));
@@ -216,10 +379,20 @@ async function uebersicht(
       <span><a href="/fahrer">Fahrer &amp; Aufträge</a> · <a class="klein" href="/fahrer/abmelden">Abmelden</a></span>
     </div>
 
-    <h2>Neue Rechnung</h2>
+    <h2>${korrigiert ? 'Berichtigte Rechnung' : 'Neue Rechnung'}</h2>
+    ${
+      korrigiert
+        ? `<p class="meldung" role="status">
+             ✓ Die alte Rechnung ist storniert${sendenAn ? ', die Stornorechnung ist beim Fahrgast' : ''}.
+             Unten stehen alle Angaben von dort – korrigieren Sie, was falsch war, und stellen Sie die Rechnung neu aus.
+             ${sendenAn ? `Sie geht anschließend automatisch an ${sicher(sendenAn)}.` : ''}
+           </p>`
+        : ''
+    }
     ${fehler.length ? `<div class="fehlerkasten" role="alert">${fehler.map((t) => `<p>${sicher(t)}</p>`).join('')}</div>` : ''}
 
     <form method="post" action="/fahrer/rechnungen/neu" class="formular">
+      ${sendenAn ? `<input type="hidden" name="senden_an" value="${sicher(sendenAn)}">` : ''}
       ${adressfeld({ name: 'von', beschriftung: 'Start-Adresse', wert: e.von, platzhalter: 'Straße, Hausnummer, Ort', pflicht: true })}
       ${adressfeld({ name: 'nach', beschriftung: 'Ziel-Adresse', wert: e.nach, platzhalter: 'z. B. Flughafen Stuttgart', pflicht: true })}
       <p class="hinweis">Beim Tippen erscheinen Vorschläge. Passt keiner, die Adresse einfach vollständig eintragen.</p>
@@ -271,8 +444,17 @@ async function uebersicht(
             <input name="${feld}" value="${sicher(absender[feld])}" ${PFLICHT_ABSENDER.includes(feld) ? 'required' : ''}>
           </label>`,
         ).join('')}
+        <label>Link zur Bewertungsseite <span class="klein">– optional</span>
+          <input name="bewertung_link" type="url" inputmode="url"
+                 value="${sicher(bewertungLink)}"
+                 placeholder="https://g.page/r/...">
+        </label>
         <button>Firmendaten speichern</button>
-        <p class="hinweis">Gilt für neue Rechnungen. Bereits ausgestellte bleiben, wie sie sind.</p>
+        <p class="hinweis">
+          Gilt für neue Rechnungen. Bereits ausgestellte bleiben, wie sie sind.
+          Der Bewertungslink steht unter jeder Rechnung, die per E-Mail
+          rausgeht – solange er leer ist, bleibt die Zeile weg.
+        </p>
       </form>
     </details>
 
@@ -282,7 +464,12 @@ async function uebersicht(
   );
 }
 
-async function einzelSeite(r: RechnungMitStorno, env: Umgebung, neu: boolean): Promise<string> {
+async function einzelSeite(
+  r: RechnungMitStorno,
+  env: Umgebung,
+  neu: boolean,
+  versand = '',
+): Promise<string> {
   const nummer = rechnungsnummer(r.jahr, r.laufnummer);
   const istStorno = r.storno_von !== null;
   const titel = istStorno ? 'Stornorechnung' : 'Rechnung';
@@ -311,18 +498,55 @@ async function einzelSeite(r: RechnungMitStorno, env: Umgebung, neu: boolean): P
     zustand = `<p class="fehler">Storniert durch <a href="/fahrer/rechnungen/${stornoRechnung.id}">Stornorechnung ${rechnungsnummer(stornoRechnung.jahr, stornoRechnung.laufnummer)}</a>.</p>`;
   }
 
+  const adresse = await empfaengerZu(env, r);
+
+  const versandstand = r.versendet_um
+    ? `<p class="meldung">✓ Per E-Mail verschickt am ${datumDeutsch(r.versendet_um.slice(0, 10))} an ${sicher(r.versand_an ?? '')}.</p>`
+    : '<p class="hinweis">Diese Rechnung wurde noch nicht per E-Mail verschickt.</p>';
+
+  const versandmeldung =
+    versand === 'ok'
+      ? '<p class="meldung" role="status">✓ Rechnung verschickt.</p>'
+      : versand === 'fehler'
+        ? '<p class="fehler" role="alert">Der Versand hat nicht geklappt. Bitte Adresse prüfen und noch einmal versuchen.</p>'
+        : versand === 'adresse'
+          ? '<p class="fehler" role="alert">Die E-Mail-Adresse sieht nicht richtig aus.</p>'
+          : '';
+
+  const versandFeld = `<h2>Per E-Mail verschicken</h2>
+    ${versandstand}
+    ${versandmeldung}
+    <form method="post" action="/fahrer/rechnungen/${r.id}/senden" class="formular">
+      <label>E-Mail-Adresse des Fahrgasts
+        <input name="an" type="email" inputmode="email" value="${sicher(adresse)}"
+               placeholder="name@beispiel.de" required>
+      </label>
+      <button class="cyan">${r.versendet_um ? 'Noch einmal verschicken' : 'Rechnung verschicken'}</button>
+    </form>`;
+
+  // Korrigieren statt Stornieren als Hauptweg: Es ist das, was Oender
+  // tatsaechlich will. Der Knopf macht beides - stornieren UND das Formular
+  // mit den alten Werten oeffnen.
   const stornoKnopf =
     !istStorno && !stornoRechnung
       ? `<h2>Fehler in der Rechnung?</h2>
     <p class="hinweis">
-      Eine ausgestellte Rechnung darf nicht geändert oder gelöscht werden.
-      Stattdessen wird sie storniert: Es entsteht eine Stornorechnung mit
-      eigener Nummer, danach einfach eine neue Rechnung erstellen.
+      Eine ausgestellte Rechnung darf nicht geändert oder gelöscht werden –
+      das verlangt das Steuerrecht. „Korrigieren" erledigt beides auf einmal:
+      Es storniert diese Rechnung, schickt dem Fahrgast die Stornorechnung und
+      öffnet eine neue Rechnung mit allen Angaben von hier.
     </p>
-    <form method="post" action="/fahrer/rechnungen/${r.id}/stornieren"
-          onsubmit="return confirm('Rechnung ${nummer} stornieren?\\n\\nDas lässt sich nicht rückgängig machen.')">
-      <button class="rot">Rechnung stornieren</button>
-    </form>`
+    <form method="post" action="/fahrer/rechnungen/${r.id}/korrigieren"
+          onsubmit="return confirm('Rechnung ${nummer} korrigieren?\\n\\nSie wird storniert, und Sie können sie gleich neu ausstellen.')">
+      <button class="cyan">Rechnung korrigieren</button>
+    </form>
+    <details>
+      <summary>Nur stornieren, ohne neue Rechnung</summary>
+      <form method="post" action="/fahrer/rechnungen/${r.id}/stornieren"
+            onsubmit="return confirm('Rechnung ${nummer} stornieren?\\n\\nDas lässt sich nicht rückgängig machen.')">
+        <button class="rot">Rechnung stornieren</button>
+      </form>
+    </details>`
       : '';
 
   return seite(
@@ -342,6 +566,8 @@ async function einzelSeite(r: RechnungMitStorno, env: Umgebung, neu: boolean): P
       <a class="knopf gross" href="/fahrer/rechnungen">Neue Rechnung</a>
     </div>
 
+    ${versandFeld}
+
     ${stornoKnopf}
 
     <script>${TEILEN_SKRIPT}</script>
@@ -351,6 +577,16 @@ async function einzelSeite(r: RechnungMitStorno, env: Umgebung, neu: boolean): P
 }
 
 /* ================================================================ Hilfen */
+
+/** Einen einzelnen Wert aus den Einstellungen holen. Fehlt er, bleibt er leer. */
+async function einstellung(env: Umgebung, schluessel: string): Promise<string> {
+  const zeile = await env.DB.prepare(
+    'SELECT wert FROM einstellungen WHERE schluessel = ?',
+  )
+    .bind(schluessel)
+    .first<{ wert: string }>();
+  return zeile?.wert ?? '';
+}
 
 async function ladeAbsender(env: Umgebung): Promise<Absender> {
   const zeilen = await env.DB.prepare(

@@ -233,6 +233,59 @@ Anlass, Abholung, Fahrgast und Fahrer.
 
 ---
 
+## Rechnungen, die von selbst entstehen
+
+Kreuzt ein Fahrgast bei der Bestellung **„Rechnung per E-Mail"** an, passiert
+Folgendes ohne Ihr Zutun:
+
+1. Der Fahrer sieht beim Abmelden **zwei Knöpfe** statt einem:
+   **„Erledigt · bar"** und **„Erledigt · Karte"**. Er tippt den passenden –
+   damit auf der Rechnung die richtige Zahlungsart steht.
+2. Die Rechnung wird geschrieben und sofort an den Fahrgast geschickt, mit PDF
+   im Anhang.
+3. Sie finden sie wie jede andere unter **Rechnungen**.
+
+**Wann Sie trotzdem gebraucht werden** – dann bekommen Sie eine
+Telegram-Nachricht mit allen Angaben:
+
+- **Die Fahrt kostet mehr als 250 €.** Darüber schreibt das Gesetz vor, dass
+  Name *und* Anschrift des Fahrgasts auf der Rechnung stehen. Die Anschrift
+  fragen wir bei der Bestellung nicht ab – das würden zu viele abbrechen.
+- **Es steht kein Festpreis fest**, etwa weil die Adresse nur frei eingetippt
+  wurde. Dann wird nicht geraten.
+- **Der Versand ist fehlgeschlagen.** Die Rechnung ist dann schon geschrieben;
+  auf ihrer Seite steht ein Knopf zum erneuten Verschicken.
+
+---
+
+## Eine Rechnung korrigieren
+
+Auf der Rechnung den Knopf **„Rechnung korrigieren"**. Damit passiert alles
+Nötige auf einmal:
+
+1. Die alte Rechnung wird storniert
+2. Der Fahrgast bekommt die Stornorechnung per E-Mail
+3. Das Formular öffnet sich mit allen Angaben der alten Rechnung
+4. Sie ändern, was falsch war, und stellen sie neu aus
+5. Die berichtigte Rechnung geht automatisch an dieselbe Adresse
+
+**Warum nicht einfach ändern?** Eine ausgestellte Rechnung darf nach dem
+Steuerrecht nicht nachträglich geändert oder gelöscht werden. Deshalb der
+Umweg – er ist für Sie aber nur ein Knopfdruck.
+
+---
+
+## Bewertungen
+
+Unter jeder Rechnung, die per E-Mail rausgeht, kann eine Bitte um eine
+Bewertung stehen. Dafür den Link Ihres Google-Profils unter **Rechnungen →
+Firmendaten → Link zur Bewertungsseite** eintragen.
+
+Solange dort nichts steht, bleibt die Zeile einfach weg – es wird nie ein
+toter Link verschickt.
+
+---
+
 ## Rechnungen schreiben
 
 Oben im Fahrerbereich auf **„Rechnungen"** tippen, oder direkt aufrufen:

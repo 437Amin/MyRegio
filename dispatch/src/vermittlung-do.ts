@@ -1,4 +1,7 @@
 import type { Auftrag, Fahrer, Umgebung } from './typen';
+import { rechnungAusFahrt } from './rechnung-fahrt';
+import { zahlungsartLesen } from './rechnung-automatik';
+import type { Zahlungsart } from './rechnung';
 import { fahrerFuerZeitpunkt, wunschZuerst } from './schichten';
 import { belegteFahrerIds, type LaufenderAuftrag } from './belegung';
 import {
@@ -84,8 +87,11 @@ export class Vermittlung implements DurableObject {
 
     // Der Fahrer meldet die Fahrt als abgeschlossen und ist wieder frei
     if (pfad === '/erledigt') {
-      const { fahrerId } = (await anfrage.json()) as { fahrerId: number };
-      return Response.json(await this.erledigt(fahrerId));
+      const { fahrerId, zahlungsart } = (await anfrage.json()) as {
+        fahrerId: number;
+        zahlungsart?: string;
+      };
+      return Response.json(await this.erledigt(fahrerId, zahlungsartLesen(zahlungsart)));
     }
 
     // Der fest eingeteilte Fahrer kann doch nicht - die Fahrt wird
@@ -293,7 +299,7 @@ export class Vermittlung implements DurableObject {
       zustand,
       fahrerId,
       this.zusagetext(auftrag),
-      this.erledigtKnoepfe(auftrag.id, fahrerId),
+      this.erledigtKnoepfe(auftrag, fahrerId),
     );
 
     // Bei allen anderen die Knoepfe entfernen
@@ -363,7 +369,7 @@ export class Vermittlung implements DurableObject {
         this.env.TELEGRAM_TOKEN,
         fahrer.telegram_chat_id,
         this.einteilungstext(auftrag),
-        this.erledigtKnoepfe(auftragId, fahrerId, true),
+        this.erledigtKnoepfe(auftrag, fahrerId, true),
       );
       if (gesendet.ok && gesendet.nachrichtId) {
         zustand.gesendet.push({
@@ -397,6 +403,7 @@ export class Vermittlung implements DurableObject {
   /** Der Fahrer meldet die Fahrt als erledigt und ist wieder frei. */
   private async erledigt(
     fahrerId: number,
+    zahlungsart: Zahlungsart | null = null,
   ): Promise<{ ergebnis: 'erledigt' | 'unbekannt' }> {
     const zustand = await this.state.storage.get<Zustand>('zustand');
     if (!zustand) return { ergebnis: 'unbekannt' };
@@ -416,6 +423,11 @@ export class Vermittlung implements DurableObject {
       fahrerId,
       '✅ <b>Fahrt abgeschlossen.</b> Danke – du bekommst wieder Aufträge.',
     );
+
+    // Die Rechnung kommt NACH der Freimeldung. Scheitert der Versand, bleibt
+    // der Fahrer trotzdem frei - sonst sperrte ihn eine fremde Stoerung.
+    await rechnungAusFahrt(this.env, zustand.auftragId, zahlungsart);
+
     return { ergebnis: 'erledigt' };
   }
 
@@ -582,12 +594,23 @@ export class Vermittlung implements DurableObject {
    * Der Knopf, mit dem sich ein Fahrer wieder freimeldet. Ohne ihn bliebe er
    * bis zum Ablauf der geschaetzten Fahrtzeit gesperrt.
    */
-  private erledigtKnoepfe(auftragId: string, fahrerId: number, abgeben = false): Knopf[] {
-    const knoepfe: Knopf[] = [
-      { text: '✅ Fahrt erledigt', daten: `fertig:${auftragId}:${fahrerId}` },
-    ];
+  private erledigtKnoepfe(
+    auftrag: Auftrag,
+    fahrerId: number,
+    abgeben = false,
+  ): Knopf[] {
+    // Will der Fahrgast eine Rechnung, muss die Zahlungsart darauf stehen.
+    // Raten kommt nicht in Frage: "Bar bezahlt" auf einer Kartenzahlung waere
+    // schlicht falsch. Es bleibt bei EINEM Fingertipp, nur mit Auswahl.
+    const knoepfe: Knopf[] = auftrag.rechnung_gewuenscht
+      ? [
+          { text: '✅ Erledigt · bar', daten: `fertig:${auftrag.id}:${fahrerId}:bar` },
+          { text: '✅ Erledigt · Karte', daten: `fertig:${auftrag.id}:${fahrerId}:karte` },
+        ]
+      : [{ text: '✅ Fahrt erledigt', daten: `fertig:${auftrag.id}:${fahrerId}` }];
+
     if (abgeben) {
-      knoepfe.push({ text: '✖️ Kann ich nicht', daten: `weg:${auftragId}:${fahrerId}` });
+      knoepfe.push({ text: '✖️ Kann ich nicht', daten: `weg:${auftrag.id}:${fahrerId}` });
     }
     return knoepfe;
   }

@@ -89,7 +89,7 @@ async function knopfDruck(auftragId, fahrerId, chatId, annahme) {
  * Fahrtdauer gesperrt - richtig im Betrieb, aber hier waeren nach zwei
  * Abschnitten beide Fahrer belegt.
  */
-async function erledige(auftragId, fahrerId) {
+async function erledige(auftragId, fahrerId, zahlungsart = '') {
   const antwort = await fetch(`${DIENST}/telegram/webhook`, {
     method: 'POST',
     headers: {
@@ -99,7 +99,7 @@ async function erledige(auftragId, fahrerId) {
     body: JSON.stringify({
       callback_query: {
         id: 'cb-fertig',
-        data: `fertig:${auftragId}:${fahrerId}`,
+        data: `fertig:${auftragId}:${fahrerId}${zahlungsart ? ':' + zahlungsart : ''}`,
         message: { chat: { id: String(fahrerId) }, message_id: 1 },
       },
     }),
@@ -352,7 +352,74 @@ await leeren();
   await erledige(koerper.auftragId, 101);
 }
 
-console.log('\n=== 8. Absicherungen ===');
+console.log('\n=== 8. Rechnung nach der Fahrt ===');
+//
+// Ohne Kartendienst-Schluessel steht lokal KEIN Festpreis fest. Das ist kein
+// Mangel der Probe, sondern der interessantere Fall: Ohne Preis darf keine
+// Rechnung entstehen, und der Chef muss davon erfahren. Die vollstaendige
+// Kette bis zum PDF prueft test/rechnung-fahrt.test.ts gegen eine echte
+// Datenbank.
+await leeren();
+{
+  const { status: code, koerper } = await bestelle(
+    {
+      name: 'Frau Keller',
+      rechnungGewuenscht: true,
+      kundeEmail: 'kundin@example.com',
+    },
+    '203.0.113.8',
+  );
+  pruefe(code === 201, 'Bestellung mit Rechnungswunsch wird angenommen', `Code ${code}`);
+  await warte(600);
+
+  await knopfDruck(koerper.auftragId, 101, '101', true);
+  await warte(500);
+
+  // Die Zusage ist eine Aenderung der bestehenden Nachricht, kein neuer Text
+  const zusage = (await aufrufe())
+    .filter((a) => a.methode === 'editMessageText' && String(a.daten.chat_id) === '101')
+    .at(-1);
+  const knoepfe = (zusage?.daten.reply_markup?.inline_keyboard ?? []).flat();
+  pruefe(
+    knoepfe.some((k) => k.callback_data?.endsWith(':bar')) &&
+      knoepfe.some((k) => k.callback_data?.endsWith(':karte')),
+    'Beim Abmelden stehen „bar" und „Karte" zur Wahl',
+    JSON.stringify(knoepfe.map((k) => k.callback_data)),
+  );
+
+  await leeren();
+  await erledige(koerper.auftragId, 101, 'karte');
+  await warte(900);
+
+  const liste = await aufrufe();
+  pruefe(
+    liste.filter((a) => a.methode === 'email').length === 0,
+    'Ohne Festpreis geht keine Rechnung raus',
+  );
+
+  const anChef = an(liste, '999');
+  pruefe(anChef.length === 1, 'Der Chef bekommt genau eine Meldung', `${anChef.length}`);
+  pruefe(
+    String(anChef[0]?.daten.text).includes('kein Festpreis'),
+    'Die Meldung nennt den Grund',
+    String(anChef[0]?.daten.text).slice(0, 120),
+  );
+  pruefe(
+    String(anChef[0]?.daten.text).includes('kundin@example.com'),
+    'Und die Adresse, an die sie gehen soll',
+  );
+
+  // Zweimal tippen darf nicht zweimal melden
+  await leeren();
+  await erledige(koerper.auftragId, 101, 'karte');
+  await warte(600);
+  pruefe(
+    an(await aufrufe(), '999').length === 0,
+    'Zweimal abmelden meldet nicht zweimal',
+  );
+}
+
+console.log('\n=== 9. Absicherungen ===');
 {
   const ohneName = await bestelle({ name: '' });
   pruefe(ohneName.status === 400, 'Bestellung ohne Namen wird abgelehnt');

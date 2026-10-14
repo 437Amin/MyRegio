@@ -19,6 +19,10 @@ export interface Umgebung {
 
   /** Schluessel fuer OpenRouteService - ohne ihn gibt es keine Festpreise */
   ORS_SCHLUESSEL?: string;
+  /** Schluessel fuer Brevo - ohne ihn werden keine Rechnungen verschickt */
+  BREVO_API_KEY?: string;
+  /** Nur fuer Tests: andere Adresse fuer die Brevo-Schnittstelle */
+  BREVO_BASIS?: string;
   /** Nur fuer Tests: andere Adresse fuer die Telegram-Schnittstelle */
   TELEGRAM_BASIS?: string;
 }
@@ -72,6 +76,10 @@ export interface Auftrag {
   kunde_telefon: string;
   /** Vom Fahrgast gewuenschter Fahrer - wird zuerst gefragt */
   wunsch_fahrer_id: number | null;
+  /** 1, wenn der Fahrgast eine Rechnung per E-Mail moechte */
+  rechnung_gewuenscht: number;
+  /** Nur gesetzt, wenn eine Rechnung gewuenscht ist */
+  kunde_email: string;
   fahrer_id: number | null;
   angenommen_um: string | null;
   beendet_um: string | null;

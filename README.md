@@ -175,6 +175,11 @@ Eigenschaften:
 - Der Sende-Knopf ist ein echtes `<a>`, dessen `href` laufend aktualisiert
   wird – so gibt es keine Probleme mit Popup-Blockern.
 - Vorauswahl möglich: `<Buchungsassistent vorauswahl="Park & Fly" />`
+- **Rechnung per E-Mail.** Häkchen in Schritt 4; das Adressfeld erscheint erst
+  damit und ist dann Pflicht. Ohne Haken wird die Adresse **nicht gespeichert**,
+  auch wenn im Feld noch etwas steht. Eine unbrauchbare Adresse wird abgewiesen
+  statt verworfen – sonst bestellt jemand mit Rechnungswunsch und bekommt
+  kommentarlos keine.
 - **Wunschfahrer.** In Schritt 4 steht eine Auswahlliste der Fahrer, geladen
   von `GET /api/fahrer`. Sie erscheint nur, wenn es **mindestens zwei** gibt –
   bei einem einzigen wäre sie eine Scheinwahl. Nach draußen gehen nur Nummer
@@ -229,6 +234,45 @@ Prozess, den nachts jemand neu starten müsste.
 
 **Fahrerdaten** liegen in der Cloudflare-Datenbank und bewusst **nicht** im
 Repository. Verwaltet werden sie unter `<worker>/fahrer` hinter einem Passwort.
+
+### Rechnung nach der Fahrt
+
+```
+Fahrgast kreuzt "Rechnung per E-Mail" an (Website oder Telefonaufnahme)
+  → Fahrer bekommt beim Abmelden ZWEI Knöpfe: "Erledigt · bar" / "· Karte"
+  → Rechnung entsteht aus den Auftragsdaten, verknüpft über rechnungen.auftrag_id
+  → PDF per Brevo an den Fahrgast, mit Bewertungshinweis (falls Link hinterlegt)
+```
+
+Die Regeln stehen in `rechnung-automatik.ts`, getrennt von Datenbank und Netz:
+
+- **Über 250 € keine Automatik.** § 33 UStDV verlangt darüber Name *und*
+  Anschrift des Fahrgasts. Die Anschrift wird bei der Bestellung bewusst nicht
+  abgefragt – für eine Fahrt wäre das eine Hürde, die kaum jemand nimmt. In
+  diesen Fällen bekommt der Chef eine Telegram-Meldung mit allen Angaben.
+- **Ohne Festpreis keine Rechnung.** Steht kein Betrag fest (Adresse nur als
+  Freitext), wird nicht geraten, sondern gemeldet.
+- **Zweimal „Erledigt" ergibt keine zweite Rechnung.** Geprüft wird über
+  `rechnungen.auftrag_id`; Stornorechnungen zählen nicht mit.
+- **Die Zahlungsart wird gefragt, nicht geraten.** Deshalb die zwei Knöpfe –
+  „Bar bezahlt" auf einer Kartenzahlung wäre schlicht falsch. Der Fahrer tippt
+  genauso oft wie vorher, und die zwei Knöpfe erscheinen nur dort, wo eine
+  Rechnung gewünscht ist.
+- **Ein Fehler beim Rechnungsschreiben reißt die Fahrt nicht mit.** Der Fahrer
+  ist vorher freigemeldet; scheitert etwas, meldet es der Chef-Chat, und die
+  Rechnung lässt sich im Fahrerbereich nachschicken.
+
+**Versand** über `brevo.ts` – bewusst **reiner Text**: Brevo schreibt Links in
+HTML-Mails um, um Klicks zu zählen, und eine fremde Zähladresse auf einer
+Rechnung kostet eher Vertrauen, als sie nützt. Festgehalten wird, *wann* und
+*wohin* verschickt wurde (`versendet_um`, `versand_an`) – ohne das ließe sich
+„nie verschickt" nicht von „Versand gescheitert" unterscheiden.
+
+**Korrigieren** ist ein Knopf, aber zwei Vorgänge: Eine ausgestellte Rechnung
+darf nicht geändert werden (GoBD, § 14 UStG). „Rechnung korrigieren" storniert
+sie, schickt dem Fahrgast die Stornorechnung und öffnet das Formular mit allen
+alten Angaben; die berichtigte Rechnung geht danach automatisch an dieselbe
+Adresse.
 
 ### Telefonische Aufträge (`<worker>/fahrer/auftrag`)
 
@@ -328,9 +372,21 @@ npx wrangler d1 execute vermittlung --local --file=test/testdaten.sql
 node test/ablauf.mjs                 # Fenster 3
 ```
 
-Acht Abschnitte: Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef, der
-Wunschfahrer (vorgezogen / unterwegs / unbekannt) und die Absicherungen
-(fehlende Angaben, unsinnige Rufnummer, Telegram-Aufruf ohne Geheimnis).
+Neun Abschnitte: Annahme, Ablehnung, Zeitablauf, Eskalation an den Chef, der
+Wunschfahrer (vorgezogen / unterwegs / unbekannt), die Rechnung nach der Fahrt
+und die Absicherungen (fehlende Angaben, unsinnige Rufnummer, Telegram-Aufruf
+ohne Geheimnis).
+
+Dazu `node test/versand.mjs` – es prüft im echten Workers-Lauf, was vitest
+nicht kann: Anmeldung, PDF-Erzeugung in der Worker-Umgebung, Versand,
+Korrektur und erneutes Verschicken. Die Telegram-Attrappe steht dabei auch für
+Brevo; dafür `--var BREVO_API_KEY:lokal-test --var
+BREVO_BASIS:http://127.0.0.1:8799` an `wrangler dev` mitgeben.
+
+Ohne Kartendienst-Schlüssel steht lokal **kein Festpreis** fest. Abschnitt 8
+prüft deshalb den Fall „ohne Preis keine Rechnung, dafür eine Meldung an den
+Chef" – die vollständige Kette bis zum PDF deckt `test/rechnung-fahrt.test.ts`
+gegen eine echte SQLite-Datenbank ab.
 
 Zwei Dinge, über die die Probe schon gestolpert ist und die beim Erweitern
 wichtig sind:

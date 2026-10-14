@@ -52,6 +52,10 @@ export interface Rechnung {
   /** Firmendaten zum Zeitpunkt der Ausstellung, als JSON */
   absender: string;
   storno_von: number | null;
+  /** Wann die Rechnung per E-Mail rausging. Leer: noch nicht verschickt. */
+  versendet_um?: string | null;
+  /** An welche Adresse sie ging - nachvollziehbar, auch nach einem Wechsel */
+  versand_an?: string;
 }
 
 /* ================================================================ Betraege */

@@ -158,7 +158,11 @@ INSERT OR IGNORE INTO einstellungen (schluessel, wert) VALUES
   ('tarif_preis_nah', '2.60'),
   ('tarif_preis_fern', '2.20'),
   ('tarif_mindestpreis', '12'),
-  ('tarif_rundung', '0.50');
+  ('tarif_rundung', '0.50'),
+  -- Link zur Bewertungsseite, erscheint unter der Rechnung per E-Mail.
+  -- Leer heisst: Die Zeile bleibt weg. Wird eingetragen, sobald das
+  -- Google-Unternehmensprofil steht.
+  ('bewertung_link', '');
 
 -- --- Missbrauchsschutz -------------------------------------------------------
 -- Verhindert, dass jemand ueber das Bestellformular die Fahrerhandys flutet.

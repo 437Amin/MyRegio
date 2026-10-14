@@ -300,7 +300,9 @@ async function telegramEmpfangen(
   // --- Fahrer tippt auf Annehmen oder Ablehnen -----------------------------
   const knopf = update.callback_query;
   if (knopf?.data) {
-    const [aktion, auftragId, fahrerIdText] = String(knopf.data).split(':');
+    // "fertig" traegt einen vierten Teil: wie bezahlt wurde. Er steht nur an
+    // Fahrten, zu denen eine Rechnung gewuenscht ist.
+    const [aktion, auftragId, fahrerIdText, zahlungsart] = String(knopf.data).split(':');
     const fahrerId = Number(fahrerIdText);
 
     if (!auftragId || !Number.isFinite(fahrerId)) {
@@ -331,7 +333,7 @@ async function telegramEmpfangen(
     const ergebnis = (await (
       await objekt.fetch(`https://vermittlung${pfad}`, {
         method: 'POST',
-        body: JSON.stringify({ fahrerId, annahme: aktion === 'ja' }),
+        body: JSON.stringify({ fahrerId, annahme: aktion === 'ja', zahlungsart }),
       })
     ).json()) as { ergebnis: string };
 
