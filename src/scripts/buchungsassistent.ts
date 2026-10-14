@@ -285,6 +285,14 @@ function einrichten(wurzel: HTMLElement): void {
     zeilen.push(`Mein Name: ${w.name || '(bitte noch ergänzen)'}`);
     if (w.telefon) zeilen.push(`Meine Telefonnummer: ${w.telefon}`);
 
+    // Auch ueber WhatsApp muss der Rechnungswunsch ankommen. Sonst setzt
+    // jemand das Haekchen, bestellt dann aber ueber WhatsApp - und niemand
+    // erfaehrt davon. Automatisch verschickt wird nur bei einer Bestellung
+    // ueber "Jetzt Fahrer anfordern"; hier muss die Rechnung von Hand kommen.
+    if (w.rechnungGewuenscht === 'ja' && w.kundeEmail) {
+      zeilen.push(`Rechnung bitte per E-Mail an: ${w.kundeEmail}`);
+    }
+
     return zeilen.join('\n');
   }
 
