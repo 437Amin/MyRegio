@@ -141,6 +141,31 @@ function einrichten(wurzel: HTMLElement): void {
 
   /* ------------------------------------------------------------ Pruefungen */
 
+  /**
+   * Dieselbe lockere Regel wie im Vermittlungsdienst (auftrag-erfassen.ts).
+   *
+   * Sie faengt die Tippfehler, an denen eine Mail wirklich scheitert, und
+   * weist keine ungewoehnliche Adresse ab. Maßgeblich bleibt der Server -
+   * hier geht es nur darum, den Fehler zu zeigen, solange der Fahrgast noch
+   * davorsitzt.
+   */
+  function emailPlausibel(wert: string): boolean {
+    const text = wert.trim();
+    if (text.length < 6 || text.length > 254 || /\s/.test(text)) return false;
+
+    const teile = text.split('@');
+    if (teile.length !== 2) return false;
+
+    const [davor, danach] = teile;
+    if (!davor || davor.length > 64 || !danach) return false;
+    if (danach.includes('..') || danach.startsWith('.') || danach.endsWith('.')) {
+      return false;
+    }
+
+    const punkt = danach.lastIndexOf('.');
+    return punkt >= 1 && danach.length - punkt - 1 >= 2;
+  }
+
   function pflichtfeld(name: string): HTMLInputElement | null {
     const element = formular!.elements.namedItem(name);
     return element instanceof HTMLInputElement ? element : null;
@@ -192,8 +217,32 @@ function einrichten(wurzel: HTMLElement): void {
         return null;
       }
 
-      case 4:
+      case 4: {
+        // Der Assistent prueft jeden Schritt selbst - das "required" des
+        // Browsers greift hier nicht, weil die Schritte Teile EINES Formulars
+        // sind und nie einzeln abgeschickt werden.
+        const adresse = (werte.kundeEmail ?? '').trim();
+
+        if (werte.rechnungGewuenscht === 'ja' && !adresse) {
+          return fehlt(
+            'kundeEmail',
+            'Für die Rechnung brauchen wir Ihre E-Mail-Adresse.',
+          );
+        }
+
+        // Auch ohne Rechnung lohnt die Pruefung: Eine vertippte Adresse faellt
+        // sonst erst auf, wenn die Nachricht nicht ankommt - und dann merkt es
+        // niemand.
+        if (adresse && !emailPlausibel(adresse)) {
+          const feld = pflichtfeld('kundeEmail');
+          feld?.setAttribute('aria-invalid', 'true');
+          feld?.focus();
+          return 'Diese E-Mail-Adresse sieht nicht richtig aus – bitte prüfen.';
+        }
+
+        pflichtfeld('kundeEmail')?.removeAttribute('aria-invalid');
         return null;
+      }
 
       case 5: {
         const grund = fehlt('name', 'Bitte nennen Sie uns noch Ihren Namen.');
@@ -603,13 +652,21 @@ function einrichten(wurzel: HTMLElement): void {
     const haken = wurzel.querySelector<HTMLInputElement>('[data-rechnung-haken]');
     const adresse = wurzel.querySelector<HTMLElement>('[data-rechnung-adresse]');
     const feld = adresse?.querySelector<HTMLInputElement>('input');
+    const vermerk = adresse?.querySelector<HTMLElement>('[data-email-optional]');
     if (!haken || !feld) return;
 
-    haken.addEventListener('change', () => {
+    const umschalten = (): void => {
       feld.required = haken.checked;
+      // "optional" darf nicht stehen bleiben, wenn die Adresse gebraucht wird
+      if (vermerk) vermerk.hidden = haken.checked;
+      if (!haken.checked) feld.removeAttribute('aria-invalid');
+    };
+
+    haken.addEventListener('change', () => {
+      umschalten();
       if (haken.checked && !feld.value) feld.focus();
     });
-    feld.required = haken.checked;
+    umschalten();
   }
 
   /** Blendet das Formular aus und zeigt stattdessen den Stand der Suche. */
