@@ -183,9 +183,12 @@ einer echten E-Mail:
 
 - [ ] **Auftragsverarbeitungsvertrag mit Brevo** abschließen – liegt im
       Brevo-Konto bereit.
-- [ ] **Datenschutzerklärung ergänzen**: Brevo als Auftragsverarbeiter für den
-      Rechnungsversand, und dass die E-Mail-Adresse nur erhoben wird, wenn der
-      Fahrgast eine Rechnung wünscht.
+- [ ] **Datenschutzerklärung ergänzen** – drei Punkte:
+      Brevo als Auftragsverarbeiter für den Versand; die E-Mail-Adresse des
+      Fahrgasts (freiwillig, für Rechnung und die Nachricht nach der Fahrt);
+      der Live-Standort der Fahrer (freiwillig, nur während einer Fahrt, nur
+      der letzte Punkt, danach gelöscht – der Fahrgast sieht nie den Ort,
+      sondern nur eine geschätzte Zeit).
 
 ---
 
