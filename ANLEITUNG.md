@@ -139,8 +139,8 @@ auf seinem Handy.
 **Der Vorname steht auf der Website.** Sobald ein Fahrer angemeldet ist, können
 Kunden ihn als Wunschfahrer auswählen – sichtbar ist nur der Vorname, sonst
 nichts. Bei zwei gleichen Vornamen kommt der erste Buchstabe des Nachnamens
-dazu („Mehmet Y."). Die Auswahl erscheint erst ab **zwei** angemeldeten
-Fahrern. Wer pausiert oder ausgetragen ist, steht nicht in der Liste.
+dazu („Mehmet Y."). Die Auswahl erscheint, sobald mindestens ein Fahrer
+angemeldet ist. Wer pausiert oder ausgetragen ist, steht nicht in der Liste.
 
 ---
 

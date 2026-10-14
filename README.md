@@ -184,8 +184,9 @@ Eigenschaften:
   unbrauchbare Adresse wird abgewiesen statt verworfen – sonst bestellt jemand
   mit Rechnungswunsch und bekommt kommentarlos keine.
 - **Wunschfahrer.** In Schritt 4 steht eine Auswahlliste der Fahrer, geladen
-  von `GET /api/fahrer`. Sie erscheint nur, wenn es **mindestens zwei** gibt –
-  bei einem einzigen wäre sie eine Scheinwahl. Nach draußen gehen nur Nummer
+  von `GET /api/fahrer`. Sie erscheint, sobald **mindestens ein** Fahrer
+  angemeldet ist; ohne jeden Fahrer bleibt sie verborgen, weil eine leere
+  Liste schlechter wäre als gar kein Feld. Nach draußen gehen nur Nummer
   und Vorname (`dispatch/src/fahrer-liste.ts`), nicht Handynummer, Anmeldecode
   oder Schicht. Dass jemand gerade frei ist, steht **absichtlich nicht** dabei:
   sonst könnte jeder Fremde von außen mitlesen, wer wann unterwegs ist.

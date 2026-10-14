@@ -566,8 +566,12 @@ function einrichten(wurzel: HTMLElement): void {
       const { fahrer = [] } = (await antwort.json()) as {
         fahrer?: { id: number; name: string }[];
       };
-      // Bei nur einem Fahrer ist die Auswahl sinnlos
-      if (fahrer.length < 2) return;
+      // Ohne angemeldeten Fahrer bleibt der Block verborgen - eine leere
+      // Liste waere schlechter als gar kein Feld. Ab einem Fahrer erscheint
+      // sie: Entscheidung des Auftraggebers vom 14.10.2026. Bei nur einem zur
+      // Auswahl ist das eher eine Vorstellung als eine Wahl - aber "Egal"
+      // steht voreingestellt da, es kostet also niemanden einen Handgriff.
+      if (fahrer.length === 0) return;
 
       for (const eintrag of fahrer) {
         const auswahlfeld = document.createElement('option');
