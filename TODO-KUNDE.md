@@ -142,29 +142,50 @@ Der Absender `MyRegioCar <contact@myregiocar.com>` ist verifiziert.
   Berichte gehen an Brevo, nicht ins Postfach: Es sind XML-Dateien, die täglich
   kommen
 
-### Schritt 5: API-Schlüssel anlegen und hinterlegen
+### ✅ Schritt 5: API-Schlüssel – erledigt (13.10.2026)
 
-- [ ] In der Seitenleiste auf **SMTP & API** (direkt unter *Absender:innen,
-      Domains, IPs*) → Reiter **API-Schlüssel** → **Einen neuen API-Schlüssel
-      generieren**, Name z. B. `myregiocar-vermittlung`
-- [ ] Den Schlüssel **sofort kopieren** – Brevo zeigt ihn nur einmal an
-- [ ] Im Projektordner ausführen und den Schlüssel einfügen:
-      ```
-      cd dispatch && npx wrangler secret put BREVO_API_KEY
-      ```
+`BREVO_API_KEY` liegt als **Geheimnis** beim Worker `myregiocar-vermittlung`.
+Geprüft: Es hat die Veröffentlichung am 14.10.2026 überstanden.
 
-Der Schlüssel liegt danach verschlüsselt bei Cloudflare. Er steht in keiner
-Datei, nicht im Repository, und Claude bekommt ihn nicht zu sehen.
+> **Wichtig, falls er je neu gesetzt werden muss:** Beim Anlegen in der
+> Cloudflare-Oberfläche muss **„Geheimnis"** angehakt sein. Als normale
+> Variable steht der Schlüssel im Klartext **und** wird beim nächsten
+> `npm run deploy` gelöscht – dann fällt der Rechnungsversand aus, ohne dass
+> irgendwo ein Fehler erscheint.
 
-### Schritt 6: Erst danach
+### 🟡 Schritt 6: Einmal echt ausprobieren
 
-- [ ] **Testrechnung an die eigene Adresse** schicken und prüfen, ob sie
-      ankommt und nicht im Spam landet
-- [ ] **Bewertungslink**, sobald das Google-Unternehmensprofil steht – er kommt
-      unter die Rechnung. Ohne Link bleibt die Zeile einfach weg
-- [ ] **Datenschutzerklärung**: Brevo kommt als Auftragsverarbeiter hinzu.
-      Brevo stellt dafür einen Vertrag (DPA) im Konto bereit – abschließen und
-      den Abschnitt in der Datenschutzerklärung ergänzen
+Alles ist seit dem 14.10.2026 live. Was noch fehlt, ist ein Durchlauf mit
+einer echten E-Mail:
+
+- [ ] **Testrechnung an die eigene Adresse.** Fahrerbereich → **Rechnungen** →
+      eine Rechnung schreiben (Start, Ziel, Betrag) → auf ihrer Seite unten
+      bei **„Per E-Mail verschicken"** die eigene Adresse eintragen und
+      abschicken. Prüfen: Kommt sie an? Liegt sie im Posteingang und nicht im
+      Spam? Lässt sich das PDF öffnen?
+- [ ] **Danach einmal „Rechnung korrigieren"** antippen und sehen, wie der
+      Ablauf sich anfühlt: Storno raus, Formular vorbelegt, neue Rechnung geht
+      automatisch an dieselbe Adresse.
+- [ ] **Eine echte Fahrt mit Rechnungswunsch**, sobald echte Fahrer eingetragen
+      sind: auf der Website „Ich möchte eine Rechnung per E-Mail" ankreuzen,
+      Fahrt annehmen, mit **„Erledigt · bar"** abmelden. Die Rechnung sollte
+      ohne weiteres Zutun beim Fahrgast landen.
+
+### 🟡 Schritt 7: Bewertungslink
+
+- [ ] Sobald das Google-Unternehmensprofil steht: Fahrerbereich →
+      **Rechnungen** → **Firmendaten** → **Link zur Bewertungsseite**.
+      Er erscheint dann unter jeder Rechnung, die per E-Mail rausgeht.
+      Solange er leer ist, bleibt die Zeile weg – es wird nie ein toter Link
+      verschickt.
+
+### 🟡 Schritt 8: Datenschutz
+
+- [ ] **Auftragsverarbeitungsvertrag mit Brevo** abschließen – liegt im
+      Brevo-Konto bereit.
+- [ ] **Datenschutzerklärung ergänzen**: Brevo als Auftragsverarbeiter für den
+      Rechnungsversand, und dass die E-Mail-Adresse nur erhoben wird, wenn der
+      Fahrgast eine Rechnung wünscht.
 
 ---
 
