@@ -7,10 +7,12 @@ import type { Zahlungsart } from './rechnung';
 import { fahrerFuerZeitpunkt, wunschZuerst } from './schichten';
 import { belegteFahrerIds, type LaufenderAuftrag } from './belegung';
 import {
+  entferneStandortknopf,
   ersetzeNachricht,
   sendeNachricht,
   setzeTelegramBasis,
   sicher,
+  zeigeStandortknopf,
   type Knopf,
 } from './telegram';
 
@@ -304,6 +306,8 @@ export class Vermittlung implements DurableObject {
       this.erledigtKnoepfe(auftrag, fahrerId),
     );
 
+    await this.standortAnbieten(fahrer, auftrag);
+
     // Bei allen anderen die Knoepfe entfernen
     for (const eintrag of zustand.gesendet) {
       if (eintrag.fahrerId === fahrerId) continue;
@@ -422,6 +426,15 @@ export class Vermittlung implements DurableObject {
     // Der Standort wird nicht mehr gebraucht - also weg damit. Was nicht
     // gespeichert ist, kann auch nicht missbraucht werden.
     await standortVergessen(this.env.DB, fahrerId);
+
+    const fahrer = await this.ladeFahrer(fahrerId);
+    if (fahrer?.telegram_chat_id) {
+      await entferneStandortknopf(
+        this.env.TELEGRAM_TOKEN,
+        fahrer.telegram_chat_id,
+        '📍 Standortfreigabe beendet. Danke!',
+      );
+    }
 
     await this.protokolliere(zustand.auftragId, fahrerId, 'erledigt');
     await this.entwerteNachricht(
@@ -624,6 +637,38 @@ export class Vermittlung implements DurableObject {
       knoepfe.push({ text: '✖️ Kann ich nicht', daten: `weg:${auftrag.id}:${fahrerId}` });
     }
     return knoepfe;
+  }
+
+  /**
+   * Bietet dem Fahrer den Standortknopf an - bei jeder Fahrt neu.
+   *
+   * Ein Fingertipp schickt einen Punkt; der Fahrgast sieht dann die
+   * geschaetzte Zeit. Wer waehrend der Anfahrt noch einmal tippt,
+   * aktualisiert sie. Wer lieber einmal am Morgen den Live-Standort teilt,
+   * braucht den Knopf gar nicht - deshalb steht beides in der Nachricht.
+   *
+   * Scheitert das, passiert nichts weiter: Die Fahrt laeuft auch ohne.
+   */
+  private async standortAnbieten(fahrer: Fahrer, auftrag: Auftrag): Promise<void> {
+    if (!fahrer.telegram_chat_id) return;
+    // Ohne Koordinaten der Abholung liesse sich nichts rechnen - dann waere
+    // der Knopf eine Bitte ohne Zweck.
+    if (!auftrag.von_breite || !auftrag.von_laenge) return;
+
+    await zeigeStandortknopf(
+      this.env.TELEGRAM_TOKEN,
+      fahrer.telegram_chat_id,
+      [
+        '📍 <b>Tippe unten auf „Standort senden".</b>',
+        '',
+        'Der Fahrgast sieht dann, wie lange es noch etwa dauert – nie, wo du',
+        'bist. Während der Anfahrt kannst du jederzeit noch einmal tippen.',
+        '',
+        '<i>Einmal für die ganze Schicht:</i> Büroklammer → Standort →',
+        '„Live-Standort teilen", 8 Stunden. Dann aktualisiert es sich von',
+        'selbst und der Knopf bleibt ungenutzt.',
+      ].join('\n'),
+    );
   }
 
   private zusagetext(auftrag: Auftrag): string {

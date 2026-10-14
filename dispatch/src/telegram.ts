@@ -84,6 +84,55 @@ export async function sendeNachricht(
 }
 
 /**
+ * Legt dem Fahrer eine Tastatur mit dem Standortknopf unter das Eingabefeld.
+ *
+ * Das muss eine EIGENE Nachricht sein: Der Knopf, der einen Standort anfordert
+ * ("request_location"), gibt es in Telegram nur auf der Tastatur unter dem
+ * Eingabefeld, nicht als Knopf an einer Nachricht. Die Knoepfe an der Fahrt
+ * ("Annehmen", "Fahrt erledigt") sind von der anderen Sorte, beides zusammen
+ * in einer Nachricht geht nicht.
+ *
+ * Die Tastatur bleibt stehen, bis sie entfernt wird - der Fahrer kann also
+ * waehrend der Anfahrt mehrfach tippen und die Zeit aktualisieren.
+ *
+ * Nur auf dem Handy: Telegram am Rechner kennt keinen Standort.
+ */
+export async function zeigeStandortknopf(
+  token: string,
+  chatId: string,
+  text: string,
+): Promise<{ ok: boolean; nachrichtId?: number }> {
+  const antwort = await rufeAuf(token, 'sendMessage', {
+    chat_id: chatId,
+    text,
+    parse_mode: 'HTML',
+    disable_web_page_preview: true,
+    reply_markup: {
+      keyboard: [[{ text: '📍 Standort senden', request_location: true }]],
+      resize_keyboard: true,
+      is_persistent: true,
+      input_field_placeholder: 'Standort senden, damit der Fahrgast die Zeit sieht',
+    },
+  });
+  return { ok: antwort.ok, nachrichtId: antwort.result?.message_id };
+}
+
+/** Nimmt die Tastatur wieder weg - nach der Fahrt wird sie nicht gebraucht. */
+export async function entferneStandortknopf(
+  token: string,
+  chatId: string,
+  text: string,
+): Promise<void> {
+  await rufeAuf(token, 'sendMessage', {
+    chat_id: chatId,
+    text,
+    parse_mode: 'HTML',
+    disable_web_page_preview: true,
+    reply_markup: { remove_keyboard: true },
+  });
+}
+
+/**
  * Quittiert einen Knopfdruck. Ohne diesen Aufruf dreht sich beim Fahrer
  * ewig ein Ladekringel.
  */

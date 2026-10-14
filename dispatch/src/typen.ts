@@ -82,6 +82,9 @@ export interface Auftrag {
   bewertung_gewuenscht: number;
   /** Nur gesetzt, wenn eines von beidem gewuenscht ist */
   kunde_email: string;
+  /** Koordinaten der Abholung, 0 wenn die Adresse nur als Freitext vorlag */
+  von_breite: number;
+  von_laenge: number;
   fahrer_id: number | null;
   angenommen_um: string | null;
   beendet_um: string | null;
