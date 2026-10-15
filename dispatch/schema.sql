@@ -50,6 +50,9 @@
 --  NACHTRAG "Fahrgast abgeholt" (15.10.2026):
 --
 --    ALTER TABLE auftraege ADD COLUMN abgeholt_um TEXT;
+--
+--  NACHTRAG Antworten der Fahrer (15.10.2026): neue Tabelle, legt
+--  "npm run db:anlegen" selbst an.
 --    ALTER TABLE auftraege  ADD COLUMN kunde_email         TEXT    NOT NULL DEFAULT '';
 --    ALTER TABLE rechnungen ADD COLUMN versendet_um        TEXT;
 --    ALTER TABLE rechnungen ADD COLUMN versand_an          TEXT    NOT NULL DEFAULT '';
@@ -202,6 +205,25 @@ CREATE TABLE IF NOT EXISTS fahrer_standort (
   -- Ohne diese Spalte wuerde er von der Anzeige verschwinden.
   live_bis  TEXT
 );
+
+-- --- Antworten der Fahrer ----------------------------------------------------
+-- Der Fahrer schreibt in den Chat mit dem Bot, der Fahrgast liest es auf der
+-- Statusseite. Die Antwort muss liegen bleiben, bis er sie abholt - seine
+-- Seite fragt nur in Abstaenden nach.
+--
+-- Mit dem Abmelden der Fahrt wird sie geloescht: Danach wartet niemand mehr
+-- darauf, und was nicht gespeichert ist, muss auch nicht geschuetzt werden.
+-- Die Gegenrichtung (Fahrgast an Fahrer) wird gar nicht erst abgelegt, sie
+-- geht sofort nach Telegram. Siehe src/fahrer-antwort.ts
+CREATE TABLE IF NOT EXISTS fahrer_antworten (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  auftrag_id TEXT    NOT NULL REFERENCES auftraege (id),
+  text       TEXT    NOT NULL,
+  zeitpunkt  TEXT    NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_antworten_auftrag ON fahrer_antworten (auftrag_id, id);
+
 
 -- --- Einstellungen -----------------------------------------------------------
 -- Damit der Chef Nachtfenster und Antwortzeit selbst aendern kann.

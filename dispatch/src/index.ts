@@ -13,6 +13,12 @@ import {
   nachrichtPruefen,
   nachrichtentext,
 } from './fahrgast-nachricht';
+import {
+  antwortAblegen,
+  antwortPruefen,
+  antwortenLesen,
+  laufendeFahrtVon,
+} from './fahrer-antwort';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -263,8 +269,51 @@ async function statusAbfragen(
     // Damit die Seite aufhoeren kann nachzufragen
     beendet: Boolean(zeile.beendet_um),
     abgeholt: Boolean(zeile.abgeholt_um),
+    antworten: zeile.beendet_um ? undefined : await antwortenLesen(env.DB, id),
   };
   return antwort(ergebnis, 200, env, anfrage);
+}
+
+/**
+ * Der Fahrer schreibt zurueck.
+ *
+ * Seine Nachricht landet auf der Seite des Fahrgasts, der gerade auf ihn
+ * wartet. Hat er keine laufende Fahrt, sagen wir es ihm - sonst schriebe er
+ * ins Leere und wuerde sich wundern, warum niemand antwortet.
+ */
+async function antwortAnnehmen(
+  chatId: string,
+  text: string,
+  env: Umgebung,
+): Promise<Response> {
+  const geprueft = antwortPruefen(text);
+  // Befehle und Leeres stillschweigend uebergehen
+  if (!geprueft.ok) {
+    if (geprueft.grund.startsWith('zu lang')) {
+      await sendeNachricht(env.TELEGRAM_TOKEN, chatId, `⚠️ Nachricht ${geprueft.grund}.`);
+    }
+    return new Response('ok');
+  }
+
+  const fahrt = await laufendeFahrtVon(env.DB, chatId);
+  if (!fahrt) {
+    await sendeNachricht(
+      env.TELEGRAM_TOKEN,
+      chatId,
+      'Du hast gerade keine laufende Fahrt – diese Nachricht erreicht niemanden.',
+    );
+    return new Response('ok');
+  }
+
+  const ergebnis = await antwortAblegen(env.DB, fahrt.auftragId, geprueft.text);
+  await sendeNachricht(
+    env.TELEGRAM_TOKEN,
+    chatId,
+    ergebnis === 'abgelegt'
+      ? '✓ Der Fahrgast sieht es auf seiner Seite.'
+      : '⚠️ Für diese Fahrt sind genug Nachrichten raus – bitte ruf den Fahrgast an.',
+  );
+  return new Response('ok');
 }
 
 /**
@@ -438,6 +487,13 @@ async function telegramEmpfangen(
       `✅ Angemeldet als <b>${fahrer.name}</b>.\n\nDu bekommst ab jetzt Fahraufträge hier herein. Tippe auf „Annehmen", wenn du eine Fahrt übernimmst – die Adresse erscheint danach.`,
     );
     return new Response('ok');
+  }
+
+  // --- Fahrer schreibt dem Fahrgast ---------------------------------------
+  // Alles, was kein Befehl ist, geht an den Fahrgast der laufenden Fahrt.
+  // Kein Knopf, kein Umweg: Er tippt einfach in den Chat.
+  if (text && update.message?.chat?.id) {
+    return await antwortAnnehmen(String(update.message.chat.id), text, env);
   }
 
   // --- Fahrer tippt auf Annehmen oder Ablehnen -----------------------------

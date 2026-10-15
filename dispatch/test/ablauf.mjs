@@ -108,6 +108,20 @@ async function erledige(auftragId, fahrerId, zahlungsart = '') {
   return antwort;
 }
 
+/** Der Fahrer tippt etwas in den Chat mit dem Bot. */
+async function fahrerSchreibt(chatId, text) {
+  return fetch(`${DIENST}/telegram/webhook`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-telegram-bot-api-secret-token': 'test-geheimnis',
+    },
+    body: JSON.stringify({
+      message: { message_id: 9, chat: { id: chatId }, text },
+    }),
+  });
+}
+
 /** Schickt eine Nachricht des Fahrgasts an den Fahrer. */
 async function nachricht(auftragId, text) {
   const antwort = await fetch(`${DIENST}/api/nachricht`, {
@@ -644,10 +658,51 @@ await leeren();
   const zuViel = await nachricht(koerper.auftragId, 'sechs');
   pruefe(zuViel.status === 429, 'Nach fünf Nachrichten ist Schluss', `Code ${zuViel.status}`);
 
+  // --- Der Fahrer antwortet ------------------------------------------------
+  await leeren();
+  await fahrerSchreibt('101', 'Bin in zwei Minuten da');
+  await warte(300);
+
+  const mitAntwort = await status(koerper.auftragId);
+  pruefe(
+    (mitAntwort.antworten ?? []).includes('Bin in zwei Minuten da'),
+    'Die Antwort des Fahrers steht im Status',
+    JSON.stringify(mitAntwort.antworten),
+  );
+  pruefe(
+    String(an(await aufrufe(), '101').at(-1)?.daten.text).includes('sieht es'),
+    'Der Fahrer bekommt eine Bestätigung',
+  );
+
+  await leeren();
+  await fahrerSchreibt('101', '/start ABC123');
+  await warte(300);
+  const nachBefehl = await status(koerper.auftragId);
+  pruefe(
+    !(nachBefehl.antworten ?? []).some((t) => t.includes('/start')),
+    'Ein Befehl landet nicht beim Fahrgast',
+    JSON.stringify(nachBefehl.antworten),
+  );
+
   await erledige(koerper.auftragId, 101);
   await warte(300);
   const danach = await nachricht(koerper.auftragId, 'Noch da?');
   pruefe(danach.status === 409, 'Nach der Fahrt geht keine mehr', `Code ${danach.status}`);
+
+  const ohneAntworten = await status(koerper.auftragId);
+  pruefe(
+    (ohneAntworten.antworten ?? []).length === 0,
+    'Nach der Fahrt sind die Antworten gelöscht',
+    JSON.stringify(ohneAntworten.antworten),
+  );
+
+  await leeren();
+  await fahrerSchreibt('101', 'Hallo?');
+  await warte(300);
+  pruefe(
+    String(an(await aufrufe(), '101').at(-1)?.daten.text).includes('keine laufende Fahrt'),
+    'Ohne Fahrt bekommt der Fahrer einen Hinweis',
+  );
 }
 
 console.log('\n=== 12. Absicherungen ===');

@@ -598,6 +598,9 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
             Kurze Nachricht an den Fahrer. Ohne Rufnummern auf beiden Seiten:
             Sie geht über denselben Bot, den der Fahrer ohnehin offen hat.
           -->
+          <!-- Antworten des Fahrers, aelteste zuerst -->
+          <ul class="mx-auto mt-5 max-w-md space-y-2 text-left" data-antworten hidden></ul>
+
           <div class="mx-auto mt-6 max-w-md text-left" data-nachricht>
             <label class="block text-sm text-nebel-400" for="feld-nachricht">
               Dem Fahrer kurz etwas mitteilen
@@ -760,6 +763,21 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
   .feld .opt {
     font-weight: 400;
     color: var(--color-nebel-500);
+  }
+
+  [data-antworten] li {
+    padding: 0.6rem 0.8rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(34 184 240 / 0.25);
+    background: rgb(34 184 240 / 0.08);
+    color: #fff;
+    font-size: 0.95rem;
+  }
+
+  [data-antworten] li::before {
+    content: 'Ihr Fahrer: ';
+    color: var(--color-cyan-400);
+    font-weight: 600;
   }
 
   [data-nachricht] input {

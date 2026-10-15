@@ -791,6 +791,7 @@ function einrichten(wurzel: HTMLElement): void {
             ankunft?: string;
             beendet?: boolean;
             abgeholt?: boolean;
+            antworten?: string[];
           };
 
           if (stand.status === 'angenommen') {
@@ -811,6 +812,22 @@ function einrichten(wurzel: HTMLElement): void {
               const text = stand.abgeholt ? 'Ihr Fahrer ist da.' : (stand.ankunft ?? '');
               ankunft.textContent = text;
               ankunft.hidden = !text;
+            }
+
+            // Was der Fahrer zurueckgeschrieben hat. textContent, nicht
+            // innerHTML: Sein Text wird angezeigt, nicht ausgefuehrt.
+            const liste = wurzel.querySelector<HTMLElement>('[data-antworten]');
+            if (liste) {
+              const antworten = stand.antworten ?? [];
+              if (antworten.length !== liste.children.length) {
+                liste.textContent = '';
+                for (const satz of antworten) {
+                  const zeile = document.createElement('li');
+                  zeile.textContent = satz;
+                  liste.append(zeile);
+                }
+              }
+              liste.hidden = antworten.length === 0;
             }
 
             zeigeStatus('gefunden');
