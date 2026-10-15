@@ -43,6 +43,9 @@
 --  NACHTRAG Live-Freigabe (15.10.2026), falls die Tabelle schon stand:
 --
 --    ALTER TABLE fahrer_standort ADD COLUMN live_bis TEXT;
+--
+--  NACHTRAG Adressspeicher (15.10.2026): neue Tabelle, legt
+--  "npm run db:anlegen" selbst an.
 --    ALTER TABLE auftraege  ADD COLUMN kunde_email         TEXT    NOT NULL DEFAULT '';
 --    ALTER TABLE rechnungen ADD COLUMN versendet_um        TEXT;
 --    ALTER TABLE rechnungen ADD COLUMN versand_an          TEXT    NOT NULL DEFAULT '';
@@ -235,6 +238,21 @@ CREATE TABLE IF NOT EXISTS strecken_speicher (
   schluessel TEXT PRIMARY KEY,
   km         REAL NOT NULL,
   minuten    INTEGER NOT NULL,
+  angelegt   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+
+-- --- Zwischenspeicher fuer Adressvorschlaege ---------------------------------
+-- Derselbe Gedanke: Zehn Fahrgaeste tippen dieselben zehn Strassen. Der
+-- Kartendienst hat ein Tageskontingent, und jeder Tastendruck kostet davon.
+--
+-- "treffer" ist die fertige Vorschlagsliste als JSON. Eine LEERE Liste wird
+-- nie gespeichert - sie kann aus einem Ausfall stammen, und dann waere
+-- "nichts gefunden" fuer dreissig Tage einbetoniert. Siehe
+-- src/adressen-speicher.ts
+CREATE TABLE IF NOT EXISTS adressen_speicher (
+  schluessel TEXT PRIMARY KEY,
+  treffer    TEXT NOT NULL,
   angelegt   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

@@ -7,6 +7,7 @@ import { HEIMAT, festpreisErmitteln, pruefePunkt, type Punkt } from './festpreis
 import { plausibleEmail, plausibleTelefonnummer } from './auftrag-erfassen';
 import { standortLesen, standortmeldung } from './standort';
 import { ankunftstext } from './ankunft';
+import { ausSpeicher, inSpeicher } from './adressen-speicher';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -594,7 +595,21 @@ async function adressenAnfragen(
   anfrage: Request,
 ): Promise<Response> {
   const gesuch = (url.searchParams.get('q') ?? '').trim().slice(0, 120);
-  if (!env.ORS_SCHLUESSEL || gesuch.length < 3) {
+  if (gesuch.length < 3) {
+    return antwort({ vorschlaege: [] }, 200, env, anfrage);
+  }
+
+  // Erst im eigenen Speicher nachsehen - VOR der Pruefung auf den
+  // Kartendienst. Sonst stuende der Speicher genau dann nicht zur Verfuegung,
+  // wenn man ihn am noetigsten braucht: wenn der Kartendienst ausfaellt oder
+  // sein Kontingent erschoepft ist. Gespart wird dabei auch die Drosselung,
+  // weil keine fremde Anfrage ausgeloest wird.
+  const gespeichert = await ausSpeicher(env.DB, gesuch);
+  if (gespeichert) {
+    return antwort({ vorschlaege: gespeichert }, 200, env, anfrage);
+  }
+
+  if (!env.ORS_SCHLUESSEL) {
     return antwort({ vorschlaege: [] }, 200, env, anfrage);
   }
 
@@ -613,16 +628,14 @@ async function adressenAnfragen(
     HEIMAT.laenge,
   );
 
-  return antwort(
-    {
-      vorschlaege: treffer.map((ort) => ({
-        text: ort.bezeichnung,
-        breite: ort.breite,
-        laenge: ort.laenge,
-      })),
-    },
-    200,
-    env,
-    anfrage,
-  );
+  const vorschlaege = treffer.map((ort) => ({
+    text: ort.bezeichnung,
+    breite: ort.breite,
+    laenge: ort.laenge,
+  }));
+
+  // Nur echte Treffer merken - siehe adressen-speicher.ts
+  await inSpeicher(env.DB, gesuch, vorschlaege);
+
+  return antwort({ vorschlaege }, 200, env, anfrage);
 }
