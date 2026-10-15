@@ -8,17 +8,13 @@ import { plausibleEmail, plausibleTelefonnummer } from './auftrag-erfassen';
 import { standortLesen, standortmeldung } from './standort';
 import { ankunftstext } from './ankunft';
 import { ausSpeicher, inSpeicher } from './adressen-speicher';
+import { nachrichtentext } from './fahrgast-nachricht';
 import {
-  HOECHSTZAHL,
-  nachrichtPruefen,
-  nachrichtentext,
-} from './fahrgast-nachricht';
-import {
-  antwortAblegen,
-  antwortPruefen,
-  antwortenLesen,
   laufendeFahrtVon,
-} from './fahrer-antwort';
+  nachrichtAblegen,
+  nachrichtPruefen,
+  verlaufLesen,
+} from './fahrt-nachrichten';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -269,7 +265,7 @@ async function statusAbfragen(
     // Damit die Seite aufhoeren kann nachzufragen
     beendet: Boolean(zeile.beendet_um),
     abgeholt: Boolean(zeile.abgeholt_um),
-    antworten: zeile.beendet_um ? undefined : await antwortenLesen(env.DB, id),
+    verlauf: zeile.beendet_um ? undefined : await verlaufLesen(env.DB, id),
   };
   return antwort(ergebnis, 200, env, anfrage);
 }
@@ -286,7 +282,7 @@ async function antwortAnnehmen(
   text: string,
   env: Umgebung,
 ): Promise<Response> {
-  const geprueft = antwortPruefen(text);
+  const geprueft = nachrichtPruefen(text);
   // Befehle und Leeres stillschweigend uebergehen
   if (!geprueft.ok) {
     if (geprueft.grund.startsWith('zu lang')) {
@@ -305,7 +301,12 @@ async function antwortAnnehmen(
     return new Response('ok');
   }
 
-  const ergebnis = await antwortAblegen(env.DB, fahrt.auftragId, geprueft.text);
+  const ergebnis = await nachrichtAblegen(
+    env.DB,
+    fahrt.auftragId,
+    'fahrer',
+    geprueft.text,
+  );
   await sendeNachricht(
     env.TELEGRAM_TOKEN,
     chatId,
@@ -359,9 +360,15 @@ async function nachrichtSenden(anfrage: Request, env: Umgebung): Promise<Respons
     );
   }
 
-  // Je Fahrt begrenzt: Wer mehr zu sagen hat, soll anrufen.
-  const kennung = 'msg-' + auftragId;
-  if (await zuVieleBestellungen(kennung, env, HOECHSTZAHL)) {
+  // Je Fahrt begrenzt: Wer mehr zu sagen hat, soll anrufen. Gezaehlt wird am
+  // Verlauf selbst - beide Richtungen zusammen.
+  const abgelegt = await nachrichtAblegen(
+    env.DB,
+    auftragId,
+    'fahrgast',
+    geprueft.text,
+  );
+  if (abgelegt === 'zu-viele') {
     return antwort(
       { fehler: 'Bitte rufen Sie an – mehr Nachrichten gehen für diese Fahrt nicht.' },
       429,
@@ -369,9 +376,6 @@ async function nachrichtSenden(anfrage: Request, env: Umgebung): Promise<Respons
       anfrage,
     );
   }
-  await env.DB.prepare('INSERT INTO drosselung (kennung) VALUES (?)')
-    .bind(kennung)
-    .run();
 
   const ergebnis = await sendeNachricht(
     env.TELEGRAM_TOKEN,

@@ -655,19 +655,27 @@ await leeren();
   await nachricht(koerper.auftragId, 'drei');
   await nachricht(koerper.auftragId, 'vier');
   await nachricht(koerper.auftragId, 'fünf');
-  const zuViel = await nachricht(koerper.auftragId, 'sechs');
-  pruefe(zuViel.status === 429, 'Nach fünf Nachrichten ist Schluss', `Code ${zuViel.status}`);
-
   // --- Der Fahrer antwortet ------------------------------------------------
   await leeren();
   await fahrerSchreibt('101', 'Bin in zwei Minuten da');
   await warte(300);
 
   const mitAntwort = await status(koerper.auftragId);
+  const verlauf = mitAntwort.verlauf ?? [];
   pruefe(
-    (mitAntwort.antworten ?? []).includes('Bin in zwei Minuten da'),
-    'Die Antwort des Fahrers steht im Status',
-    JSON.stringify(mitAntwort.antworten),
+    verlauf.some((n) => n.von === 'fahrer' && n.text === 'Bin in zwei Minuten da'),
+    'Die Antwort des Fahrers steht im Verlauf',
+    JSON.stringify(verlauf),
+  );
+  pruefe(
+    verlauf.some((n) => n.von === 'fahrgast' && n.text.includes('hinteren Ausgang')),
+    'Und die eigene Nachricht des Fahrgasts auch',
+    JSON.stringify(verlauf),
+  );
+  pruefe(
+    verlauf.every((n) => /^\d{2}:\d{2}$/.test(n.zeit)),
+    'Jede Zeile trägt eine Uhrzeit',
+    JSON.stringify(verlauf.map((n) => n.zeit)),
   );
   pruefe(
     String(an(await aufrufe(), '101').at(-1)?.daten.text).includes('sieht es'),
@@ -679,21 +687,27 @@ await leeren();
   await warte(300);
   const nachBefehl = await status(koerper.auftragId);
   pruefe(
-    !(nachBefehl.antworten ?? []).some((t) => t.includes('/start')),
-    'Ein Befehl landet nicht beim Fahrgast',
-    JSON.stringify(nachBefehl.antworten),
+    !(nachBefehl.verlauf ?? []).some((n) => n.text.includes('/start')),
+    'Ein Befehl landet nicht im Verlauf',
+    JSON.stringify(nachBefehl.verlauf),
   );
+
+  // Erst zum Schluss ans Kontingent gehen - die Grenze zaehlt beide
+  // Richtungen zusammen, danach waere kein Austausch mehr pruefbar
+  for (let n = 0; n < 16; n++) await nachricht(koerper.auftragId, `Nummer ${n}`);
+  const zuViel = await nachricht(koerper.auftragId, 'eine zu viel');
+  pruefe(zuViel.status === 429, 'Irgendwann ist Schluss', `Code ${zuViel.status}`);
 
   await erledige(koerper.auftragId, 101);
   await warte(300);
   const danach = await nachricht(koerper.auftragId, 'Noch da?');
   pruefe(danach.status === 409, 'Nach der Fahrt geht keine mehr', `Code ${danach.status}`);
 
-  const ohneAntworten = await status(koerper.auftragId);
+  const ohneVerlauf = await status(koerper.auftragId);
   pruefe(
-    (ohneAntworten.antworten ?? []).length === 0,
-    'Nach der Fahrt sind die Antworten gelöscht',
-    JSON.stringify(ohneAntworten.antworten),
+    (ohneVerlauf.verlauf ?? []).length === 0,
+    'Nach der Fahrt ist der Verlauf gelöscht',
+    JSON.stringify(ohneVerlauf.verlauf),
   );
 
   await leeren();

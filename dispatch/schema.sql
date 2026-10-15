@@ -51,8 +51,11 @@
 --
 --    ALTER TABLE auftraege ADD COLUMN abgeholt_um TEXT;
 --
---  NACHTRAG Antworten der Fahrer (15.10.2026): neue Tabelle, legt
---  "npm run db:anlegen" selbst an.
+--  NACHTRAG Nachrichten zur Fahrt (15.10.2026): neue Tabelle, legt
+--  "npm run db:anlegen" selbst an. Die kurzlebige Vorgaengerin heisst
+--  "fahrer_antworten" und kann weg:
+--
+--    DROP TABLE IF EXISTS fahrer_antworten;
 --    ALTER TABLE auftraege  ADD COLUMN kunde_email         TEXT    NOT NULL DEFAULT '';
 --    ALTER TABLE rechnungen ADD COLUMN versendet_um        TEXT;
 --    ALTER TABLE rechnungen ADD COLUMN versand_an          TEXT    NOT NULL DEFAULT '';
@@ -206,23 +209,23 @@ CREATE TABLE IF NOT EXISTS fahrer_standort (
   live_bis  TEXT
 );
 
--- --- Antworten der Fahrer ----------------------------------------------------
--- Der Fahrer schreibt in den Chat mit dem Bot, der Fahrgast liest es auf der
--- Statusseite. Die Antwort muss liegen bleiben, bis er sie abholt - seine
--- Seite fragt nur in Abstaenden nach.
+-- --- Nachrichten zur Fahrt ---------------------------------------------------
+-- Beide Richtungen: Der Fahrgast schreibt auf der Statusseite, der Fahrer in
+-- seinem Chat mit dem Bot. Beide sehen denselben Verlauf.
 --
--- Mit dem Abmelden der Fahrt wird sie geloescht: Danach wartet niemand mehr
--- darauf, und was nicht gespeichert ist, muss auch nicht geschuetzt werden.
--- Die Gegenrichtung (Fahrgast an Fahrer) wird gar nicht erst abgelegt, sie
--- geht sofort nach Telegram. Siehe src/fahrer-antwort.ts
-CREATE TABLE IF NOT EXISTS fahrer_antworten (
+-- Auch der Text des Fahrgasts liegt hier - ein Verlauf, den nur eine Seite
+-- sieht, waere keiner. Mit dem Abmelden der Fahrt wird alles geloescht:
+-- Danach wartet niemand mehr darauf. Siehe src/fahrt-nachrichten.ts
+CREATE TABLE IF NOT EXISTS fahrt_nachrichten (
   id         INTEGER PRIMARY KEY AUTOINCREMENT,
   auftrag_id TEXT    NOT NULL REFERENCES auftraege (id),
+  -- 'fahrgast' | 'fahrer'
+  von        TEXT    NOT NULL,
   text       TEXT    NOT NULL,
   zeitpunkt  TEXT    NOT NULL DEFAULT (datetime('now'))
 );
 
-CREATE INDEX IF NOT EXISTS idx_antworten_auftrag ON fahrer_antworten (auftrag_id, id);
+CREATE INDEX IF NOT EXISTS idx_nachrichten_auftrag ON fahrt_nachrichten (auftrag_id, id);
 
 
 -- --- Einstellungen -----------------------------------------------------------

@@ -598,8 +598,8 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
             Kurze Nachricht an den Fahrer. Ohne Rufnummern auf beiden Seiten:
             Sie geht über denselben Bot, den der Fahrer ohnehin offen hat.
           -->
-          <!-- Antworten des Fahrers, aelteste zuerst -->
-          <ul class="mx-auto mt-5 max-w-md space-y-2 text-left" data-antworten hidden></ul>
+          <!-- Nachrichtenverlauf, aelteste zuerst -->
+          <ul class="mx-auto mt-5 max-w-md space-y-2 text-left" data-verlauf hidden></ul>
 
           <div class="mx-auto mt-6 max-w-md text-left" data-nachricht>
             <label class="block text-sm text-nebel-400" for="feld-nachricht">
@@ -765,19 +765,44 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
     color: var(--color-nebel-500);
   }
 
-  [data-antworten] li {
-    padding: 0.6rem 0.8rem;
-    border-radius: 0.75rem;
-    border: 1px solid rgb(34 184 240 / 0.25);
-    background: rgb(34 184 240 / 0.08);
-    color: #fff;
+  /* Verlauf wie in einem Nachrichtendienst: Fahrer links, Fahrgast rechts */
+  [data-verlauf] li {
+    max-width: 85%;
+    padding: 0.55rem 0.8rem;
+    border-radius: 0.9rem;
     font-size: 0.95rem;
+    color: #fff;
   }
 
-  [data-antworten] li::before {
-    content: 'Ihr Fahrer: ';
-    color: var(--color-cyan-400);
+  [data-verlauf] li[data-von='fahrer'] {
+    margin-right: auto;
+    border: 1px solid rgb(34 184 240 / 0.25);
+    border-bottom-left-radius: 0.25rem;
+    background: rgb(34 184 240 / 0.1);
+  }
+
+  [data-verlauf] li[data-von='fahrgast'] {
+    margin-left: auto;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-bottom-right-radius: 0.25rem;
+    background: rgb(255 255 255 / 0.07);
+  }
+
+  [data-verlauf] .wer {
+    display: block;
+    font-size: 0.75rem;
     font-weight: 600;
+    opacity: 0.75;
+  }
+
+  [data-verlauf] li[data-von='fahrer'] .wer {
+    color: var(--color-cyan-400);
+  }
+
+  [data-verlauf] .zeit {
+    margin-left: 0.4rem;
+    font-weight: 400;
+    opacity: 0.8;
   }
 
   [data-nachricht] input {

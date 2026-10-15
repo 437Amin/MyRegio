@@ -672,6 +672,48 @@ function einrichten(wurzel: HTMLElement): void {
   }
 
   /**
+   * Zeichnet den Nachrichtenverlauf.
+   *
+   * Neu gezeichnet wird nur, wenn sich etwas geaendert hat - sonst springt
+   * die Liste bei jeder Abfrage. textContent statt innerHTML: Die Texte
+   * werden angezeigt, nicht ausgefuehrt.
+   */
+  let verlaufStand = '';
+  function verlaufZeigen(
+    verlauf: { von: 'fahrgast' | 'fahrer'; text: string; zeit: string }[],
+  ): void {
+    const liste = wurzel.querySelector<HTMLElement>('[data-verlauf]');
+    if (!liste) return;
+
+    const kennung = JSON.stringify(verlauf);
+    if (kennung !== verlaufStand) {
+      verlaufStand = kennung;
+      liste.textContent = '';
+
+      for (const eintrag of verlauf) {
+        const zeile = document.createElement('li');
+        zeile.dataset.von = eintrag.von;
+
+        const wer = document.createElement('span');
+        wer.className = 'wer';
+        wer.textContent = eintrag.von === 'fahrer' ? 'Ihr Fahrer' : 'Sie';
+
+        if (eintrag.zeit) {
+          const zeit = document.createElement('span');
+          zeit.className = 'zeit';
+          zeit.textContent = eintrag.zeit;
+          wer.append(zeit);
+        }
+
+        zeile.append(wer, document.createTextNode(eintrag.text));
+        liste.append(zeile);
+      }
+    }
+
+    liste.hidden = verlauf.length === 0;
+  }
+
+  /**
    * Kurze Nachricht an den Fahrer.
    *
    * Die Rufnummer des Fahrers bekommt der Fahrgast bewusst nicht zu sehen -
@@ -705,7 +747,7 @@ function einrichten(wurzel: HTMLElement): void {
 
         if (daten.gesendet) {
           feld.value = '';
-          sagen('Nachricht ist beim Fahrer.', true);
+          sagen('', true);
         } else {
           sagen(daten.fehler ?? 'Das hat nicht geklappt. Bitte rufen Sie an.', false);
         }
@@ -791,7 +833,7 @@ function einrichten(wurzel: HTMLElement): void {
             ankunft?: string;
             beendet?: boolean;
             abgeholt?: boolean;
-            antworten?: string[];
+            verlauf?: { von: 'fahrgast' | 'fahrer'; text: string; zeit: string }[];
           };
 
           if (stand.status === 'angenommen') {
@@ -814,21 +856,7 @@ function einrichten(wurzel: HTMLElement): void {
               ankunft.hidden = !text;
             }
 
-            // Was der Fahrer zurueckgeschrieben hat. textContent, nicht
-            // innerHTML: Sein Text wird angezeigt, nicht ausgefuehrt.
-            const liste = wurzel.querySelector<HTMLElement>('[data-antworten]');
-            if (liste) {
-              const antworten = stand.antworten ?? [];
-              if (antworten.length !== liste.children.length) {
-                liste.textContent = '';
-                for (const satz of antworten) {
-                  const zeile = document.createElement('li');
-                  zeile.textContent = satz;
-                  liste.append(zeile);
-                }
-              }
-              liste.hidden = antworten.length === 0;
-            }
+            verlaufZeigen(stand.verlauf ?? []);
 
             zeigeStatus('gefunden');
 

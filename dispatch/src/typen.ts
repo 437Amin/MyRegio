@@ -133,6 +133,6 @@ export interface StatusAntwort {
   beendet?: boolean;
   /** true, sobald der Fahrgast im Auto sitzt */
   abgeholt?: boolean;
-  /** Was der Fahrer zurueckgeschrieben hat, aelteste zuerst */
-  antworten?: string[];
+  /** Der Nachrichtenverlauf zur Fahrt, aelteste zuerst */
+  verlauf?: { von: 'fahrgast' | 'fahrer'; text: string; zeit: string }[];
 }

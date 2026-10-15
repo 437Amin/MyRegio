@@ -2,7 +2,7 @@ import type { Auftrag, Fahrer, Umgebung } from './typen';
 import { rechnungAusFahrt } from './rechnung-fahrt';
 import { dankeNachFahrt } from './danke-mail';
 import { standortVergessen } from './standort';
-import { antwortenVergessen } from './fahrer-antwort';
+import { verlaufVergessen } from './fahrt-nachrichten';
 import { zahlungsartLesen } from './rechnung-automatik';
 import type { Zahlungsart } from './rechnung';
 import { fahrerFuerZeitpunkt, wunschZuerst } from './schichten';
@@ -433,7 +433,7 @@ export class Vermittlung implements DurableObject {
     // Standort und Nachrichten werden nicht mehr gebraucht - also weg damit.
     // Was nicht gespeichert ist, kann auch nicht missbraucht werden.
     await standortVergessen(this.env.DB, fahrerId);
-    await antwortenVergessen(this.env.DB, zustand.auftragId);
+    await verlaufVergessen(this.env.DB, zustand.auftragId);
 
     const fahrer = await this.ladeFahrer(fahrerId);
     if (fahrer?.telegram_chat_id) {
