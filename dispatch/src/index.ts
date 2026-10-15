@@ -1,6 +1,6 @@
 import type { Bestellung, Fahrer, StatusAntwort, Umgebung } from './typen';
 import { gueltigerWunschfahrer, oeffentlicheFahrer } from './fahrer-liste';
-import { quittiereKnopf, sendeNachricht, setzeTelegramBasis } from './telegram';
+import { quittiereKnopf, sendeNachricht, setzeTelegramBasis, sicher } from './telegram';
 import { adminRoute } from './admin';
 import { adressenVorschlagen } from './strecke';
 import { HEIMAT, festpreisErmitteln, pruefePunkt, type Punkt } from './festpreis';
@@ -9,6 +9,7 @@ import { standortLesen, standortmeldung } from './standort';
 import { ankunftstext } from './ankunft';
 import { ausSpeicher, inSpeicher } from './adressen-speicher';
 import { nachrichtentext } from './fahrgast-nachricht';
+import { bewertungPruefen, chefmeldung } from './bewertung';
 import {
   laufendeFahrtVon,
   nachrichtAblegen,
@@ -53,6 +54,10 @@ export default {
 
       if (pfad === '/api/adressen' && anfrage.method === 'GET') {
         return await adressenAnfragen(url, env, anfrage);
+      }
+
+      if (pfad === '/api/bewertung' && anfrage.method === 'POST') {
+        return await bewertungAnnehmen(anfrage, env);
       }
 
       if (pfad === '/api/nachricht' && anfrage.method === 'POST') {
@@ -228,7 +233,7 @@ async function statusAbfragen(
 ): Promise<Response> {
   const zeile = await env.DB.prepare(
     `SELECT a.status, a.angenommen_um, a.wunsch_fahrer_id, a.fahrer_id,
-            a.von_breite, a.von_laenge, a.beendet_um, a.abgeholt_um,
+            a.von_breite, a.von_laenge, a.beendet_um, a.abgeholt_um, a.bewertet_um,
             f.name AS fahrername
        FROM auftraege a
        LEFT JOIN fahrer f ON f.id = a.fahrer_id
@@ -244,6 +249,7 @@ async function statusAbfragen(
       von_laenge: number;
       beendet_um: string | null;
       abgeholt_um: string | null;
+      bewertet_um: string | null;
       fahrername: string | null;
     }>();
 
@@ -266,8 +272,76 @@ async function statusAbfragen(
     beendet: Boolean(zeile.beendet_um),
     abgeholt: Boolean(zeile.abgeholt_um),
     verlauf: zeile.beendet_um ? undefined : await verlaufLesen(env.DB, id),
+    bewertet: Boolean(zeile.bewertet_um),
+    // Erst nach der Fahrt gebraucht - vorher waere er nur Ballast
+    bewertungLink: zeile.beendet_um ? await bewertungLinkHolen(env) : undefined,
   };
   return antwort(ergebnis, 200, env, anfrage);
+}
+
+/** Der hinterlegte Link zur Bewertungsseite, leer wenn keiner eingetragen ist. */
+async function bewertungLinkHolen(env: Umgebung): Promise<string | undefined> {
+  const zeile = await env.DB.prepare(
+    "SELECT wert FROM einstellungen WHERE schluessel = 'bewertung_link'",
+  ).first<{ wert: string }>();
+  return zeile?.wert || undefined;
+}
+
+/**
+ * Der Fahrgast bewertet die Fahrt.
+ *
+ * Nur nach der Fahrt und nur einmal. Ein zweiter Versuch wird nicht als
+ * Fehler behandelt - wer den Knopf doppelt tippt, soll kein rotes Feld sehen.
+ */
+async function bewertungAnnehmen(anfrage: Request, env: Umgebung): Promise<Response> {
+  const roh = (await anfrage.json().catch(() => null)) as {
+    auftragId?: string;
+    sterne?: unknown;
+    text?: unknown;
+  } | null;
+
+  const auftragId = kurz(roh?.auftragId, 60);
+  const geprueft = bewertungPruefen(roh?.sterne, roh?.text);
+  if (!auftragId) return antwort({ fehler: 'Unbekannte Fahrt' }, 400, env, anfrage);
+  if (!geprueft.ok) return antwort({ fehler: geprueft.grund }, 400, env, anfrage);
+
+  const ergebnis = await env.DB.prepare(
+    `UPDATE auftraege
+        SET sterne = ?, bewertung_text = ?, bewertet_um = datetime('now')
+      WHERE id = ? AND beendet_um IS NOT NULL AND bewertet_um IS NULL`,
+  )
+    .bind(geprueft.sterne, geprueft.text, auftragId)
+    .run();
+
+  if (ergebnis.meta.changes === 0) {
+    // Entweder schon bewertet oder die Fahrt laeuft noch - beides kein Drama
+    return antwort({ gespeichert: true, schon: true }, 200, env, anfrage);
+  }
+
+  // Der Chef erfaehrt davon sofort. Eine schlechte Bewertung soll auffallen,
+  // solange sich noch etwas tun laesst.
+  if (env.CHEF_CHAT_ID) {
+    const zeile = await env.DB.prepare(
+      `SELECT a.abholung, a.ziel, f.name AS fahrername
+         FROM auftraege a LEFT JOIN fahrer f ON f.id = a.fahrer_id
+        WHERE a.id = ?`,
+    )
+      .bind(auftragId)
+      .first<{ abholung: string; ziel: string; fahrername: string | null }>();
+
+    await sendeNachricht(
+      env.TELEGRAM_TOKEN,
+      env.CHEF_CHAT_ID,
+      chefmeldung(geprueft.sterne, geprueft.text, {
+        von: zeile?.abholung ?? '',
+        nach: zeile?.ziel ?? '',
+        fahrer: zeile?.fahrername ?? 'unbekannt',
+        sicher,
+      }),
+    );
+  }
+
+  return antwort({ gespeichert: true }, 200, env, anfrage);
 }
 
 /**

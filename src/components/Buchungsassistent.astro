@@ -601,6 +601,56 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
           <!-- Nachrichtenverlauf, aelteste zuerst -->
           <ul class="mx-auto mt-5 max-w-md space-y-2 text-left" data-verlauf hidden></ul>
 
+          <!--
+            Nach der Fahrt: Dank und Bewertung. Erscheint erst, wenn der
+            Fahrer abgemeldet hat - vorher waere es eine Frage zur Unzeit.
+          -->
+          <div class="mx-auto mt-6 max-w-md" data-bewertung hidden>
+            <p class="text-lg font-semibold text-white">
+              Danke, dass Sie mit uns gefahren sind.
+            </p>
+            <p class="mt-1 text-sm text-nebel-400">
+              Wie war die Fahrt? Ihre Rückmeldung hilft uns weiter.
+            </p>
+
+            <fieldset class="sterne mt-4">
+              <legend class="sr-only">Bewertung von einem bis fünf Sternen</legend>
+              <label><input type="radio" name="sterne" value="1" /><span>★</span><span class="sr-only">1 Stern</span></label>
+              <label><input type="radio" name="sterne" value="2" /><span>★</span><span class="sr-only">2 Sterne</span></label>
+              <label><input type="radio" name="sterne" value="3" /><span>★</span><span class="sr-only">3 Sterne</span></label>
+              <label><input type="radio" name="sterne" value="4" /><span>★</span><span class="sr-only">4 Sterne</span></label>
+              <label><input type="radio" name="sterne" value="5" /><span>★</span><span class="sr-only">5 Sterne</span></label>
+            </fieldset>
+
+            <div class="feld mt-4">
+              <label for="feld-bewertung" class="sr-only">Ihre Rückmeldung</label>
+              <textarea
+                id="feld-bewertung"
+                rows="3"
+                maxlength="1000"
+                placeholder="Mögen Sie uns etwas dazu schreiben? (freiwillig)"
+                data-bewertung-text
+              ></textarea>
+            </div>
+
+            <button type="button" class="knopf cyan gross mt-3 w-full" data-bewertung-senden>
+              Bewertung abschicken
+            </button>
+            <p class="mt-2 text-sm" data-bewertung-meldung role="status" hidden></p>
+          </div>
+
+          <!-- Nach dem Abschicken -->
+          <div class="mx-auto mt-6 max-w-md" data-bewertung-danke hidden>
+            <p class="text-lg font-semibold text-white">Vielen Dank!</p>
+            <p class="mt-1 text-sm text-nebel-400">
+              Wir haben Ihre Rückmeldung erhalten.
+            </p>
+            <a class="knopf gross mt-4 inline-block" data-bewertung-link href="#" hidden
+               target="_blank" rel="noopener">
+              Auch bei Google bewerten
+            </a>
+          </div>
+
           <div class="mx-auto mt-6 max-w-md text-left" data-nachricht>
             <label class="block text-sm text-nebel-400" for="feld-nachricht">
               Dem Fahrer kurz etwas mitteilen
@@ -803,6 +853,47 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
     margin-left: 0.4rem;
     font-weight: 400;
     opacity: 0.8;
+  }
+
+  .sterne {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .sterne label {
+    cursor: pointer;
+    font-size: 2.25rem;
+    line-height: 1;
+    color: rgb(255 255 255 / 0.22);
+    transition: color 0.15s ease;
+  }
+
+  .sterne input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+  }
+
+  /* Alle Sterne bis zum gewaehlten leuchten - so kennt man es */
+  .sterne label:has(input:checked),
+  .sterne label:has(input:checked) ~ label {
+    color: rgb(255 255 255 / 0.22);
+  }
+
+  .sterne:has(input:checked) label {
+    color: #fbbf24;
+  }
+
+  .sterne label:has(input:checked) ~ label {
+    color: rgb(255 255 255 / 0.22);
+  }
+
+  .sterne input:focus-visible + span {
+    outline: 2px solid var(--color-cyan-500);
+    outline-offset: 2px;
+    border-radius: 0.25rem;
   }
 
   [data-nachricht] input {

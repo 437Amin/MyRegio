@@ -51,6 +51,12 @@
 --
 --    ALTER TABLE auftraege ADD COLUMN abgeholt_um TEXT;
 --
+--  NACHTRAG Bewertung (15.10.2026):
+--
+--    ALTER TABLE auftraege ADD COLUMN sterne         INTEGER;
+--    ALTER TABLE auftraege ADD COLUMN bewertung_text TEXT NOT NULL DEFAULT '';
+--    ALTER TABLE auftraege ADD COLUMN bewertet_um    TEXT;
+--
 --  NACHTRAG Nachrichten zur Fahrt (15.10.2026): neue Tabelle, legt
 --  "npm run db:anlegen" selbst an. Die kurzlebige Vorgaengerin heisst
 --  "fahrer_antworten" und kann weg:
@@ -160,7 +166,13 @@ CREATE TABLE IF NOT EXISTS auftraege (
   -- gegenstandslos: Sie rechnet zur ABHOLADRESSE, und wer schon im Auto
   -- sitzt, laese sonst waehrend der ganzen Fahrt "etwa 1 Minute entfernt".
   abgeholt_um    TEXT,
-  beendet_um     TEXT
+  beendet_um     TEXT,
+
+  -- Bewertung durch den Fahrgast, direkt nach der Fahrt auf der Seite.
+  -- NULL heisst: nicht bewertet - das ist der Normalfall und kein Mangel.
+  sterne         INTEGER,
+  bewertung_text TEXT    NOT NULL DEFAULT '',
+  bewertet_um    TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_auftraege_eingang ON auftraege (eingang DESC);

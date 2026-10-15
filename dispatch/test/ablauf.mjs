@@ -108,6 +108,16 @@ async function erledige(auftragId, fahrerId, zahlungsart = '') {
   return antwort;
 }
 
+/** Der Fahrgast bewertet die Fahrt. */
+async function bewerten(auftragId, sterne, text) {
+  const antwort = await fetch(`${DIENST}/api/bewertung`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ auftragId, sterne, text }),
+  });
+  return { status: antwort.status, koerper: await antwort.json() };
+}
+
 /** Der Fahrer tippt etwas in den Chat mit dem Bot. */
 async function fahrerSchreibt(chatId, text) {
   return fetch(`${DIENST}/telegram/webhook`, {
@@ -719,7 +729,54 @@ await leeren();
   );
 }
 
-console.log('\n=== 12. Absicherungen ===');
+console.log('\n=== 12. Bewertung nach der Fahrt ===');
+await leeren();
+{
+  const { koerper } = await bestelle({ name: 'Herr Vogt' }, '203.0.113.12');
+  await warte(600);
+  await knopfDruck(koerper.auftragId, 101, '101', true);
+  await warte(400);
+
+  // Vor dem Ende gibt es nichts zu bewerten
+  const zuFrueh = await bewerten(koerper.auftragId, 5, 'Toll');
+  const nochNicht = await status(koerper.auftragId);
+  pruefe(
+    nochNicht.bewertet !== true,
+    'Vor dem Abmelden zählt keine Bewertung',
+    JSON.stringify({ code: zuFrueh.status, bewertet: nochNicht.bewertet }),
+  );
+
+  await erledige(koerper.auftragId, 101);
+  await warte(400);
+  await leeren();
+
+  const unsinn = await bewerten(koerper.auftragId, 9, '');
+  pruefe(unsinn.status === 400, 'Neun Sterne gibt es nicht', `Code ${unsinn.status}`);
+
+  const gut = await bewerten(koerper.auftragId, 2, 'Hat lange gedauert');
+  pruefe(gut.status === 200, 'Nach der Fahrt geht die Bewertung durch', `Code ${gut.status}`);
+
+  const bewertet = await status(koerper.auftragId);
+  pruefe(bewertet.bewertet === true, 'Die Seite weiß, dass bewertet wurde');
+
+  const anChef = an(await aufrufe(), '999').at(-1)?.daten.text ?? '';
+  pruefe(
+    anChef.includes('Schlechte Bewertung'),
+    'Zwei Sterne fallen beim Chef auf',
+    anChef.slice(0, 60),
+  );
+  pruefe(anChef.includes('Hat lange gedauert'), 'Mit dem Text des Fahrgasts');
+
+  await leeren();
+  const nochmal = await bewerten(koerper.auftragId, 5, 'Doch gut');
+  pruefe(nochmal.status === 200, 'Ein zweiter Versuch ist kein Fehler', `Code ${nochmal.status}`);
+  pruefe(
+    an(await aufrufe(), '999').length === 0,
+    'Aber er meldet den Chef nicht noch einmal',
+  );
+}
+
+console.log('\n=== 13. Absicherungen ===');
 {
   const ohneName = await bestelle({ name: '' });
   pruefe(ohneName.status === 400, 'Bestellung ohne Namen wird abgelehnt');

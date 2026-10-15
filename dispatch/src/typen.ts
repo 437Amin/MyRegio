@@ -89,6 +89,8 @@ export interface Auftrag {
   angenommen_um: string | null;
   /** Gesetzt, sobald der Fahrer den Fahrgast aufgenommen hat */
   abgeholt_um: string | null;
+  /** Bewertung durch den Fahrgast, null wenn nicht bewertet */
+  sterne: number | null;
   beendet_um: string | null;
 }
 
@@ -135,4 +137,8 @@ export interface StatusAntwort {
   abgeholt?: boolean;
   /** Der Nachrichtenverlauf zur Fahrt, aelteste zuerst */
   verlauf?: { von: 'fahrgast' | 'fahrer'; text: string; zeit: string }[];
+  /** true, wenn der Fahrgast die Fahrt schon bewertet hat */
+  bewertet?: boolean;
+  /** Link zur Bewertungsseite, falls hinterlegt - nach dem Danke sichtbar */
+  bewertungLink?: string;
 }

@@ -86,6 +86,8 @@ function einrichten(wurzel: HTMLElement): void {
   let statusTimer: number | undefined;
   /** Die Fahrt, die gerade laeuft - fuer die Nachricht an den Fahrer */
   let laufenderAuftrag = '';
+  /** Zuletzt gemeldeter Bewertungslink, damit er nach dem Absenden dasteht */
+  let letzterBewertungslink = '';
   /** Merkt sich, für welche Strecke der Preis schon geholt wurde */
   let preisSchluessel = '';
   /** Zuletzt angezeigter Betrag - wandert in die WhatsApp-Nachricht */
@@ -672,6 +674,80 @@ function einrichten(wurzel: HTMLElement): void {
   }
 
   /**
+   * Nach der Fahrt: Dank, Sterne, Rueckmeldung.
+   *
+   * Der Bewertungslink wird JEDEM gezeigt, der abgeschickt hat - nicht nur
+   * den Zufriedenen. Nur die Guten weiterzuleiten waere Rosinenpickerei, und
+   * Google untersagt es ausdruecklich.
+   */
+  function bewertungZeigen(schonBewertet: boolean, link: string): void {
+    const block = wurzel.querySelector<HTMLElement>('[data-bewertung]');
+    const danke = wurzel.querySelector<HTMLElement>('[data-bewertung-danke]');
+    const nachrichtfeld = wurzel.querySelector<HTMLElement>('[data-nachricht]');
+    if (!block || !danke) return;
+
+    // Schreiben geht nach der Fahrt nicht mehr - der Fahrer ist weiter
+    if (nachrichtfeld) nachrichtfeld.hidden = true;
+
+    block.hidden = schonBewertet;
+    danke.hidden = !schonBewertet;
+
+    const knopf = danke.querySelector<HTMLAnchorElement>('[data-bewertung-link]');
+    if (knopf) {
+      if (link) knopf.href = link;
+      knopf.hidden = !link;
+    }
+  }
+
+  /** Schickt die Bewertung ab. */
+  function bewertungEinrichten(): void {
+    const block = wurzel.querySelector<HTMLElement>('[data-bewertung]');
+    const knopf = wurzel.querySelector<HTMLButtonElement>('[data-bewertung-senden]');
+    const feld = wurzel.querySelector<HTMLTextAreaElement>('[data-bewertung-text]');
+    const meldung = wurzel.querySelector<HTMLElement>('[data-bewertung-meldung]');
+    if (!block || !knopf || !feld || !meldung) return;
+
+    knopf.addEventListener('click', async () => {
+      const gewaehlt = block.querySelector<HTMLInputElement>('input[name="sterne"]:checked');
+      if (!gewaehlt) {
+        meldung.textContent = 'Bitte vergeben Sie ein bis fünf Sterne.';
+        meldung.hidden = false;
+        meldung.style.color = 'rgb(248 113 113)';
+        return;
+      }
+      if (!laufenderAuftrag || !vermittlungBasis) return;
+
+      knopf.disabled = true;
+      try {
+        const antwort = await fetch(`${vermittlungBasis}/api/bewertung`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            auftragId: laufenderAuftrag,
+            sterne: Number(gewaehlt.value),
+            text: feld.value,
+          }),
+        });
+        const daten = (await antwort.json()) as { gespeichert?: boolean; fehler?: string };
+
+        if (daten.gespeichert) {
+          bewertungZeigen(true, letzterBewertungslink);
+        } else {
+          meldung.textContent = daten.fehler ?? 'Das hat nicht geklappt.';
+          meldung.hidden = false;
+          meldung.style.color = 'rgb(248 113 113)';
+        }
+      } catch {
+        meldung.textContent = 'Keine Verbindung. Bitte später noch einmal.';
+        meldung.hidden = false;
+        meldung.style.color = 'rgb(248 113 113)';
+      } finally {
+        knopf.disabled = false;
+      }
+    });
+  }
+
+  /**
    * Zeichnet den Nachrichtenverlauf.
    *
    * Neu gezeichnet wird nur, wenn sich etwas geaendert hat - sonst springt
@@ -834,6 +910,8 @@ function einrichten(wurzel: HTMLElement): void {
             beendet?: boolean;
             abgeholt?: boolean;
             verlauf?: { von: 'fahrgast' | 'fahrer'; text: string; zeit: string }[];
+            bewertet?: boolean;
+            bewertungLink?: string;
           };
 
           if (stand.status === 'angenommen') {
@@ -866,9 +944,15 @@ function einrichten(wurzel: HTMLElement): void {
               vergeben = true;
               schluss = Date.now() + 60 * 60 * 1000;
             }
-            if (!stand.beendet) {
-              statusTimer = window.setTimeout(nachfragen, 10000);
+            letzterBewertungslink = stand.bewertungLink ?? '';
+
+            // Nach der Fahrt: Dank und Bewertung statt Nachrichtenfeld
+            if (stand.beendet) {
+              bewertungZeigen(Boolean(stand.bewertet), stand.bewertungLink ?? '');
+              return;
             }
+
+            statusTimer = window.setTimeout(nachfragen, 10000);
             return;
           }
           if (stand.status === 'niemand' || stand.status === 'storniert') {
@@ -1179,6 +1263,7 @@ function einrichten(wurzel: HTMLElement): void {
   vorschlagfeldEinrichten('nach');
   rechnungsfeldEinrichten();
   nachrichtfeldEinrichten();
+  bewertungEinrichten();
   void fahrerladen();
 
   schrittZeigen(1, false);
