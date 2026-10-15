@@ -32,6 +32,11 @@ export interface Datenbank {
 export interface GemeldeterOrt {
   breite: number;
   laenge: number;
+  /**
+   * Sekunden, die die Live-Freigabe noch laeuft. Fehlt bei einem einmaligen
+   * Punkt - etwa beim Knopf "Standort senden".
+   */
+  livePeriode?: number;
 }
 
 /**
@@ -42,8 +47,11 @@ export interface GemeldeterOrt {
  * leicht entsteht.
  */
 export function standortAusNachricht(nachricht: unknown): GemeldeterOrt | null {
-  const ort = (nachricht as { location?: { latitude?: unknown; longitude?: unknown } })
-    ?.location;
+  const ort = (
+    nachricht as {
+      location?: { latitude?: unknown; longitude?: unknown; live_period?: unknown };
+    }
+  )?.location;
   if (!ort) return null;
 
   const breite = Number(ort.latitude);
@@ -53,7 +61,16 @@ export function standortAusNachricht(nachricht: unknown): GemeldeterOrt | null {
   if (Math.abs(breite) > 90 || Math.abs(laenge) > 180) return null;
   if (breite === 0 && laenge === 0) return null;
 
-  return { breite, laenge };
+  const periode = Number(ort.live_period);
+  return {
+    breite,
+    laenge,
+    // Telegram erlaubt 60 Sekunden bis 8 Stunden (und 0x7FFFFFFF fuer
+    // "bis auf Weiteres"); alles andere ist kein Live-Standort.
+    ...(Number.isFinite(periode) && periode >= 60
+      ? { livePeriode: Math.min(periode, 8 * 3600) }
+      : {}),
+  };
 }
 
 /**
@@ -87,14 +104,18 @@ export async function standortMerken(
 
   await db
     .prepare(
-      `INSERT INTO fahrer_standort (fahrer_id, breite, laenge, zeitpunkt)
-       VALUES (?, ?, ?, datetime('now'))
+      `INSERT INTO fahrer_standort (fahrer_id, breite, laenge, zeitpunkt, live_bis)
+       VALUES (?, ?, ?, datetime('now'),
+               CASE WHEN ? > 0 THEN datetime('now', '+' || ? || ' seconds') END)
        ON CONFLICT(fahrer_id) DO UPDATE
          SET breite = excluded.breite,
              laenge = excluded.laenge,
-             zeitpunkt = excluded.zeitpunkt`,
+             zeitpunkt = excluded.zeitpunkt,
+             -- Eine laufende Freigabe nicht durch einen einmaligen Punkt
+             -- beenden: Der Knopf soll die Dauerfreigabe nicht abwuergen.
+             live_bis = COALESCE(excluded.live_bis, fahrer_standort.live_bis)`,
     )
-    .bind(fahrer.id, ort.breite, ort.laenge)
+    .bind(fahrer.id, ort.breite, ort.laenge, ort.livePeriode ?? 0, ort.livePeriode ?? 0)
     .run();
 
   return 'gemerkt';
@@ -109,11 +130,23 @@ export async function standortVergessen(db: Datenbank, fahrerId: number): Promis
 export async function standortLesen(
   db: Datenbank,
   fahrerId: number,
-): Promise<{ breite: number; laenge: number; zeitpunkt: string } | null> {
+): Promise<{
+  breite: number;
+  laenge: number;
+  zeitpunkt: string;
+  live_bis: string | null;
+} | null> {
   return db
-    .prepare('SELECT breite, laenge, zeitpunkt FROM fahrer_standort WHERE fahrer_id = ?')
+    .prepare(
+      'SELECT breite, laenge, zeitpunkt, live_bis FROM fahrer_standort WHERE fahrer_id = ?',
+    )
     .bind(fahrerId)
-    .first<{ breite: number; laenge: number; zeitpunkt: string }>();
+    .first<{
+      breite: number;
+      laenge: number;
+      zeitpunkt: string;
+      live_bis: string | null;
+    }>();
 }
 
 /**

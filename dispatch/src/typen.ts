@@ -127,4 +127,6 @@ export interface StatusAntwort {
   wunschVerfehlt?: boolean;
   /** "Ihr Fahrer ist etwa 4 Minuten entfernt." - fehlt, wenn unbekannt */
   ankunft?: string;
+  /** true, sobald der Fahrer die Fahrt abgemeldet hat */
+  beendet?: boolean;
 }

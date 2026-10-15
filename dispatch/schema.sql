@@ -39,6 +39,10 @@
 --    ALTER TABLE auftraege ADD COLUMN von_laenge REAL NOT NULL DEFAULT 0;
 --
 --  Die Tabelle "fahrer_standort" legt "npm run db:anlegen" selbst an.
+--
+--  NACHTRAG Live-Freigabe (15.10.2026), falls die Tabelle schon stand:
+--
+--    ALTER TABLE fahrer_standort ADD COLUMN live_bis TEXT;
 --    ALTER TABLE auftraege  ADD COLUMN kunde_email         TEXT    NOT NULL DEFAULT '';
 --    ALTER TABLE rechnungen ADD COLUMN versendet_um        TEXT;
 --    ALTER TABLE rechnungen ADD COLUMN versand_an          TEXT    NOT NULL DEFAULT '';
@@ -178,7 +182,14 @@ CREATE TABLE IF NOT EXISTS fahrer_standort (
   fahrer_id INTEGER PRIMARY KEY REFERENCES fahrer (id),
   breite    REAL NOT NULL,
   laenge    REAL NOT NULL,
-  zeitpunkt TEXT NOT NULL DEFAULT (datetime('now'))
+  zeitpunkt TEXT NOT NULL DEFAULT (datetime('now')),
+  -- Bis wann die Live-Freigabe laeuft. NULL = einmalig gesendeter Punkt.
+  --
+  -- Der Unterschied ist wichtig: Telegram schickt bei einer laufenden Freigabe
+  -- nur dann eine Aktualisierung, wenn sich der Fahrer BEWEGT. Wer an der
+  -- Ampel steht, meldet minutenlang nichts - sein Punkt stimmt trotzdem.
+  -- Ohne diese Spalte wuerde er von der Anzeige verschwinden.
+  live_bis  TEXT
 );
 
 -- --- Einstellungen -----------------------------------------------------------

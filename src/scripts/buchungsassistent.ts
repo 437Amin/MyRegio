@@ -702,13 +702,23 @@ function einrichten(wurzel: HTMLElement): void {
     if (fortschritt) fortschritt.hidden = false;
   }
 
-  /** Fragt in Abstaenden nach, ob schon jemand zugesagt hat. */
+  /**
+   * Fragt in Abstaenden nach, wie es um die Fahrt steht.
+   *
+   * Nach der Zusage wird WEITER gefragt, nur langsamer: Die Ankunftszeit
+   * entsteht erst, wenn der Fahrer seinen Standort teilt - meist ein paar
+   * Sekunden spaeter. Wer hier aufhoert, zeigt sie nie an.
+   */
   function beobachte(auftragId: string): void {
-    const schluss = Date.now() + 5 * 60 * 1000;
+    // Bis jemand zusagt. Nach der Zusage laeuft die Frist weiter, siehe unten.
+    let schluss = Date.now() + 5 * 60 * 1000;
+    let vergeben = false;
 
     const nachfragen = async (): Promise<void> => {
       if (Date.now() > schluss) {
-        zeigeStatus('keiner');
+        // Nach einer Zusage ist "keiner" die falsche Meldung - dann hoeren
+        // wir einfach auf, und es bleibt stehen, was zuletzt zu sehen war.
+        if (!vergeben) zeigeStatus('keiner');
         return;
       }
 
@@ -722,6 +732,7 @@ function einrichten(wurzel: HTMLElement): void {
             fahrer?: string;
             wunschVerfehlt?: boolean;
             ankunft?: string;
+            beendet?: boolean;
           };
 
           if (stand.status === 'angenommen') {
@@ -742,6 +753,16 @@ function einrichten(wurzel: HTMLElement): void {
             }
 
             zeigeStatus('gefunden');
+
+            // Weiterfragen, bis die Fahrt abgemeldet ist. Langsamer als bei
+            // der Suche: Es geht nur noch um die Ankunftszeit.
+            if (!vergeben) {
+              vergeben = true;
+              schluss = Date.now() + 60 * 60 * 1000;
+            }
+            if (!stand.beendet) {
+              statusTimer = window.setTimeout(nachfragen, 10000);
+            }
             return;
           }
           if (stand.status === 'niemand' || stand.status === 'storniert') {

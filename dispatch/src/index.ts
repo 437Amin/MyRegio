@@ -248,6 +248,8 @@ async function statusAbfragen(
         zeile.wunsch_fahrer_id !== zeile.fahrer_id,
     ),
     ankunft: (await ankunftSatz(zeile, env)) ?? undefined,
+    // Damit die Seite aufhoeren kann nachzufragen
+    beendet: Boolean(zeile.beendet_um),
   };
   return antwort(ergebnis, 200, env, anfrage);
 }

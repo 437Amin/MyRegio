@@ -66,6 +66,24 @@ export function ankunftMinuten(von: Punkt, nach: Punkt): number {
 export interface Standort extends Punkt {
   /** Zeitpunkt der Meldung, als ISO-Text oder SQLite-Zeit */
   zeitpunkt: string;
+  /** Bis wann die Live-Freigabe laeuft. Fehlt bei einem einmaligen Punkt. */
+  live_bis?: string | null;
+}
+
+/**
+ * Solange eine Live-Freigabe laeuft, darf die letzte Meldung aelter sein.
+ *
+ * Telegram aktualisiert nur bei Bewegung: Ein Fahrer im Stau oder an der
+ * Ampel meldet minutenlang nichts, und sein Punkt stimmt trotzdem. Eine
+ * Obergrenze bleibt, falls das Handy in den Tiefschlaf geht.
+ */
+export const HOECHSTALTER_LIVE_SEKUNDEN = 900;
+
+/** Laeuft die Live-Freigabe gerade noch? */
+function liveLaeuft(bis: string | null | undefined, jetzt: Date): boolean {
+  if (!bis) return false;
+  const ende = new Date(/[TZ]|[+-]\d\d:\d\d$/.test(bis) ? bis : bis.replace(' ', 'T') + 'Z');
+  return !Number.isNaN(ende.getTime()) && ende.getTime() > jetzt.getTime();
 }
 
 /**
@@ -92,7 +110,12 @@ export function ankunftstext(
 
   const alterSekunden = (jetzt.getTime() - gemeldet.getTime()) / 1000;
   // Auch ein Standort aus der Zukunft ist unbrauchbar - dann geht eine Uhr falsch
-  if (alterSekunden < -60 || alterSekunden > HOECHSTALTER_SEKUNDEN) return null;
+  if (alterSekunden < -60) return null;
+
+  const grenze = liveLaeuft(standort.live_bis, jetzt)
+    ? HOECHSTALTER_LIVE_SEKUNDEN
+    : HOECHSTALTER_SEKUNDEN;
+  if (alterSekunden > grenze) return null;
 
   const minuten = ankunftMinuten(standort, abholung);
 

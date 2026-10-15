@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  HOECHSTALTER_LIVE_SEKUNDEN,
   HOECHSTALTER_SEKUNDEN,
   ankunftMinuten,
   ankunftstext,
@@ -109,5 +110,56 @@ describe('Text für den Fahrgast', () => {
     // Dann geht irgendwo eine Uhr falsch, und jede Zahl wäre geraten
     const zukunft = new Date(JETZT.getTime() + 5 * 60_000);
     expect(ankunftstext(standort({ zeitpunkt: zukunft.toISOString() }), BETRIEB, JETZT)).toBeNull();
+  });
+});
+
+describe('Laufende Live-Freigabe', () => {
+  const vorMinuten = (n) => new Date(JETZT.getTime() - n * 60_000).toISOString();
+  const spaeter = new Date(JETZT.getTime() + 30 * 60_000).toISOString();
+
+  it('zeigt die Zeit auch bei einer aelteren Meldung', () => {
+    // Telegram aktualisiert nur bei Bewegung: Wer an der Ampel steht, meldet
+    // minutenlang nichts - sein Punkt stimmt trotzdem
+    const text = ankunftstext(
+      { breite: 48.81, laenge: 9.17, zeitpunkt: vorMinuten(8), live_bis: spaeter },
+      BETRIEB,
+      JETZT,
+    );
+    expect(text).toContain('Minuten entfernt');
+  });
+
+  it('schweigt ohne Freigabe bei derselben Meldung', () => {
+    const text = ankunftstext(
+      { breite: 48.81, laenge: 9.17, zeitpunkt: vorMinuten(8) },
+      BETRIEB,
+      JETZT,
+    );
+    expect(text).toBeNull();
+  });
+
+  it('schweigt, wenn die Freigabe abgelaufen ist', () => {
+    const abgelaufen = new Date(JETZT.getTime() - 60_000).toISOString();
+    const text = ankunftstext(
+      { breite: 48.81, laenge: 9.17, zeitpunkt: vorMinuten(8), live_bis: abgelaufen },
+      BETRIEB,
+      JETZT,
+    );
+    expect(text).toBeNull();
+  });
+
+  it('hat auch bei laufender Freigabe eine Obergrenze', () => {
+    // Falls das Handy in den Tiefschlaf geht, soll keine Zahl stehen bleiben
+    const zuAlt = new Date(JETZT.getTime() - (HOECHSTALTER_LIVE_SEKUNDEN + 60) * 1000);
+    const text = ankunftstext(
+      {
+        breite: 48.81,
+        laenge: 9.17,
+        zeitpunkt: zuAlt.toISOString(),
+        live_bis: spaeter,
+      },
+      BETRIEB,
+      JETZT,
+    );
+    expect(text).toBeNull();
   });
 });
