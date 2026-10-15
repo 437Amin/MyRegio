@@ -98,6 +98,12 @@ export class Vermittlung implements DurableObject {
       return Response.json(await this.erledigt(fahrerId, zahlungsartLesen(zahlungsart)));
     }
 
+    // Der Fahrgast sitzt im Auto
+    if (pfad === '/abgeholt') {
+      const { fahrerId } = (await anfrage.json()) as { fahrerId: number };
+      return Response.json(await this.abgeholt(fahrerId));
+    }
+
     // Der fest eingeteilte Fahrer kann doch nicht - die Fahrt wird
     // ausgeschrieben, statt beim Chef liegen zu bleiben
     if (pfad === '/abgeben') {
@@ -623,6 +629,19 @@ export class Vermittlung implements DurableObject {
     fahrerId: number,
     abgeben = false,
   ): Knopf[] {
+    // Solange der Fahrgast noch wartet, steht "Abgeholt" vorn: Es ist der
+    // Knopf, der als Naechstes drankommt. "Erledigt" erscheint trotzdem
+    // mit - wer ihn direkt tippt, soll nicht erst umwege gehen muessen.
+    const vorweg: Knopf[] =
+      auftrag.abgeholt_um || !auftrag.von_breite
+        ? []
+        : [
+            {
+              text: '🚕 Fahrgast abgeholt',
+              daten: `abgeholt:${auftrag.id}:${fahrerId}`,
+            },
+          ];
+
     // Will der Fahrgast eine Rechnung, muss die Zahlungsart darauf stehen.
     // Raten kommt nicht in Frage: "Bar bezahlt" auf einer Kartenzahlung waere
     // schlicht falsch. Es bleibt bei EINEM Fingertipp, nur mit Auswahl.
@@ -636,7 +655,55 @@ export class Vermittlung implements DurableObject {
     if (abgeben) {
       knoepfe.push({ text: '✖️ Kann ich nicht', daten: `weg:${auftrag.id}:${fahrerId}` });
     }
-    return knoepfe;
+    return [...vorweg, ...knoepfe];
+  }
+
+  /**
+   * Der Fahrgast sitzt im Auto.
+   *
+   * Ab hier ist die Ankunftszeit gegenstandslos - sie rechnet zur
+   * Abholadresse. Der Standort wird deshalb geloescht und die Tastatur
+   * eingezogen: Ab jetzt gibt es nichts mehr zu teilen.
+   */
+  private async abgeholt(
+    fahrerId: number,
+  ): Promise<{ ergebnis: 'abgeholt' | 'unbekannt' }> {
+    const zustand = await this.state.storage.get<Zustand>('zustand');
+    if (!zustand) return { ergebnis: 'unbekannt' };
+
+    const ergebnis = await this.env.DB.prepare(
+      `UPDATE auftraege SET abgeholt_um = datetime('now')
+        WHERE id = ? AND fahrer_id = ? AND abgeholt_um IS NULL AND beendet_um IS NULL`,
+    )
+      .bind(zustand.auftragId, fahrerId)
+      .run();
+
+    if (ergebnis.meta.changes === 0) return { ergebnis: 'unbekannt' };
+
+    await standortVergessen(this.env.DB, fahrerId);
+    await this.protokolliere(zustand.auftragId, fahrerId, 'abgeholt');
+
+    const auftrag = await this.ladeAuftrag(zustand.auftragId);
+    const fahrer = await this.ladeFahrer(fahrerId);
+
+    if (auftrag) {
+      await this.entwerteNachricht(
+        zustand,
+        fahrerId,
+        this.zusagetext(auftrag) + '\n\n🚕 <b>Fahrgast ist eingestiegen.</b>',
+        this.erledigtKnoepfe({ ...auftrag, abgeholt_um: 'jetzt' }, fahrerId),
+      );
+    }
+
+    if (fahrer?.telegram_chat_id) {
+      await entferneStandortknopf(
+        this.env.TELEGRAM_TOKEN,
+        fahrer.telegram_chat_id,
+        '📍 Standort wird nicht mehr gebraucht. Gute Fahrt!',
+      );
+    }
+
+    return { ergebnis: 'abgeholt' };
   }
 
   /**

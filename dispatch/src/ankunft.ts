@@ -33,10 +33,21 @@ const ZUSCHLAG_MINUTEN = 2;
 /**
  * Aelter als das - dann sagen wir lieber nichts.
  *
- * Ein Standort von vor zehn Minuten ist schlimmer als keiner: Der Fahrgast
- * verlaesst sich auf eine Zahl, die nicht mehr stimmt.
+ * Gilt fuer einen einmalig gesendeten Punkt. Laenger als zwanzig Minuten
+ * unterwegs heisst: Irgendetwas ist anders gekommen als gedacht, und jede
+ * Hochrechnung waere geraten.
  */
-export const HOECHSTALTER_SEKUNDEN = 180;
+export const HOECHSTALTER_SEKUNDEN = 20 * 60;
+
+/**
+ * So weit darf die Schaetzung ueberzogen werden, bevor wir schweigen.
+ *
+ * Der Fahrer hat EINEN Punkt geschickt und faehrt seitdem los. Wir zaehlen
+ * mit - aber wenn die geschaetzte Zeit um mehr als diese Spanne verstrichen
+ * ist, stimmt die Annahme nicht mehr, und ein "gleich da" waere eine
+ * Beschwichtigung statt einer Auskunft.
+ */
+export const NACHLAUF_MINUTEN = 3;
 
 export interface Punkt {
   breite: number;
@@ -112,13 +123,30 @@ export function ankunftstext(
   // Auch ein Standort aus der Zukunft ist unbrauchbar - dann geht eine Uhr falsch
   if (alterSekunden < -60) return null;
 
-  const grenze = liveLaeuft(standort.live_bis, jetzt)
-    ? HOECHSTALTER_LIVE_SEKUNDEN
-    : HOECHSTALTER_SEKUNDEN;
-  if (alterSekunden > grenze) return null;
+  const vomPunkt = ankunftMinuten(standort, abholung);
 
-  const minuten = ankunftMinuten(standort, abholung);
+  // --- Laufende Live-Freigabe: der Punkt selbst ist aktuell ----------------
+  if (liveLaeuft(standort.live_bis, jetzt)) {
+    if (alterSekunden > HOECHSTALTER_LIVE_SEKUNDEN) return null;
+    return satz(vomPunkt);
+  }
 
+  // --- Einmaliger Punkt: mitzaehlen ----------------------------------------
+  //
+  // Der Fahrer hat einmal getippt und faehrt seitdem. Die Zahl einzufrieren
+  // waere falsch, und sie nach drei Minuten verschwinden zu lassen auch: Er
+  // ist ja unterwegs, und zwar genau dorthin. Also rechnen wir mit, was seit
+  // der Meldung vergangen ist - und schweigen, sobald die Schaetzung
+  // ueberzogen ist. Lieber nichts sagen als beschwichtigen.
+  if (alterSekunden > HOECHSTALTER_SEKUNDEN) return null;
+
+  const verbleibend = vomPunkt - alterSekunden / 60;
+  if (verbleibend < -NACHLAUF_MINUTEN) return null;
+
+  return satz(Math.round(verbleibend));
+}
+
+function satz(minuten: number): string {
   if (minuten <= 1) return 'Ihr Fahrer ist gleich da.';
   if (minuten <= 2) return 'Ihr Fahrer ist etwa 2 Minuten entfernt.';
   return `Ihr Fahrer ist etwa ${minuten} Minuten entfernt.`;

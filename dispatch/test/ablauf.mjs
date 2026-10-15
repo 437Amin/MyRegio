@@ -108,6 +108,24 @@ async function erledige(auftragId, fahrerId, zahlungsart = '') {
   return antwort;
 }
 
+/** Simuliert einen beliebigen Knopfdruck ueber die Knopfdaten. */
+async function knopfDaten(daten, chatId) {
+  return fetch(`${DIENST}/telegram/webhook`, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-telegram-bot-api-secret-token': 'test-geheimnis',
+    },
+    body: JSON.stringify({
+      callback_query: {
+        id: 'cb-knopf',
+        data: daten,
+        message: { chat: { id: chatId }, message_id: 1 },
+      },
+    }),
+  });
+}
+
 /** Simuliert eine Standortmeldung des Fahrers aus Telegram. */
 async function standortMelden(chatId, breite, laenge, bearbeitet = false) {
   const nachricht = {
@@ -553,14 +571,22 @@ await leeren();
     `${mit.ankunft} -> ${naeher.ankunft}`,
   );
 
+  // Fahrgast einsteigen lassen: Ab hier waere eine Ankunftszeit zur
+  // Abholadresse sinnlos
+  await knopfDaten(`abgeholt:${koerper.auftragId}:101`, '101');
+  await warte(400);
+  const eingestiegen = await status(koerper.auftragId);
+  pruefe(eingestiegen.abgeholt === true, 'Die Seite weiß, dass er eingestiegen ist');
+  pruefe(
+    eingestiegen.ankunft === undefined,
+    'Danach steht keine Ankunftszeit mehr da',
+    JSON.stringify(eingestiegen.ankunft),
+  );
+
   await erledige(koerper.auftragId, 101);
   await warte(400);
   const danach = await status(koerper.auftragId);
-  pruefe(
-    danach.ankunft === undefined,
-    'Nach der Fahrt ist der Standort gelöscht',
-    JSON.stringify(danach),
-  );
+  pruefe(danach.beendet === true, 'Nach dem Abmelden gilt die Fahrt als beendet');
 
   // Dass ohne laufende Fahrt gar nichts gespeichert wird, prueft
   // test/standort.test.ts gegen eine echte Datenbank - von aussen waere es

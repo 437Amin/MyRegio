@@ -733,6 +733,7 @@ function einrichten(wurzel: HTMLElement): void {
             wunschVerfehlt?: boolean;
             ankunft?: string;
             beendet?: boolean;
+            abgeholt?: boolean;
           };
 
           if (stand.status === 'angenommen') {
@@ -748,8 +749,11 @@ function einrichten(wurzel: HTMLElement): void {
             // Zeile wieder, statt eine veraltete Zahl stehen zu lassen.
             const ankunft = wurzel.querySelector<HTMLElement>('[data-status-ankunft]');
             if (ankunft) {
-              ankunft.textContent = stand.ankunft ?? '';
-              ankunft.hidden = !stand.ankunft;
+              // Sitzt der Fahrgast im Auto, waere eine Ankunftszeit zur
+              // Abholadresse sinnlos - dann steht da, dass der Fahrer da ist.
+              const text = stand.abgeholt ? 'Ihr Fahrer ist da.' : (stand.ankunft ?? '');
+              ankunft.textContent = text;
+              ankunft.hidden = !text;
             }
 
             zeigeStatus('gefunden');

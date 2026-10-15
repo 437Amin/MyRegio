@@ -46,6 +46,10 @@
 --
 --  NACHTRAG Adressspeicher (15.10.2026): neue Tabelle, legt
 --  "npm run db:anlegen" selbst an.
+--
+--  NACHTRAG "Fahrgast abgeholt" (15.10.2026):
+--
+--    ALTER TABLE auftraege ADD COLUMN abgeholt_um TEXT;
 --    ALTER TABLE auftraege  ADD COLUMN kunde_email         TEXT    NOT NULL DEFAULT '';
 --    ALTER TABLE rechnungen ADD COLUMN versendet_um        TEXT;
 --    ALTER TABLE rechnungen ADD COLUMN versand_an          TEXT    NOT NULL DEFAULT '';
@@ -146,6 +150,10 @@ CREATE TABLE IF NOT EXISTS auftraege (
 
   fahrer_id      INTEGER REFERENCES fahrer (id),
   angenommen_um  TEXT,
+  -- Der Fahrer hat den Fahrgast aufgenommen. Ab hier ist die Ankunftszeit
+  -- gegenstandslos: Sie rechnet zur ABHOLADRESSE, und wer schon im Auto
+  -- sitzt, laese sonst waehrend der ganzen Fahrt "etwa 1 Minute entfernt".
+  abgeholt_um    TEXT,
   beendet_um     TEXT
 );
 

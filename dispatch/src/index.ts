@@ -217,7 +217,8 @@ async function statusAbfragen(
 ): Promise<Response> {
   const zeile = await env.DB.prepare(
     `SELECT a.status, a.angenommen_um, a.wunsch_fahrer_id, a.fahrer_id,
-            a.von_breite, a.von_laenge, a.beendet_um, f.name AS fahrername
+            a.von_breite, a.von_laenge, a.beendet_um, a.abgeholt_um,
+            f.name AS fahrername
        FROM auftraege a
        LEFT JOIN fahrer f ON f.id = a.fahrer_id
       WHERE a.id = ?`,
@@ -231,6 +232,7 @@ async function statusAbfragen(
       von_breite: number;
       von_laenge: number;
       beendet_um: string | null;
+      abgeholt_um: string | null;
       fahrername: string | null;
     }>();
 
@@ -251,6 +253,7 @@ async function statusAbfragen(
     ankunft: (await ankunftSatz(zeile, env)) ?? undefined,
     // Damit die Seite aufhoeren kann nachzufragen
     beendet: Boolean(zeile.beendet_um),
+    abgeholt: Boolean(zeile.abgeholt_um),
   };
   return antwort(ergebnis, 200, env, anfrage);
 }
@@ -269,10 +272,14 @@ async function ankunftSatz(
     von_breite: number;
     von_laenge: number;
     beendet_um: string | null;
+    abgeholt_um: string | null;
   },
   env: Umgebung,
 ): Promise<string | null> {
   if (zeile.status !== 'angenommen' || zeile.beendet_um || !zeile.fahrer_id) return null;
+  // Wer im Auto sitzt, braucht keine Ankunftszeit mehr - sie rechnet zur
+  // Abholadresse und waere ab jetzt schlicht falsch.
+  if (zeile.abgeholt_um) return null;
   if (!zeile.von_breite || !zeile.von_laenge) return null;
 
   const standort = await standortLesen(env.DB, zeile.fahrer_id);
@@ -379,7 +386,13 @@ async function telegramEmpfangen(
     // "fertig" und "weg" stehen an zugewiesenen Fahrten: Der Fahrer meldet
     // sich nach der Fahrt frei oder gibt sie zurueck.
     const pfad =
-      aktion === 'fertig' ? '/erledigt' : aktion === 'weg' ? '/abgeben' : '/antwort';
+      aktion === 'fertig'
+        ? '/erledigt'
+        : aktion === 'weg'
+          ? '/abgeben'
+          : aktion === 'abgeholt'
+            ? '/abgeholt'
+            : '/antwort';
 
     const objekt = env.VERMITTLUNG.get(env.VERMITTLUNG.idFromName(auftragId));
     const ergebnis = (await (
@@ -394,6 +407,7 @@ async function telegramEmpfangen(
       vergeben: 'Schon vergeben.',
       abgelehnt: 'Abgelehnt.',
       erledigt: 'Danke, du bekommst wieder Aufträge.',
+      abgeholt: 'Notiert – gute Fahrt!',
       abgegeben: 'Die Fahrt wird neu ausgeschrieben.',
       unbekannt: 'Auftrag nicht gefunden.',
     };

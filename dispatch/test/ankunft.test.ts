@@ -83,16 +83,45 @@ describe('Text für den Fahrgast', () => {
     expect(ankunftstext(standort(), null, JETZT)).toBeNull();
   });
 
-  it('schweigt bei einer veralteten Meldung', () => {
-    const alt = new Date(JETZT.getTime() - (HOECHSTALTER_SEKUNDEN + 10) * 1000);
-    expect(ankunftstext(standort({ zeitpunkt: alt.toISOString() }), BETRIEB, JETZT)).toBeNull();
+  it('schweigt bei einer lange zurückliegenden Meldung', () => {
+    const lange = new Date(JETZT.getTime() - (HOECHSTALTER_SEKUNDEN + 10) * 1000);
+    expect(ankunftstext(standort({ zeitpunkt: lange.toISOString() }), BETRIEB, JETZT)).toBeNull();
   });
 
-  it('nimmt eine Meldung kurz vor der Grenze noch an', () => {
-    const grenzwertig = new Date(JETZT.getTime() - (HOECHSTALTER_SEKUNDEN - 10) * 1000);
-    expect(
-      ankunftstext(standort({ zeitpunkt: grenzwertig.toISOString() }), BETRIEB, JETZT),
-    ).toContain('Minuten');
+  it('zählt mit, statt die Zahl einzufrieren', () => {
+    // Der Fahrer hat einmal getippt und faehrt seitdem - genau dorthin.
+    // Weit genug entfernt, damit beide Male eine Zahl dasteht.
+    const weit = { ...FLUGHAFEN, zeitpunkt: JETZT.toISOString() };
+    const frisch = ankunftstext(weit, BETRIEB, JETZT);
+    const spaeter = ankunftstext(
+      { ...weit, zeitpunkt: new Date(JETZT.getTime() - 3 * 60_000).toISOString() },
+      BETRIEB,
+      JETZT,
+    );
+
+    const minuten = (text: string | null) => Number(/(\d+)/.exec(text ?? '')?.[1] ?? 0);
+    expect(minuten(spaeter)).toBeLessThan(minuten(frisch));
+    expect(minuten(frisch) - minuten(spaeter)).toBe(3);
+  });
+
+  it('schweigt, sobald die Schätzung überzogen ist', () => {
+    // Lieber nichts sagen als beschwichtigen
+    const text = ankunftstext(
+      standort({ zeitpunkt: new Date(JETZT.getTime() - 12 * 60_000).toISOString() }),
+      BETRIEB,
+      JETZT,
+    );
+    expect(text).toBeNull();
+  });
+
+  it('sagt kurz vor dem Ziel „gleich da"', () => {
+    // Punkt mit etwa 5 Minuten Schaetzung, vor gut 4 Minuten gemeldet
+    const text = ankunftstext(
+      standort({ zeitpunkt: new Date(JETZT.getTime() - 4 * 60_000).toISOString() }),
+      BETRIEB,
+      JETZT,
+    );
+    expect(text).toBe('Ihr Fahrer ist gleich da.');
   });
 
   it('versteht die Schreibweise von SQLite', () => {

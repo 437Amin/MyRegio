@@ -87,6 +87,8 @@ export interface Auftrag {
   von_laenge: number;
   fahrer_id: number | null;
   angenommen_um: string | null;
+  /** Gesetzt, sobald der Fahrer den Fahrgast aufgenommen hat */
+  abgeholt_um: string | null;
   beendet_um: string | null;
 }
 
@@ -129,4 +131,6 @@ export interface StatusAntwort {
   ankunft?: string;
   /** true, sobald der Fahrer die Fahrt abgemeldet hat */
   beendet?: boolean;
+  /** true, sobald der Fahrgast im Auto sitzt */
+  abgeholt?: boolean;
 }
