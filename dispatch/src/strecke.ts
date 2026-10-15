@@ -243,7 +243,17 @@ export async function adressenVorschlagen(
   try {
     const antwort = await fetch(url.toString());
     // Auch ohne Kartendienst soll "Flughafen" zum Terminal fuehren
-    if (!antwort.ok) return festeZieleEinsetzen(text, []);
+    if (!antwort.ok) {
+      // Ohne diese Zeile faellt der Kartendienst lautlos aus: Die Seite zeigt
+      // einfach keine Vorschlaege mehr, und niemand weiss warum. Der
+      // Schluessel steht in der Adresse und wird deshalb NICHT mitgeloggt.
+      console.warn(
+        'Adressvorschlaege: Kartendienst antwortete',
+        antwort.status,
+        (await antwort.text().catch(() => '')).slice(0, 200),
+      );
+      return festeZieleEinsetzen(text, []);
+    }
 
     const daten = (await antwort.json()) as {
       features?: {
@@ -286,7 +296,11 @@ export async function adressenVorschlagen(
       .map((eintrag) => eintrag.ort);
 
     return festeZieleEinsetzen(text, vorschlaege).slice(0, 5);
-  } catch {
+  } catch (fehler) {
+    console.warn(
+      'Adressvorschlaege: Kartendienst nicht erreichbar',
+      fehler instanceof Error ? fehler.message : String(fehler),
+    );
     return festeZieleEinsetzen(text, []);
   }
 }

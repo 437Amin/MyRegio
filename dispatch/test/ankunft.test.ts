@@ -114,7 +114,7 @@ describe('Text für den Fahrgast', () => {
 });
 
 describe('Laufende Live-Freigabe', () => {
-  const vorMinuten = (n) => new Date(JETZT.getTime() - n * 60_000).toISOString();
+  const vorMinuten = (n: number) => new Date(JETZT.getTime() - n * 60_000).toISOString();
   const spaeter = new Date(JETZT.getTime() + 30 * 60_000).toISOString();
 
   it('zeigt die Zeit auch bei einer aelteren Meldung', () => {
