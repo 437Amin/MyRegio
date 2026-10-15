@@ -8,6 +8,11 @@ import { plausibleEmail, plausibleTelefonnummer } from './auftrag-erfassen';
 import { standortLesen, standortmeldung } from './standort';
 import { ankunftstext } from './ankunft';
 import { ausSpeicher, inSpeicher } from './adressen-speicher';
+import {
+  HOECHSTZAHL,
+  nachrichtPruefen,
+  nachrichtentext,
+} from './fahrgast-nachricht';
 
 export { Vermittlung } from './vermittlung-do';
 
@@ -46,6 +51,10 @@ export default {
 
       if (pfad === '/api/adressen' && anfrage.method === 'GET') {
         return await adressenAnfragen(url, env, anfrage);
+      }
+
+      if (pfad === '/api/nachricht' && anfrage.method === 'POST') {
+        return await nachrichtSenden(anfrage, env);
       }
 
       if (pfad === '/api/fahrer' && anfrage.method === 'GET') {
@@ -256,6 +265,81 @@ async function statusAbfragen(
     abgeholt: Boolean(zeile.abgeholt_um),
   };
   return antwort(ergebnis, 200, env, anfrage);
+}
+
+/**
+ * Der Fahrgast schreibt dem Fahrer.
+ *
+ * Nur waehrend einer laufenden Fahrt und nur an den Fahrer, der sie hat.
+ * Rufnummern werden dabei auf keiner Seite sichtbar - die Nachricht geht
+ * ueber den Bot. Die Regeln zum Text stehen in fahrgast-nachricht.ts.
+ */
+async function nachrichtSenden(anfrage: Request, env: Umgebung): Promise<Response> {
+  const roh = (await anfrage.json().catch(() => null)) as {
+    auftragId?: string;
+    text?: string;
+  } | null;
+
+  const auftragId = kurz(roh?.auftragId, 60);
+  if (!auftragId) return antwort({ fehler: 'Unbekannte Fahrt' }, 400, env, anfrage);
+
+  const geprueft = nachrichtPruefen(roh?.text);
+  if (!geprueft.ok) return antwort({ fehler: geprueft.grund }, 400, env, anfrage);
+
+  const zeile = await env.DB.prepare(
+    `SELECT a.kunde_name, a.beendet_um, a.status, f.telegram_chat_id
+       FROM auftraege a JOIN fahrer f ON f.id = a.fahrer_id
+      WHERE a.id = ?`,
+  )
+    .bind(auftragId)
+    .first<{
+      kunde_name: string;
+      beendet_um: string | null;
+      status: string;
+      telegram_chat_id: string | null;
+    }>();
+
+  // Nach der Fahrt gibt es nichts mehr auszurichten - und vorher weiss
+  // niemand, an wen.
+  if (!zeile || zeile.status !== 'angenommen' || zeile.beendet_um || !zeile.telegram_chat_id) {
+    return antwort(
+      { fehler: 'Für diese Fahrt ist gerade kein Fahrer erreichbar.' },
+      409,
+      env,
+      anfrage,
+    );
+  }
+
+  // Je Fahrt begrenzt: Wer mehr zu sagen hat, soll anrufen.
+  const kennung = 'msg-' + auftragId;
+  if (await zuVieleBestellungen(kennung, env, HOECHSTZAHL)) {
+    return antwort(
+      { fehler: 'Bitte rufen Sie an – mehr Nachrichten gehen für diese Fahrt nicht.' },
+      429,
+      env,
+      anfrage,
+    );
+  }
+  await env.DB.prepare('INSERT INTO drosselung (kennung) VALUES (?)')
+    .bind(kennung)
+    .run();
+
+  const ergebnis = await sendeNachricht(
+    env.TELEGRAM_TOKEN,
+    zeile.telegram_chat_id,
+    nachrichtentext(zeile.kunde_name, geprueft.text),
+  );
+
+  if (!ergebnis.ok) {
+    return antwort(
+      { fehler: 'Die Nachricht ging nicht durch. Bitte rufen Sie an.' },
+      502,
+      env,
+      anfrage,
+    );
+  }
+
+  return antwort({ gesendet: true }, 200, env, anfrage);
 }
 
 /**

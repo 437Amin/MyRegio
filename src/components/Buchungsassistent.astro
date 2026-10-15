@@ -593,6 +593,29 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
             Sie werden bei Bedarf kurz angerufen. Bezahlt wird bar oder mit
             Karte im Fahrzeug.
           </p>
+
+          <!--
+            Kurze Nachricht an den Fahrer. Ohne Rufnummern auf beiden Seiten:
+            Sie geht über denselben Bot, den der Fahrer ohnehin offen hat.
+          -->
+          <div class="mx-auto mt-6 max-w-md text-left" data-nachricht>
+            <label class="block text-sm text-nebel-400" for="feld-nachricht">
+              Dem Fahrer kurz etwas mitteilen
+            </label>
+            <div class="mt-2 flex gap-2">
+              <input
+                id="feld-nachricht"
+                type="text"
+                maxlength="300"
+                placeholder="z. B. Ich stehe am hinteren Ausgang"
+                data-nachricht-text
+              />
+              <button type="button" class="knopf" data-nachricht-senden>
+                Senden
+              </button>
+            </div>
+            <p class="mt-2 text-sm" data-nachricht-meldung role="status" hidden></p>
+          </div>
         </div>
 
         <!-- Niemand frei -->
@@ -737,6 +760,37 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
   .feld .opt {
     font-weight: 400;
     color: var(--color-nebel-500);
+  }
+
+  [data-nachricht] input {
+    flex: 1;
+    min-width: 0;
+    min-height: 3rem;
+    padding: 0.75rem 0.875rem;
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: 0.75rem;
+    background-color: rgb(5 7 10 / 0.6);
+    color: #fff;
+  }
+
+  [data-nachricht] input::placeholder {
+    color: var(--color-nebel-500);
+  }
+
+  [data-nachricht] button {
+    min-height: 3rem;
+    padding: 0 1.1rem;
+    border-radius: 0.75rem;
+    border: 1px solid rgb(255 255 255 / 0.14);
+    background: rgb(255 255 255 / 0.06);
+    color: #fff;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  [data-nachricht] button:disabled {
+    opacity: 0.6;
+    cursor: default;
   }
 
   .feld input,

@@ -59,8 +59,19 @@ describe('Text für den Fahrgast', () => {
     ...werte,
   });
 
-  it('nennt die geschätzte Zeit', () => {
+  it('nennt die Zeit als Erwartung, solange nur ein Punkt vorliegt', () => {
+    // Ohne Live-Freigabe zaehlen wir mit, statt zu messen - und sagen es auch
     const text = ankunftstext(standort(), BETRIEB, JETZT);
+    expect(text).toMatch(/^Ihr Fahrer ist unterwegs – voraussichtlich in etwa \d+ Minuten da\.$/);
+  });
+
+  it('spricht bei laufender Live-Freigabe von einer Messung', () => {
+    const spaeter = new Date(JETZT.getTime() + 30 * 60_000).toISOString();
+    const text = ankunftstext(
+      { ...FLUGHAFEN, zeitpunkt: JETZT.toISOString(), live_bis: spaeter },
+      BETRIEB,
+      JETZT,
+    );
     expect(text).toMatch(/^Ihr Fahrer ist etwa \d+ Minuten entfernt\.$/);
   });
 
@@ -70,8 +81,7 @@ describe('Text für den Fahrgast', () => {
       BETRIEB,
       JETZT,
     );
-    // Zwei Minuten Zuschlag fürs Anhalten - "gleich da" wäre erst darunter
-    expect(text).toBe('Ihr Fahrer ist etwa 2 Minuten entfernt.');
+    expect(text).toBe('Ihr Fahrer müsste gleich da sein.');
   });
 
   it('schweigt ohne Standort', () => {
@@ -121,7 +131,7 @@ describe('Text für den Fahrgast', () => {
       BETRIEB,
       JETZT,
     );
-    expect(text).toBe('Ihr Fahrer ist gleich da.');
+    expect(text).toBe('Ihr Fahrer müsste gleich da sein.');
   });
 
   it('versteht die Schreibweise von SQLite', () => {

@@ -84,6 +84,8 @@ function einrichten(wurzel: HTMLElement): void {
 
   let schritt = 1;
   let statusTimer: number | undefined;
+  /** Die Fahrt, die gerade laeuft - fuer die Nachricht an den Fahrer */
+  let laufenderAuftrag = '';
   /** Merkt sich, für welche Strecke der Preis schon geholt wurde */
   let preisSchluessel = '';
   /** Zuletzt angezeigter Betrag - wandert in die WhatsApp-Nachricht */
@@ -669,6 +671,60 @@ function einrichten(wurzel: HTMLElement): void {
     umschalten();
   }
 
+  /**
+   * Kurze Nachricht an den Fahrer.
+   *
+   * Die Rufnummer des Fahrers bekommt der Fahrgast bewusst nicht zu sehen -
+   * die Nachricht geht ueber den Vermittlungsdienst an dessen Telegram.
+   */
+  function nachrichtfeldEinrichten(): void {
+    const block = wurzel.querySelector<HTMLElement>('[data-nachricht]');
+    const feld = wurzel.querySelector<HTMLInputElement>('[data-nachricht-text]');
+    const knopf = wurzel.querySelector<HTMLButtonElement>('[data-nachricht-senden]');
+    const meldung = wurzel.querySelector<HTMLElement>('[data-nachricht-meldung]');
+    if (!block || !feld || !knopf || !meldung) return;
+
+    const sagen = (text: string, gut: boolean): void => {
+      meldung.textContent = text;
+      meldung.hidden = !text;
+      meldung.style.color = gut ? 'var(--color-cyan-400)' : 'rgb(248 113 113)';
+    };
+
+    const senden = async (): Promise<void> => {
+      const text = feld.value.trim();
+      if (!text || !laufenderAuftrag || !vermittlungBasis) return;
+
+      knopf.disabled = true;
+      try {
+        const antwort = await fetch(`${vermittlungBasis}/api/nachricht`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ auftragId: laufenderAuftrag, text }),
+        });
+        const daten = (await antwort.json()) as { gesendet?: boolean; fehler?: string };
+
+        if (daten.gesendet) {
+          feld.value = '';
+          sagen('Nachricht ist beim Fahrer.', true);
+        } else {
+          sagen(daten.fehler ?? 'Das hat nicht geklappt. Bitte rufen Sie an.', false);
+        }
+      } catch {
+        sagen('Keine Verbindung. Bitte rufen Sie an.', false);
+      } finally {
+        knopf.disabled = false;
+      }
+    };
+
+    knopf.addEventListener('click', () => void senden());
+    feld.addEventListener('keydown', (ereignis) => {
+      if (ereignis.key === 'Enter') {
+        ereignis.preventDefault();
+        void senden();
+      }
+    });
+  }
+
   /** Blendet das Formular aus und zeigt stattdessen den Stand der Suche. */
   function zeigeStatus(art: StatusArt): void {
     if (!statusFeld) return;
@@ -710,6 +766,7 @@ function einrichten(wurzel: HTMLElement): void {
    * Sekunden spaeter. Wer hier aufhoert, zeigt sie nie an.
    */
   function beobachte(auftragId: string): void {
+    laufenderAuftrag = auftragId;
     // Bis jemand zusagt. Nach der Zusage laeuft die Frist weiter, siehe unten.
     let schluss = Date.now() + 5 * 60 * 1000;
     let vergeben = false;
@@ -1076,6 +1133,7 @@ function einrichten(wurzel: HTMLElement): void {
   vorschlagfeldEinrichten('von');
   vorschlagfeldEinrichten('nach');
   rechnungsfeldEinrichten();
+  nachrichtfeldEinrichten();
   void fahrerladen();
 
   schrittZeigen(1, false);

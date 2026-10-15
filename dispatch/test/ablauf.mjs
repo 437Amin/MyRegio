@@ -108,6 +108,16 @@ async function erledige(auftragId, fahrerId, zahlungsart = '') {
   return antwort;
 }
 
+/** Schickt eine Nachricht des Fahrgasts an den Fahrer. */
+async function nachricht(auftragId, text) {
+  const antwort = await fetch(`${DIENST}/api/nachricht`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ auftragId, text }),
+  });
+  return { status: antwort.status, koerper: await antwort.json() };
+}
+
 /** Simuliert einen beliebigen Knopfdruck ueber die Knopfdaten. */
 async function knopfDaten(daten, chatId) {
   return fetch(`${DIENST}/telegram/webhook`, {
@@ -593,7 +603,54 @@ await leeren();
   // nicht zu sehen, und eine Pruefung, die immer besteht, ist keine.
 }
 
-console.log('\n=== 11. Absicherungen ===');
+console.log('\n=== 11. Nachricht an den Fahrer ===');
+await leeren();
+{
+  const { koerper } = await bestelle({ name: 'Frau Keller' }, '203.0.113.11');
+  await warte(600);
+
+  // Vor der Zusage gibt es niemanden, an den sie gehen koennte
+  const zuFrueh = await nachricht(koerper.auftragId, 'Hallo?');
+  pruefe(zuFrueh.status === 409, 'Vor der Zusage geht keine Nachricht', `Code ${zuFrueh.status}`);
+
+  await knopfDruck(koerper.auftragId, 101, '101', true);
+  await warte(400);
+  await leeren();
+
+  const gut = await nachricht(koerper.auftragId, 'Ich stehe am hinteren Ausgang');
+  pruefe(gut.status === 200, 'Nach der Zusage geht sie durch', `Code ${gut.status}`);
+
+  const beimFahrer = an(await aufrufe(), '101').at(-1)?.daten.text ?? '';
+  pruefe(
+    beimFahrer.includes('Ich stehe am hinteren Ausgang'),
+    'Der Fahrer bekommt den Text',
+    beimFahrer.slice(0, 80),
+  );
+  pruefe(beimFahrer.includes('Frau Keller'), 'Mit dem Namen des Fahrgasts');
+
+  // Maskierung: Der Fahrgast darf dem Fahrer nichts unterschieben
+  await leeren();
+  await nachricht(koerper.auftragId, '<a href="https://beispiel">klick</a>');
+  const maskiert = an(await aufrufe(), '101').at(-1)?.daten.text ?? '';
+  pruefe(!maskiert.includes('<a href'), 'HTML wird maskiert', maskiert.slice(0, 80));
+
+  const leer = await nachricht(koerper.auftragId, '   ');
+  pruefe(leer.status === 400, 'Leere Nachricht wird abgewiesen', `Code ${leer.status}`);
+
+  // Grenze je Fahrt: fuenf Stueck
+  await nachricht(koerper.auftragId, 'drei');
+  await nachricht(koerper.auftragId, 'vier');
+  await nachricht(koerper.auftragId, 'fünf');
+  const zuViel = await nachricht(koerper.auftragId, 'sechs');
+  pruefe(zuViel.status === 429, 'Nach fünf Nachrichten ist Schluss', `Code ${zuViel.status}`);
+
+  await erledige(koerper.auftragId, 101);
+  await warte(300);
+  const danach = await nachricht(koerper.auftragId, 'Noch da?');
+  pruefe(danach.status === 409, 'Nach der Fahrt geht keine mehr', `Code ${danach.status}`);
+}
+
+console.log('\n=== 12. Absicherungen ===');
 {
   const ohneName = await bestelle({ name: '' });
   pruefe(ohneName.status === 400, 'Bestellung ohne Namen wird abgelehnt');

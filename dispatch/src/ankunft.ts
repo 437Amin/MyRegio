@@ -128,7 +128,7 @@ export function ankunftstext(
   // --- Laufende Live-Freigabe: der Punkt selbst ist aktuell ----------------
   if (liveLaeuft(standort.live_bis, jetzt)) {
     if (alterSekunden > HOECHSTALTER_LIVE_SEKUNDEN) return null;
-    return satz(vomPunkt);
+    return gemessen(vomPunkt);
   }
 
   // --- Einmaliger Punkt: mitzaehlen ----------------------------------------
@@ -143,11 +143,30 @@ export function ankunftstext(
   const verbleibend = vomPunkt - alterSekunden / 60;
   if (verbleibend < -NACHLAUF_MINUTEN) return null;
 
-  return satz(Math.round(verbleibend));
+  return hochgerechnet(Math.round(verbleibend));
 }
 
-function satz(minuten: number): string {
+/**
+ * Wir wissen, wo der Fahrer IST.
+ *
+ * Gilt nur bei laufender Live-Freigabe: Dann kommt mit jeder Aktualisierung
+ * eine echte Position, und die Zahl ist gerechnet, nicht geschaetzt.
+ */
+function gemessen(minuten: number): string {
   if (minuten <= 1) return 'Ihr Fahrer ist gleich da.';
   if (minuten <= 2) return 'Ihr Fahrer ist etwa 2 Minuten entfernt.';
   return `Ihr Fahrer ist etwa ${minuten} Minuten entfernt.`;
+}
+
+/**
+ * Wir wissen, wo der Fahrer WAR, und zaehlen seither mit.
+ *
+ * Die Wortwahl ist bewusst eine andere: Haelt er unterwegs an, sinkt die Zahl
+ * trotzdem. "Voraussichtlich" sagt genau das - eine Erwartung, keine Messung.
+ * Mit "ist etwa 6 Minuten entfernt" wuerden wir Wissen behaupten, das wir in
+ * diesem Fall nicht haben.
+ */
+function hochgerechnet(minuten: number): string {
+  if (minuten <= 2) return 'Ihr Fahrer müsste gleich da sein.';
+  return `Ihr Fahrer ist unterwegs – voraussichtlich in etwa ${minuten} Minuten da.`;
 }
