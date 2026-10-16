@@ -183,12 +183,18 @@ einer echten E-Mail:
 
 - [ ] **Auftragsverarbeitungsvertrag mit Brevo** abschließen – liegt im
       Brevo-Konto bereit.
-- [ ] **Datenschutzerklärung ergänzen** – drei Punkte:
-      Brevo als Auftragsverarbeiter für den Versand; die E-Mail-Adresse des
-      Fahrgasts (freiwillig, für Rechnung und die Nachricht nach der Fahrt);
-      der Live-Standort der Fahrer (freiwillig, nur während einer Fahrt, nur
-      der letzte Punkt, danach gelöscht – der Fahrgast sieht nie den Ort,
-      sondern nur eine geschätzte Zeit).
+- [x] **Datenschutzerklärung ergänzt** (16.10.2026): fünf Abschnitte zu
+      E-Mail-Adresse, Brevo, Nachrichten während der Fahrt, Ankunftszeit und
+      Bewertung. **Vom Anwalt gegenlesen lassen** – besonders die Einwilligung
+      für die Bewertungsbitte (Hinweis über dem Feld statt eigenem Häkchen)
+      und den bestehenden Telegram-Abschnitt.
+- [ ] **Information für die Fahrer aushändigen** – steht in
+      [FAHRER-DATENSCHUTZ.md](FAHRER-DATENSCHUTZ.md). Ausdrucken oder als PDF
+      schicken, am besten zusammen mit dem Arbeitsvertrag. Keine Unterschrift
+      nötig, es ist eine Information. Ebenfalls vom Anwalt gegenlesen lassen.
+- [ ] **Auftragsverarbeitungsvertrag mit Brevo abschließen** – liegt im
+      Brevo-Konto bereit. ⚠️ Die Datenschutzerklärung behauptet bereits, dass
+      er besteht.
 
 ---
 
