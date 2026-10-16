@@ -699,6 +699,43 @@ function einrichten(wurzel: HTMLElement): void {
     }
   }
 
+  /**
+   * Raeumt nach der Fahrt auf und zeigt wieder das Formular.
+   *
+   * Der gespeicherte Zwischenstand wird dabei geleert: Die naechste Anfrage
+   * soll mit leeren Feldern beginnen, nicht mit den Adressen der letzten.
+   */
+  function abschliessen(): void {
+    laufenderAuftrag = '';
+    verlaufStand = '';
+    try {
+      sessionStorage.removeItem(SPEICHER_SCHLUESSEL);
+    } catch {
+      // Privater Modus - dann war ohnehin nichts gespeichert
+    }
+
+    const verlauf = wurzel.querySelector<HTMLElement>('[data-verlauf]');
+    if (verlauf) {
+      verlauf.textContent = '';
+      verlauf.hidden = true;
+    }
+
+    const danke = wurzel.querySelector<HTMLElement>('[data-bewertung-danke]');
+    const bewertung = wurzel.querySelector<HTMLElement>('[data-bewertung]');
+    if (danke) danke.hidden = true;
+    if (bewertung) bewertung.hidden = true;
+
+    for (const feld of wurzel.querySelectorAll<HTMLInputElement>('input[name="sterne"]')) {
+      feld.checked = false;
+    }
+    const text = wurzel.querySelector<HTMLTextAreaElement>('[data-bewertung-text]');
+    if (text) text.value = '';
+
+    zurueckZumFormular();
+    schrittZeigen(1, false);
+    wurzel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   /** Schickt die Bewertung ab. */
   function bewertungEinrichten(): void {
     const block = wurzel.querySelector<HTMLElement>('[data-bewertung]');
@@ -732,6 +769,12 @@ function einrichten(wurzel: HTMLElement): void {
 
         if (daten.gespeichert) {
           bewertungZeigen(true, letzterBewertungslink);
+
+          // Nach ein paar Sekunden steht die Seite wieder am Anfang - bereit
+          // fuer die naechste Fahrt. Ein Dank, der stehen bleibt, bis jemand
+          // ihn wegklickt, waere eine Sackgasse. Der Google-Knopf oeffnet
+          // einen eigenen Tab, geht also nicht verloren.
+          window.setTimeout(abschliessen, 6000);
         } else {
           meldung.textContent = daten.fehler ?? 'Das hat nicht geklappt.';
           meldung.hidden = false;
@@ -770,18 +813,25 @@ function einrichten(wurzel: HTMLElement): void {
         const zeile = document.createElement('li');
         zeile.dataset.von = eintrag.von;
 
+        const kopf = document.createElement('span');
+        kopf.className = 'kopf';
+
         const wer = document.createElement('span');
-        wer.className = 'wer';
         wer.textContent = eintrag.von === 'fahrer' ? 'Ihr Fahrer' : 'Sie';
+        kopf.append(wer);
 
         if (eintrag.zeit) {
           const zeit = document.createElement('span');
           zeit.className = 'zeit';
           zeit.textContent = eintrag.zeit;
-          wer.append(zeit);
+          kopf.append(zeit);
         }
 
-        zeile.append(wer, document.createTextNode(eintrag.text));
+        const satz = document.createElement('span');
+        satz.className = 'satz';
+        satz.textContent = eintrag.text;
+
+        zeile.append(kopf, satz);
         liste.append(zeile);
       }
     }

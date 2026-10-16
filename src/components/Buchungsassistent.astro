@@ -641,14 +641,19 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
 
           <!-- Nach dem Abschicken -->
           <div class="mx-auto mt-6 max-w-md" data-bewertung-danke hidden>
-            <p class="text-lg font-semibold text-white">Vielen Dank!</p>
+            <p class="text-lg font-semibold text-white">
+              Vielen Dank für Ihre Rückmeldung.
+            </p>
             <p class="mt-1 text-sm text-nebel-400">
-              Wir haben Ihre Rückmeldung erhalten.
+              Wir freuen uns, Sie wiederzusehen.
             </p>
             <a class="knopf gross mt-4 inline-block" data-bewertung-link href="#" hidden
                target="_blank" rel="noopener">
               Auch bei Google bewerten
             </a>
+            <p class="mt-4 text-sm text-nebel-500" data-bewertung-hinweis>
+              Sie werden gleich zur Startseite zurückgeleitet.
+            </p>
           </div>
 
           <div class="mx-auto mt-6 max-w-md text-left" data-nachricht>
@@ -815,44 +820,67 @@ const schritte = ['Anlass', 'Strecke', 'Termin', 'Details', 'Absenden'];
     color: var(--color-nebel-500);
   }
 
-  /* Verlauf wie in einem Nachrichtendienst: Fahrer links, Fahrgast rechts */
-  [data-verlauf] li {
+  /*
+    Verlauf wie in einem Nachrichtendienst: Fahrer links, Fahrgast rechts.
+
+    :global() ist hier Pflicht. Astro begrenzt Stile auf Elemente, die beim
+    Bauen schon im Quelltext stehen - die Zeilen hier entstehen aber erst im
+    Browser und bekaemen sonst gar nichts ab. Genau daran lag es, dass
+    "Sie22:11Hallo" in einer Zeile klebte.
+  */
+  [data-verlauf] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  [data-verlauf] :global(li) {
     max-width: 85%;
-    padding: 0.55rem 0.8rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 0.9rem;
     font-size: 0.95rem;
+    line-height: 1.45;
     color: #fff;
   }
 
-  [data-verlauf] li[data-von='fahrer'] {
-    margin-right: auto;
+  [data-verlauf] :global(li[data-von='fahrer']) {
+    align-self: flex-start;
     border: 1px solid rgb(34 184 240 / 0.25);
     border-bottom-left-radius: 0.25rem;
     background: rgb(34 184 240 / 0.1);
   }
 
-  [data-verlauf] li[data-von='fahrgast'] {
-    margin-left: auto;
+  [data-verlauf] :global(li[data-von='fahrgast']) {
+    align-self: flex-end;
     border: 1px solid rgb(255 255 255 / 0.12);
     border-bottom-right-radius: 0.25rem;
     background: rgb(255 255 255 / 0.07);
   }
 
-  [data-verlauf] .wer {
-    display: block;
+  [data-verlauf] :global(.kopf) {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.25rem;
+    margin-bottom: 0.15rem;
     font-size: 0.75rem;
     font-weight: 600;
-    opacity: 0.75;
   }
 
-  [data-verlauf] li[data-von='fahrer'] .wer {
+  [data-verlauf] :global(li[data-von='fahrer'] .kopf) {
     color: var(--color-cyan-400);
   }
 
-  [data-verlauf] .zeit {
-    margin-left: 0.4rem;
+  [data-verlauf] :global(li[data-von='fahrgast'] .kopf) {
+    color: var(--color-nebel-400);
+  }
+
+  [data-verlauf] :global(.zeit) {
     font-weight: 400;
-    opacity: 0.8;
+    opacity: 0.85;
+  }
+
+  [data-verlauf] :global(.satz) {
+    display: block;
   }
 
   .sterne {
