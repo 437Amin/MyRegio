@@ -28,6 +28,7 @@ Bildsprache wie das Vorschaubild.
 
 | Datei | Aussage |
 |---|---|
+| `profil-titelbild.jpg` | Ihr Fahrer in Stuttgart, direkt gebucht – **das Titelbild** |
 | `profil-festpreis.jpg` | Der Preis steht, bevor Sie einsteigen |
 | `profil-flughafen.jpg` | Zum Flughafen, pünktlich und fest |
 | `profil-parkandfly.jpg` | Parken in Feuerbach, einsteigen, weg |
@@ -39,6 +40,10 @@ Bildsprache wie das Vorschaubild.
 Betrieb deutlich häufiger, und ein Fahrgast will das Fahrzeug sehen. Diese
 Bilder füllen die Lücke, bis es Fotos gibt – und taugen danach weiter für die
 Aussagen, die sich nicht fotografieren lassen.
+
+Als **Titelbild** gehoert `profil-titelbild.jpg` dorthin: Es steht fuer den
+ganzen Betrieb. Ein Motiv zu einer einzelnen Leistung waere an dieser
+Stelle zu eng – es ist das erste, was jemand sieht.
 
 **Neue Motive** kommen in die Liste `MOTIVE` im Skript. Die beiden großen
 Zeilen dürfen höchstens 26 Zeichen haben; das Skript bricht ab, wenn eine

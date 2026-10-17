@@ -23,6 +23,9 @@ import { mkdir } from 'node:fs/promises';
 
 const SCHRIFT = 'Segoe UI, DejaVu Sans, Arial, sans-serif';
 const HOECHSTZEICHEN = 26;
+// Die Unterzeile laeuft in kleinerer, nicht fetter Schrift - da passt mehr,
+// aber auch nicht beliebig viel.
+const HOECHSTZEICHEN_UNTEN = 56;
 
 /** & und < wuerden die SVG zerreissen. */
 const sicher = (text) =>
@@ -33,6 +36,11 @@ function bild({ zeile1, zeile2, unterzeile }) {
     if (zeile.length > HOECHSTZEICHEN) {
       throw new Error(`Zu lang (${zeile.length} Zeichen, erlaubt ${HOECHSTZEICHEN}): "${zeile}"`);
     }
+  }
+  if (unterzeile.length > HOECHSTZEICHEN_UNTEN) {
+    throw new Error(
+      `Unterzeile zu lang (${unterzeile.length} Zeichen, erlaubt ${HOECHSTZEICHEN_UNTEN}): "${unterzeile}"`,
+    );
   }
 
   return `
@@ -77,6 +85,14 @@ function bild({ zeile1, zeile2, unterzeile }) {
 }
 
 const MOTIVE = [
+  {
+    // Das Titelbild. Steht fuer den ganzen Betrieb, nicht fuer eine
+    // einzelne Leistung - es ist das erste, was jemand sieht.
+    datei: 'profil-titelbild',
+    zeile1: 'Ihr Fahrer in Stuttgart.',
+    zeile2: 'Direkt gebucht.',
+    unterzeile: 'Flughafen  ·  Termine  ·  Alltag  ·  Park & Fly',
+  },
   {
     datei: 'profil-festpreis',
     zeile1: 'Der Preis steht,',
