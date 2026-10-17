@@ -1,0 +1,126 @@
+/**
+ * Gestaltete Bilder fuer Verzeichnisse - Google-Unternehmensprofil und
+ * aehnliche Stellen.
+ *
+ * Aufruf:  node scripts/profilbilder.mjs
+ *
+ * Gleiche Bildsprache wie das Vorschaubild in scripts/bilder-erzeugen.mjs:
+ * dunkler Grund, ein cyanfarbener Schein oben links, Logo, zwei Zeilen
+ * Aussage, eine Trennlinie, darunter die Einordnung.
+ *
+ * WICHTIG: Das ersetzt keine Fotos. Google zeigt Eintraege mit echten
+ * Aufnahmen vom Betrieb deutlich haeufiger, und ein Fahrgast will das
+ * Fahrzeug sehen. Diese Bilder fuellen die Luecke, bis es Fotos gibt - und
+ * taugen danach weiter fuer die Aussagen, die sich nicht fotografieren
+ * lassen ("Festpreis vorab").
+ *
+ * Die Zeilen sind bewusst kurz gehalten: Bei 1200 Pixeln Breite passen in
+ * der grossen Schrift etwa 26 Zeichen. Laengere Zeilen laufen aus dem Bild,
+ * ohne dass es jemand merkt - deshalb prueft das Skript die Laenge.
+ */
+import sharp from 'sharp';
+import { mkdir } from 'node:fs/promises';
+
+const SCHRIFT = 'Segoe UI, DejaVu Sans, Arial, sans-serif';
+const HOECHSTZEICHEN = 26;
+
+/** & und < wuerden die SVG zerreissen. */
+const sicher = (text) =>
+  text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+function bild({ zeile1, zeile2, unterzeile }) {
+  for (const zeile of [zeile1, zeile2]) {
+    if (zeile.length > HOECHSTZEICHEN) {
+      throw new Error(`Zu lang (${zeile.length} Zeichen, erlaubt ${HOECHSTZEICHEN}): "${zeile}"`);
+    }
+  }
+
+  return `
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  <defs>
+    <radialGradient id="schein" cx="20%" cy="0%" r="85%">
+      <stop offset="0%" stop-color="#22b8f0" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#22b8f0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="linie" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#22b8f0"/>
+      <stop offset="100%" stop-color="#22b8f0" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1200" height="675" fill="#05070A"/>
+  <rect width="1200" height="675" fill="url(#schein)"/>
+
+  <g transform="translate(88, 72) scale(1.45)">
+    <path d="M24 8.5c-6.6 0-12 5.3-12 11.8 0 7.8 10.2 17.8 11.3 18.8a1 1 0 0 0 1.4 0c1.1-1 11.3-11 11.3-18.8 0-6.5-5.4-11.8-12-11.8Z"
+          fill="none" stroke="#22b8f0" stroke-width="2.8"/>
+    <path d="M18.6 18.9a8 8 0 0 1 10.8 0" fill="none" stroke="#22b8f0" stroke-width="2.4" stroke-linecap="round"/>
+    <path d="M21.2 22a4.2 4.2 0 0 1 5.6 0" fill="none" stroke="#22b8f0" stroke-width="2.2" stroke-linecap="round"/>
+    <circle cx="24" cy="26" r="1.9" fill="#22b8f0"/>
+  </g>
+
+  <text x="178" y="122" font-family="${SCHRIFT}" font-size="48" font-weight="700"
+        fill="#ffffff">MyRegio<tspan fill="#22b8f0">Car</tspan></text>
+
+  <text x="88" y="310" font-family="${SCHRIFT}" font-size="68" font-weight="700"
+        fill="#ffffff">${sicher(zeile1)}</text>
+  <text x="88" y="396" font-family="${SCHRIFT}" font-size="68" font-weight="700"
+        fill="#22b8f0">${sicher(zeile2)}</text>
+
+  <rect x="88" y="452" width="420" height="3" fill="url(#linie)"/>
+
+  <text x="88" y="516" font-family="${SCHRIFT}" font-size="30"
+        fill="#b3bfcd">${sicher(unterzeile)}</text>
+  <text x="88" y="578" font-family="${SCHRIFT}" font-size="26"
+        fill="#6b7887">Steiermärker Str. 3-5  ·  70469 Stuttgart-Feuerbach</text>
+</svg>`;
+}
+
+const MOTIVE = [
+  {
+    datei: 'profil-festpreis',
+    zeile1: 'Der Preis steht,',
+    zeile2: 'bevor Sie einsteigen.',
+    unterzeile: 'Kein Zähler  ·  kein Aufschlag im Stau',
+  },
+  {
+    datei: 'profil-flughafen',
+    zeile1: 'Zum Flughafen.',
+    zeile2: 'Pünktlich und fest.',
+    unterzeile: 'Flughafen- und Messetransfer rund um Stuttgart',
+  },
+  {
+    datei: 'profil-parkandfly',
+    zeile1: 'Parken in Feuerbach,',
+    zeile2: 'einsteigen, weg.',
+    unterzeile: 'Park & Fly  ·  2 Gehminuten zur U6',
+  },
+  {
+    datei: 'profil-24-7',
+    zeile1: 'Rund um die Uhr.',
+    zeile2: 'Auch um vier.',
+    unterzeile: 'Frühe Flüge, späte Rückfahrten, Wochenende',
+  },
+  {
+    datei: 'profil-krankenfahrten',
+    zeile1: 'Zum Arzt.',
+    zeile2: 'Und wieder zurück.',
+    unterzeile: 'Krankenfahrten  ·  wir warten, wenn Sie möchten',
+  },
+  {
+    datei: 'profil-direkt',
+    zeile1: 'Direkt beim',
+    zeile2: 'Unternehmen.',
+    unterzeile: 'Keine App, kein Vermittler, keine Provision',
+  },
+];
+
+await mkdir('marke', { recursive: true });
+
+for (const motiv of MOTIVE) {
+  const ziel = `marke/${motiv.datei}.jpg`;
+  await sharp(Buffer.from(bild(motiv)))
+    .jpeg({ quality: 90, mozjpeg: true })
+    .toFile(ziel);
+  console.log(`${ziel} · 1200x675 · „${motiv.zeile1} ${motiv.zeile2}"`);
+}
