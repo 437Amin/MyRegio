@@ -128,14 +128,14 @@ function bildQuadrat({ zeile1, zeile2, unterzeile }) {
   <text x="187" y="165" font-family="${SCHRIFT}" font-size="52" font-weight="700"
         fill="#ffffff">MyRegio<tspan fill="#22b8f0">Car</tspan></text>
 
-  <text x="88" y="700" font-family="${SCHRIFT}" font-size="68" font-weight="700"
+  <text x="88" y="550" font-family="${SCHRIFT}" font-size="68" font-weight="700"
         fill="#ffffff">${sicher(zeile1)}</text>
-  <text x="88" y="792" font-family="${SCHRIFT}" font-size="68" font-weight="700"
+  <text x="88" y="642" font-family="${SCHRIFT}" font-size="68" font-weight="700"
         fill="#22b8f0">${sicher(zeile2)}</text>
 
-  <rect x="88" y="852" width="420" height="3" fill="url(#linie)"/>
+  <rect x="88" y="702" width="420" height="3" fill="url(#linie)"/>
 
-  <text x="88" y="916" font-family="${SCHRIFT}" font-size="30"
+  <text x="88" y="766" font-family="${SCHRIFT}" font-size="30"
         fill="#b3bfcd">${sicher(unterzeile)}</text>
   <text x="88" y="1100" font-family="${SCHRIFT}" font-size="26"
         fill="#6b7887">${ANSCHRIFT}</text>
