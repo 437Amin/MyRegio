@@ -236,6 +236,41 @@ const ablauf = [
   <Kundenstimmen />
   <FaqListe />
 
+  <!-- =========================== Einzugsgebiet ============================ -->
+  <!--
+    Dieselben Orte stehen im Unternehmensprofil bei Google. Sie gehoeren
+    sichtbar auf die Seite und nicht nur in die Fusszeile: Wer wissen will,
+    ob wir nach Ludwigsburg fahren, soll die Antwort lesen koennen - und
+    Suchmaschinen lesen sie mit.
+  -->
+  <section class="abschnitt border-t border-white/8">
+    <div class="huelle">
+      <div class="max-w-2xl">
+        <span class="augenbraue">Einzugsgebiet</span>
+        <h2 class="mt-4 text-3xl md:text-4xl">Wo wir Sie abholen</h2>
+        <p class="mt-4 text-nebel-400">
+          Unser Betriebssitz liegt in Stuttgart-Feuerbach. Von dort fahren wir
+          täglich in diese Orte – zum Flughafen, zur Messe und überall dorthin,
+          wo Sie hinmüssen.
+        </p>
+      </div>
+
+      <ul class="mt-8 flex flex-wrap gap-2.5">
+        {
+          site.einzugsgebiet.map((ort) => (
+            <li class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-nebel-200">
+              {ort}
+            </li>
+          ))
+        }
+      </ul>
+
+      <p class="mt-6 text-sm text-nebel-500">
+        Ihr Ort ist nicht dabei? Fragen Sie trotzdem – wir fahren auch weiter.
+      </p>
+    </div>
+  </section>
+
   <!-- ============================ Schlussaufruf ============================ -->
   <section class="abschnitt border-t border-white/8">
     <div class="huelle">

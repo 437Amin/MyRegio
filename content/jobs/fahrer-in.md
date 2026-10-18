@@ -19,6 +19,10 @@ wirBieten:
   - "Unterstützung bei der Beantragung des P-Scheins"
 ---
 
+## Wer wir sind
+
+MyRegioCar ist ein Mietwagenunternehmen mit Fahrer in Stuttgart-Feuerbach. Wir fahren eigene Aufträge – Flughafentransfer, Geschäfts- und Krankenfahrten im Großraum Stuttgart – und zusätzlich über Vermittlungsplattformen. Unser Betriebssitz liegt in der Steiermärker Straße, zwei Gehminuten vom Bahnhof Feuerbach.
+
 ## Werden Sie Teil unseres Teams
 
 Wir suchen zuverlässige Fahrerinnen und Fahrer für unser Mietwagenunternehmen in Stuttgart-Feuerbach. Ob Vollzeit, Teilzeit oder als Minijob – wir richten die Schichten so ein, dass sie zu Ihrem Leben passen.
