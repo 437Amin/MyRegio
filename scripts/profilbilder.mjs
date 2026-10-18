@@ -111,6 +111,41 @@ function bild({ zeile1, zeile2, unterzeile }) {
 }
 
 /**
+ * Das Titelbild - breit, aber mittig gesetzt.
+ *
+ * Google zeigt das Hintergrundbild je nach Stelle breit ODER quadratisch
+ * beschnitten. Vom linksbuendigen Bild fiel dabei der Zeilenanfang weg
+ * ("hr Fahrer in Stuttgart"). Deshalb steht hier alles zentriert und passt
+ * in das mittlere Quadrat von 675 Pixeln Breite - der Text ueberlebt beide
+ * Ansichten. Die Schrift faellt dadurch kleiner aus als bei den uebrigen
+ * Motiven; das ist der Preis dafuer.
+ */
+function bildTitel({ zeile1, zeile2, unterzeile }) {
+  laengePruefen({ zeile1, zeile2, unterzeile });
+
+  return `
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675">
+  ${untergrund(1200, 675)}
+  ${zeichen(492, 66, 1.2)}
+
+  <text x="543" y="108" font-family="${SCHRIFT}" font-size="38" font-weight="700"
+        fill="#ffffff">MyRegio<tspan fill="#22b8f0">Car</tspan></text>
+
+  <text x="600" y="300" text-anchor="middle" font-family="${SCHRIFT}"
+        font-size="44" font-weight="700" fill="#ffffff">${sicher(zeile1)}</text>
+  <text x="600" y="362" text-anchor="middle" font-family="${SCHRIFT}"
+        font-size="44" font-weight="700" fill="#22b8f0">${sicher(zeile2)}</text>
+
+  <rect x="460" y="410" width="280" height="3" fill="#22b8f0" opacity="0.65"/>
+
+  <text x="600" y="464" text-anchor="middle" font-family="${SCHRIFT}"
+        font-size="24" fill="#b3bfcd">${sicher(unterzeile)}</text>
+  <text x="600" y="584" text-anchor="middle" font-family="${SCHRIFT}"
+        font-size="20" fill="#6b7887">${ANSCHRIFT}</text>
+</svg>`;
+}
+
+/**
  * Quadratisch - fuer die Fotogalerie bei Google.
  *
  * Derselbe Aufbau, nur gestreckt: Logo oben, Aussage in der unteren
@@ -147,6 +182,7 @@ const MOTIVE = [
     // Das Titelbild. Steht fuer den ganzen Betrieb, nicht fuer eine
     // einzelne Leistung - es ist das erste, was jemand sieht.
     datei: 'profil-titelbild',
+    titel: true,
     zeile1: 'Ihr Fahrer in Stuttgart.',
     zeile2: 'Direkt gebucht.',
     unterzeile: 'Flughafen  ·  Termine  ·  Alltag  ·  Park & Fly',
@@ -192,7 +228,11 @@ const MOTIVE = [
 await mkdir('marke', { recursive: true });
 
 for (const motiv of MOTIVE) {
-  for (const [zusatz, bauen] of [['', bild], ['-quadrat', bildQuadrat]]) {
+  // Das Titelbild bekommt den mittigen Aufbau, damit es auch den
+  // quadratischen Zuschnitt uebersteht.
+  const breit = motiv.titel ? bildTitel : bild;
+
+  for (const [zusatz, bauen] of [['', breit], ['-quadrat', bildQuadrat]]) {
     const ziel = `marke/${motiv.datei}${zusatz}.jpg`;
     await sharp(Buffer.from(bauen(motiv)))
       .jpeg({ quality: 90, mozjpeg: true })

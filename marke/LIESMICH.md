@@ -51,9 +51,17 @@ Betrieb deutlich häufiger, und ein Fahrgast will das Fahrzeug sehen. Diese
 Bilder füllen die Lücke, bis es Fotos gibt – und taugen danach weiter für die
 Aussagen, die sich nicht fotografieren lassen.
 
-Als **Titelbild** gehoert `profil-titelbild.jpg` dorthin: Es steht fuer den
-ganzen Betrieb. Ein Motiv zu einer einzelnen Leistung waere an dieser
-Stelle zu eng – es ist das erste, was jemand sieht.
+Als **Titelbild** gehört `profil-titelbild.jpg` dorthin: Es steht für den
+ganzen Betrieb. Ein Motiv zu einer einzelnen Leistung wäre an dieser Stelle
+zu eng – es ist das erste, was jemand sieht.
+
+Das Titelbild ist als einziges Motiv **mittig** aufgebaut und bleibt dabei
+innerhalb des mittleren Quadrats von 675 Pixeln Breite. Grund: Google zeigt
+das Hintergrundbild je nach Stelle breit **oder** quadratisch beschnitten –
+linksbündig fiel der Zeilenanfang weg („hr Fahrer in Stuttgart"). Die Schrift
+fällt dadurch kleiner aus als bei den übrigen Motiven; das ist der Preis
+dafür. Wer den Aufbau ändert, prüft das Ergebnis mit einem Zuschnitt auf 1:1
+nach.
 
 **Neue Motive** kommen in die Liste `MOTIVE` im Skript. Die beiden großen
 Zeilen dürfen höchstens 26 Zeichen haben; das Skript bricht ab, wenn eine
