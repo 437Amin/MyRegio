@@ -23,8 +23,18 @@ die Website, sondern zu den Stellen, an denen das Unternehmen eingetragen ist.
 
 ## Bilder für Verzeichnisse
 
-Erzeugt mit `node scripts/profilbilder.mjs`, 1200×675 (16:9), dieselbe
-Bildsprache wie das Vorschaubild.
+Erzeugt mit `node scripts/profilbilder.mjs`, dieselbe Bildsprache wie das
+Vorschaubild. Jedes Motiv entsteht **zweimal**:
+
+- `profil-<name>.jpg` – 1200×675 (16:9), fürs Titelbild und für Links in
+  Messengern
+- `profil-<name>-quadrat.jpg` – 1200×1200, für die Fotogalerie
+
+Der Grund fürs Quadrat: **Google beschneidet Galeriebilder quadratisch.** Vom
+breiten Bild fallen links und rechts je gut 260 Pixel weg – und genau dort
+steht der Text. Aus „MyRegioCar" wird dann „RegioCar". Geöffnet ist das Bild
+zwar vollständig, aber die Kachel ist das, was die meisten überhaupt sehen.
+Nur das Titelbild bleibt breit, das zeigt Google ungeschnitten.
 
 | Datei | Aussage |
 |---|---|
