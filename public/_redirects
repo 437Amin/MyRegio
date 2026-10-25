@@ -1,0 +1,14 @@
+# =============================================================================
+#  Weiterleitungen fuer Cloudflare
+#
+#  ACHTUNG: Hier sind NUR RELATIVE PFADE erlaubt. Eine vollstaendige Adresse
+#  (https://...) lehnt Cloudflare bei Workern ab, der Deploy scheitert dann
+#  mit "code: 100324". Die Weiterleitung von myregiocar.com auf www liegt
+#  deshalb nicht hier, sondern beim Anbieter der Domain.
+# =============================================================================
+
+# Astro nennt die Sitemap "sitemap-index.xml". Fast alle Werkzeuge - und
+# Menschen - suchen sie aber unter dem ueblichen Namen. Ohne diese Zeile
+# antwortet /sitemap.xml mit 404; genau das stand am 24.10.2026 in der
+# Search Console ("Konnte nicht abgerufen werden").
+/sitemap.xml  /sitemap-index.xml  301
