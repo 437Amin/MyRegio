@@ -1,0 +1,247 @@
+---
+/**
+ * Was der Fahrgast waehrend der Fahrt auf seiner Statusseite sieht.
+ *
+ * Nichts davon ist erfunden: Ankunftszeit, "Fahrgast abgeholt" und der Chat
+ * laufen im Vermittlungsdienst wirklich. Hier wird nur vorgefuehrt, was nach
+ * einer Buchung passiert - deshalb steht auch "Beispiel" dabei. Eine
+ * Nachbildung, die sich als Echtzeit ausgibt, waere eine Luege an der
+ * Stelle, an der wir Vertrauen aufbauen wollen.
+ *
+ * Die Zeitangaben sind dieselben Formulierungen wie im echten Ablauf
+ * (dispatch/src/ankunft.ts): gemessen, nicht geschaetzt.
+ */
+---
+
+<section class="abschnitt border-t border-white/8">
+  <div class="huelle">
+    <div class="grid items-center gap-10 md:grid-cols-2 md:gap-14">
+      <div class="max-w-xl">
+        <span class="augenbraue">Nach der Buchung</span>
+        <h2 class="mt-4 text-3xl md:text-4xl">
+          Sie wissen, wo Ihr Fahrer bleibt
+        </h2>
+        <p class="mt-5 leading-relaxed text-nebel-300">
+          Sobald jemand Ihre Fahrt übernommen hat, bekommen Sie eine Seite mit
+          dem Stand der Dinge: wer fährt, wie lange es noch dauert, und ein
+          Feld, über das Sie ihm schreiben können. Kein Anruf, kein Nachfragen
+          in der Zentrale.
+        </p>
+        <ul class="mt-7 space-y-3 text-sm text-nebel-400">
+          <li class="flex gap-3">
+            <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-500"
+            ></span>
+            Die Minuten sinken, weil sich das Fahrzeug nähert – nicht, weil die
+            Zeit vergeht.
+          </li>
+          <li class="flex gap-3">
+            <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-500"
+            ></span>
+            Nachrichten in beide Richtungen, ohne dass Rufnummern
+            herausgegeben werden.
+          </li>
+          <li class="flex gap-3">
+            <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-cyan-500"
+            ></span>
+            Nach der Fahrt gelöscht – Standort wie Nachrichten.
+          </li>
+        </ul>
+      </div>
+
+      <div class="mx-auto w-full max-w-[320px]">
+        <!--
+          Der Haken heisst bewusst nicht data-vorschau: Das benutzt der
+          Buchungsassistent bereits fuer sein verstecktes Nachrichtenfeld,
+          und querySelector haette dieses hier zuerst gefunden.
+        -->
+        <div class="vorschau karte p-5" data-fahrtvorschau>
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold uppercase tracking-[0.14em] text-nebel-500">
+              Ihre Fahrt
+            </span>
+            <span
+              class="rounded-full border border-white/10 px-2 py-0.5 text-[10px] text-nebel-500"
+            >
+              Beispiel
+            </span>
+          </div>
+
+          <div class="mt-4 flex gap-1.5" aria-hidden="true">
+            <i class="balken" data-balken></i>
+            <i class="balken" data-balken></i>
+            <i class="balken" data-balken></i>
+            <i class="balken" data-balken></i>
+          </div>
+
+          <p class="satz" data-satz>Ihr Fahrer ist unterwegs.</p>
+          <p class="klein" data-klein>Önder hat die Fahrt übernommen.</p>
+
+          <div class="blase fahrgast" data-blase="1">
+            Ich stehe am Seitenausgang.
+          </div>
+          <div class="blase fahrer" data-blase="2">Alles klar, bin gleich da.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  .vorschau {
+    /* Haelt die Hoehe ruhig, wenn Satz und Blasen wechseln */
+    min-height: 272px;
+  }
+
+  .balken {
+    height: 4px;
+    flex: 1;
+    border-radius: 2px;
+    background: rgb(255 255 255 / 0.1);
+    transition: background 0.4s ease;
+  }
+
+  .balken.an {
+    background: #22b8f0;
+  }
+
+  .satz {
+    margin-top: 0.9rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: #fff;
+    min-height: 3.1rem;
+  }
+
+  .satz :global(b) {
+    color: #22b8f0;
+  }
+
+  .klein {
+    margin-top: 0.15rem;
+    font-size: 0.8125rem;
+    color: #6b7887;
+  }
+
+  .blase {
+    margin-top: 0.7rem;
+    max-width: 85%;
+    border-radius: 0.75rem;
+    padding: 0.55rem 0.8rem;
+    font-size: 0.8125rem;
+    opacity: 0;
+    transform: translateY(6px);
+    transition:
+      opacity 0.4s ease,
+      transform 0.4s ease;
+  }
+
+  .blase.da {
+    opacity: 1;
+    transform: none;
+  }
+
+  .blase.fahrgast {
+    margin-left: auto;
+    background: #22b8f0;
+    color: #04202c;
+    border-bottom-right-radius: 0.25rem;
+  }
+
+  .blase.fahrer {
+    background: rgb(255 255 255 / 0.08);
+    color: #b3bfcd;
+    border-bottom-left-radius: 0.25rem;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .balken,
+    .blase {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const karte = document.querySelector<HTMLElement>('[data-fahrtvorschau]');
+
+  if (karte) {
+    const balken = [...karte.querySelectorAll<HTMLElement>('[data-balken]')];
+    const satz = karte.querySelector<HTMLElement>('[data-satz]');
+    const klein = karte.querySelector<HTMLElement>('[data-klein]');
+    const blase1 = karte.querySelector<HTMLElement>('[data-blase="1"]');
+    const blase2 = karte.querySelector<HTMLElement>('[data-blase="2"]');
+
+    // Dieselben Formulierungen wie im echten Ablauf des Vermittlungsdienstes
+    const STUFEN = [
+      {
+        satz: 'Ihr Fahrer ist unterwegs.',
+        klein: 'Önder hat die Fahrt übernommen.',
+        bis: 1,
+        b1: false,
+        b2: false,
+      },
+      {
+        satz: 'Ihr Fahrer ist etwa <b>4 Minuten</b> entfernt.',
+        klein: 'Die Zeit stammt aus seinem Standort.',
+        bis: 2,
+        b1: true,
+        b2: false,
+      },
+      {
+        satz: 'Ihr Fahrer müsste gleich da sein.',
+        klein: 'Bitte halten Sie sich bereit.',
+        bis: 3,
+        b1: true,
+        b2: true,
+      },
+      {
+        satz: 'Gute Fahrt.',
+        klein: 'Fahrgast abgeholt · Festpreis steht.',
+        bis: 4,
+        b1: true,
+        b2: true,
+      },
+    ];
+
+    function zeigen(i: number) {
+      const stufe = STUFEN[i];
+      if (satz) satz.innerHTML = stufe.satz;
+      if (klein) klein.textContent = stufe.klein;
+      balken.forEach((b, n) => b.classList.toggle('an', n < stufe.bis));
+      blase1?.classList.toggle('da', stufe.b1);
+      blase2?.classList.toggle('da', stufe.b2);
+    }
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      // Ohne Bewegung: der aussagekraeftigste Augenblick, fest stehend
+      zeigen(1);
+    } else {
+      let i = 0;
+      let takt: number | undefined;
+
+      // Gleich den ersten Stand zeigen, sonst steht die Fortschrittsleiste
+      // bis zum ersten Takt leer da und das Feld wirkt unfertig.
+      zeigen(0);
+
+      // Nur laufen lassen, solange die Karte zu sehen ist
+      const beobachter = new IntersectionObserver(
+        (eintraege) => {
+          for (const eintrag of eintraege) {
+            if (eintrag.isIntersecting && takt === undefined) {
+              takt = window.setInterval(() => {
+                i = (i + 1) % STUFEN.length;
+                zeigen(i);
+              }, 2600);
+            } else if (!eintrag.isIntersecting && takt !== undefined) {
+              window.clearInterval(takt);
+              takt = undefined;
+            }
+          }
+        },
+        { threshold: 0.3 },
+      );
+      beobachter.observe(karte);
+    }
+  }
+</script>

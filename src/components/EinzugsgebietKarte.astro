@@ -1,0 +1,269 @@
+---
+/**
+ * Gezeichnete Karte des Einzugsgebiets.
+ *
+ * Bewusst SELBST gezeichnet und keine Kartenanbindung: Auf der oeffentlichen
+ * Seite liegt nichts von Fremden. Eine eingebettete Karte wuerde die Adresse
+ * jedes Besuchers an einen anderen Anbieter melden - genau das vermeidet
+ * diese Seite durchgaengig.
+ *
+ * Die Lage der Orte ist SCHEMATISCH. Es geht darum, dass die Richtung stimmt
+ * und die Namen lesbar nebeneinander passen, nicht um Vermessung.
+ *
+ * Die Namen in LAGE muessen genau so geschrieben sein wie in
+ * content/einstellungen.yaml. Ein Ort, der dort steht und hier nicht, faellt
+ * aus der Karte - er bleibt aber in der Liste darunter sichtbar. So kann ein
+ * neuer Ort in der YAML-Datei nichts zerbrechen.
+ */
+import { site } from '~/config/site';
+
+const HEIMAT = 'Stuttgart-Feuerbach';
+
+const LAGE: Record<string, { x: number; y: number }> = {
+  'Korntal-Münchingen': { x: 96, y: 56 },
+  Ludwigsburg: { x: 210, y: 40 },
+  Zuffenhausen: { x: 150, y: 86 },
+  Weilimdorf: { x: 84, y: 100 },
+  'Bad Cannstatt': { x: 232, y: 108 },
+  Gerlingen: { x: 56, y: 136 },
+  [HEIMAT]: { x: 126, y: 128 },
+  Botnang: { x: 104, y: 166 },
+  'Stuttgart-Mitte': { x: 190, y: 170 },
+  'Messe Stuttgart': { x: 286, y: 214 },
+  'Leinfelden-Echterdingen': { x: 140, y: 232 },
+  'Flughafen Stuttgart': { x: 200, y: 258 },
+};
+
+/** Strecken, die gezeichnet werden - die vier haeufigsten Ziele. */
+const STRECKEN = [
+  'Flughafen Stuttgart',
+  'Ludwigsburg',
+  'Messe Stuttgart',
+  'Stuttgart-Mitte',
+];
+
+const heimat = LAGE[HEIMAT];
+
+const orte = site.einzugsgebiet
+  .filter((ort) => LAGE[ort])
+  .map((ort) => ({ name: ort, ...LAGE[ort], heimat: ort === HEIMAT }));
+
+/**
+ * Leicht gebogene Linie von der Heimat zum Ziel. Die Woelbung steht
+ * senkrecht auf der Verbindung, damit sich zwei Strecken in dieselbe
+ * Richtung nicht decken.
+ */
+function bogen(ziel: { x: number; y: number }): string {
+  const mx = (heimat.x + ziel.x) / 2 + (ziel.y - heimat.y) * 0.16;
+  const my = (heimat.y + ziel.y) / 2 - (ziel.x - heimat.x) * 0.16;
+  return `M${heimat.x} ${heimat.y} Q${mx} ${my} ${ziel.x} ${ziel.y}`;
+}
+
+const strecken = STRECKEN.filter((ziel) => LAGE[ziel]).map((ziel) => ({
+  ziel,
+  d: bogen(LAGE[ziel]),
+}));
+---
+
+<!--
+  aria-hidden: Die Karte ist Schmuck. Die Orte stehen direkt darunter als
+  Liste - dort liest sie ein Screenreader, und zwar vollstaendig.
+-->
+<div class="karte-huelle" data-karte>
+  <svg viewBox="0 0 400 290" role="presentation" aria-hidden="true">
+    <path
+      class="gebiet"
+      d="M60 70 Q130 24 215 38 Q300 52 318 140 Q330 230 230 272 Q130 296 72 214 Q34 140 60 70"
+    ></path>
+
+    {
+      strecken.map((strecke) => (
+        <path class="strecke" d={strecke.d} data-strecke data-ziel={strecke.ziel} />
+      ))
+    }
+
+    {
+      orte.map((ort) => (
+        <g class:list={['ort', { heim: ort.heimat }]} data-ort={ort.name}>
+          <circle class="punkt" cx={ort.x} cy={ort.y} r={ort.heimat ? 5 : 3.2} />
+          {ort.heimat && <circle class="welle" cx={ort.x} cy={ort.y} r="5" />}
+          <text class="name" x={ort.x + 8} y={ort.y + 3.5}>
+            {ort.name}
+          </text>
+        </g>
+      ))
+    }
+  </svg>
+</div>
+
+<style>
+  .karte-huelle {
+    margin-top: 2rem;
+    border: 1px solid rgb(255 255 255 / 0.08);
+    border-radius: 1rem;
+    background: rgb(11 16 22 / 0.6);
+    padding: 0.75rem;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .gebiet {
+    fill: rgb(34 184 240 / 0.05);
+    stroke: rgb(34 184 240 / 0.18);
+    stroke-width: 1.5;
+  }
+
+  .punkt {
+    fill: #46566a;
+    transition: fill 0.5s ease;
+  }
+
+  .name {
+    font-size: 10px;
+    font-weight: 600;
+    fill: #7f8d9c;
+    transition: fill 0.5s ease;
+  }
+
+  .ort.an .punkt {
+    fill: #22b8f0;
+  }
+
+  .ort.an .name {
+    fill: #dbe4ec;
+  }
+
+  .ort.heim .punkt {
+    fill: #22b8f0;
+  }
+
+  .ort.heim .name {
+    fill: #fff;
+    font-weight: 700;
+  }
+
+  /* Der eigene Standort pulst leise weiter - das Einzige, was dauernd laeuft */
+  .welle {
+    fill: none;
+    stroke: #22b8f0;
+    stroke-width: 1.5;
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: welle 3s ease-out infinite;
+  }
+
+  @keyframes welle {
+    0% {
+      transform: scale(1);
+      opacity: 0.7;
+    }
+    70%,
+    100% {
+      transform: scale(2.6);
+      opacity: 0;
+    }
+  }
+
+  .strecke {
+    fill: none;
+    stroke: #22b8f0;
+    stroke-width: 2;
+    stroke-linecap: round;
+    opacity: 0.85;
+  }
+
+  /*
+    Wer Bewegung abgestellt hat, bekommt das fertige Bild: alle Orte hell,
+    alle Strecken gezeichnet. Kein Pulsen, kein Nachziehen.
+  */
+  @media (prefers-reduced-motion: reduce) {
+    .welle {
+      animation: none;
+      opacity: 0;
+    }
+    .punkt,
+    .name {
+      transition: none;
+    }
+  }
+</style>
+
+<script>
+  const huelle = document.querySelector<HTMLElement>('[data-karte]');
+
+  if (huelle) {
+    const orte = [...huelle.querySelectorAll<SVGGElement>('[data-ort]')];
+    const strecken = [...huelle.querySelectorAll<SVGPathElement>('[data-strecke]')];
+    const ruhig = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    /** Alles hell, alle Strecken gezeichnet - der Endzustand. */
+    function fertig() {
+      for (const ort of orte) ort.classList.add('an');
+      for (const strecke of strecken) strecke.style.strokeDashoffset = '0';
+    }
+
+    if (ruhig) {
+      fertig();
+    } else {
+      // Laenge je Strecke merken, damit sich die Linie nachziehen laesst
+      const laengen = strecken.map((strecke) => strecke.getTotalLength());
+      strecken.forEach((strecke, i) => {
+        strecke.style.strokeDasharray = String(laengen[i]);
+        strecke.style.strokeDashoffset = String(laengen[i]);
+      });
+
+      let uhren: number[] = [];
+
+      function lauf() {
+        for (const nr of uhren) window.clearTimeout(nr);
+        uhren = [];
+
+        for (const ort of orte) {
+          if (!ort.classList.contains('heim')) ort.classList.remove('an');
+        }
+        strecken.forEach((strecke, i) => {
+          strecke.style.transition = 'none';
+          strecke.style.strokeDashoffset = String(laengen[i]);
+        });
+        void huelle!.offsetWidth; // Zuruecksetzen wirksam machen
+
+        orte.forEach((ort, i) => {
+          uhren.push(window.setTimeout(() => ort.classList.add('an'), 130 * i));
+        });
+
+        const nachOrten = 130 * orte.length + 300;
+        strecken.forEach((strecke, i) => {
+          uhren.push(
+            window.setTimeout(() => {
+              strecke.style.transition = 'stroke-dashoffset 1.1s ease';
+              strecke.style.strokeDashoffset = '0';
+            }, nachOrten + 650 * i),
+          );
+        });
+      }
+
+      // Nur laufen lassen, solange die Karte zu sehen ist. Ein Zeitgeber, der
+      // im Hintergrund weiterlaeuft, kostet Akku und bringt niemandem etwas.
+      let takt: number | undefined;
+      const beobachter = new IntersectionObserver(
+        (eintraege) => {
+          for (const eintrag of eintraege) {
+            if (eintrag.isIntersecting && takt === undefined) {
+              lauf();
+              takt = window.setInterval(lauf, 8000);
+            } else if (!eintrag.isIntersecting && takt !== undefined) {
+              window.clearInterval(takt);
+              takt = undefined;
+            }
+          }
+        },
+        { threshold: 0.25 },
+      );
+      beobachter.observe(huelle);
+    }
+  }
+</script>

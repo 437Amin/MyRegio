@@ -7,6 +7,8 @@ import LeistungenRaster from '~/components/LeistungenRaster.astro';
 import FaqListe from '~/components/FaqListe.astro';
 import Kundenstimmen from '~/components/Kundenstimmen.astro';
 import PreisTabelle from '~/components/PreisTabelle.astro';
+import FahrtVorschau from '~/components/FahrtVorschau.astro';
+import EinzugsgebietKarte from '~/components/EinzugsgebietKarte.astro';
 import { site, telefonLink, preise, preiseSichtbar, preisFormat } from '~/config/site';
 
 const leistungen = (await getCollection('leistungen'))
@@ -229,6 +231,9 @@ const ablauf = [
     </div>
   </section>
 
+  <!-- Was nach der Buchung passiert - die Statusseite im Kleinen -->
+  <FahrtVorschau />
+
   <!-- ============================= Leistungen ============================= -->
   <LeistungenRaster />
 
@@ -254,6 +259,8 @@ const ablauf = [
           wo Sie hinmüssen.
         </p>
       </div>
+
+      <EinzugsgebietKarte />
 
       <ul class="mt-8 flex flex-wrap gap-2.5">
         {
